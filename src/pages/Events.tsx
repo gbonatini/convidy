@@ -304,6 +304,19 @@ const Events = () => {
                     </div>
                     
                     <div className="flex items-center space-x-2">
+                      {/* Botão Ver Confirmações */}
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        asChild
+                        className="text-blue-600 hover:text-blue-700"
+                      >
+                        <Link to={`/confirmations?event=${event.id}`}>
+                          <Eye className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Ver</span>
+                        </Link>
+                      </Button>
+                      
                       <Button
                         variant="outline"
                         size="sm"

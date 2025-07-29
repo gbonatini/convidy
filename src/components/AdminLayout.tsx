@@ -29,6 +29,7 @@ import { useToast } from '@/hooks/use-toast';
 const menuItems = [
   { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
   { title: 'Eventos', url: '/events', icon: Calendar },
+  { title: 'Confirmações', url: '/confirmations', icon: Users },
   { title: 'Configurações', url: '/settings', icon: Settings },
 ];
 

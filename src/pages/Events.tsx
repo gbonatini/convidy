@@ -106,7 +106,10 @@ const Events = () => {
     console.log('Evento atualizado, fechando modal e recarregando eventos...');
     setIsEditDialogOpen(false);
     setSelectedEvent(null);
-    fetchEvents();
+    // Adiciona um pequeno delay para garantir que a base de dados foi atualizada
+    setTimeout(() => {
+      fetchEvents();
+    }, 500);
     toast({
       title: "Evento atualizado com sucesso!",
       description: "As alterações foram salvas.",

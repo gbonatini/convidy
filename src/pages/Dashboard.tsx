@@ -37,29 +37,12 @@ const Dashboard = () => {
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
-  // Redirecionar se não autenticado
-  if (!loading && !user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  // Redirecionar para setup se não tem empresa
-  if (!loading && profile && !profile.company_id) {
-    return <Navigate to="/setup" replace />;
-  }
-
-  useEffect(() => {
-    if (profile?.company_id) {
-      fetchDashboardStats();
-    }
-  }, [profile]);
-
   const fetchDashboardStats = async () => {
     if (!profile?.company_id) return;
 
     try {
       setLoadingStats(true);
 
-      // Buscar eventos da empresa
       const { data: events, error: eventsError } = await supabase
         .from('events')
         .select('id')
@@ -68,8 +51,6 @@ const Dashboard = () => {
       if (eventsError) throw eventsError;
 
       const eventIds = events?.map(e => e.id) || [];
-
-      // Buscar confirmações
       let totalRegistrations = 0;
       let totalCheckins = 0;
 
@@ -109,11 +90,9 @@ const Dashboard = () => {
 
   const handleSignOut = async () => {
     try {
-      // Limpar estado de auth
       localStorage.clear();
       sessionStorage.clear();
       
-      // Tentar sign out global
       try {
         await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
@@ -125,7 +104,6 @@ const Dashboard = () => {
         description: "Você foi desconectado da plataforma.",
       });
       
-      // Recarregar página para estado limpo
       window.location.href = '/auth';
     } catch (error) {
       toast({
@@ -135,6 +113,22 @@ const Dashboard = () => {
       });
     }
   };
+
+  useEffect(() => {
+    if (profile?.company_id) {
+      fetchDashboardStats();
+    }
+  }, [profile]);
+
+  // Redirecionar se não autenticado
+  if (!loading && !user) {
+    return <Navigate to="/auth" replace />;
+  }
+
+  // Redirecionar para setup se não tem empresa
+  if (!loading && profile && !profile.company_id) {
+    return <Navigate to="/setup" replace />;
+  }
 
   if (loading || loadingStats) {
     return (
@@ -149,7 +143,6 @@ const Dashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
       <header className="border-b bg-card">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-4">
@@ -179,10 +172,8 @@ const Dashboard = () => {
         </div>
       </header>
 
-      {/* Main Content */}
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-8">
-          {/* Welcome Section */}
           <div className="space-y-2">
             <h2 className="text-3xl font-bold">Bem-vindo, {profile?.name?.split(' ')[0]}!</h2>
             <p className="text-muted-foreground">
@@ -190,7 +181,6 @@ const Dashboard = () => {
             </p>
           </div>
 
-          {/* Stats Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="border-0 shadow-lg">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
@@ -199,9 +189,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalEvents}</div>
-                <p className="text-xs text-muted-foreground">
-                  Eventos criados
-                </p>
+                <p className="text-xs text-muted-foreground">Eventos criados</p>
               </CardContent>
             </Card>
             
@@ -212,9 +200,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalRegistrations}</div>
-                <p className="text-xs text-muted-foreground">
-                  Total de confirmações
-                </p>
+                <p className="text-xs text-muted-foreground">Total de confirmações</p>
               </CardContent>
             </Card>
             
@@ -225,9 +211,7 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.totalCheckins}</div>
-                <p className="text-xs text-muted-foreground">
-                  Check-ins realizados
-                </p>
+                <p className="text-xs text-muted-foreground">Check-ins realizados</p>
               </CardContent>
             </Card>
             
@@ -238,14 +222,11 @@ const Dashboard = () => {
               </CardHeader>
               <CardContent>
                 <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
-                <p className="text-xs text-muted-foreground">
-                  Percentual de comparecimento
-                </p>
+                <p className="text-xs text-muted-foreground">Percentual de comparecimento</p>
               </CardContent>
             </Card>
           </div>
 
-          {/* Quick Actions */}
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             <Card className="border-0 shadow-lg">
               <CardHeader>
@@ -302,21 +283,6 @@ const Dashboard = () => {
             </Card>
           </div>
 
-          {/* Security Notice */}
-          <Card className="border-green-200 bg-green-50 dark:border-green-800 dark:bg-green-950">
-            <CardHeader>
-              <CardTitle className="text-green-800 dark:text-green-200 flex items-center space-x-2">
-                <CheckCircle className="h-5 w-5" />
-                <span>Sistema Protegido</span>
-              </CardTitle>
-              <CardDescription className="text-green-700 dark:text-green-300">
-                Sua conta está protegida com autenticação segura e políticas de segurança avançadas.
-                Todos os dados são criptografados e seguem as diretrizes da LGPD.
-              </CardDescription>
-            </CardHeader>
-          </Card>
-
-          {/* Onboarding Notice */}
           {stats.totalEvents === 0 && (
             <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
               <CardHeader>
@@ -326,7 +292,6 @@ const Dashboard = () => {
                 </CardTitle>
                 <CardDescription className="text-blue-700 dark:text-blue-300">
                   Parece que você ainda não criou nenhum evento. Que tal começar criando seu primeiro evento?
-                  É rápido e fácil!
                 </CardDescription>
               </CardHeader>
               <CardContent>

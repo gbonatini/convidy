@@ -132,14 +132,20 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
         company_id: companyId,
       };
 
+      console.log('Dados que serão salvos:', eventData);
+
       if (event) {
         // Atualizar evento existente
-        const { error } = await supabase
+        console.log('Atualizando evento ID:', event.id);
+        const { data: updatedData, error } = await supabase
           .from('events')
           .update(eventData)
-          .eq('id', event.id);
+          .eq('id', event.id)
+          .select()
+          .single();
 
         if (error) throw error;
+        console.log('Evento atualizado no banco:', updatedData);
       } else {
         // Criar novo evento
         const { error } = await supabase

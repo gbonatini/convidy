@@ -46,7 +46,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   const fetchProfile = async (userId: string) => {
-    console.log('AuthProvider - fetchProfile iniciado para userId:', userId);
     try {
       const { data, error } = await supabase
         .from('profiles')
@@ -59,7 +58,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return;
       }
 
-      console.log('AuthProvider - Profile encontrado:', data);
       setProfile(data);
     } catch (error) {
       console.error('Erro ao buscar perfil:', error);

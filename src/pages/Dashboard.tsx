@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
+import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -142,44 +143,14 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4 flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
-              Convidy
-            </h1>
-            <Badge variant="secondary" className="hidden sm:inline-flex">
-              Dashboard
-            </Badge>
-          </div>
-          
-          <div className="flex items-center space-x-4">
-            <div className="hidden sm:block text-right">
-              <p className="text-sm font-medium">{profile?.name}</p>
-              <p className="text-xs text-muted-foreground">{profile?.email}</p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handleSignOut}
-              className="flex items-center space-x-2"
-            >
-              <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sair</span>
-            </Button>
-          </div>
+    <AdminLayout>
+      <div className="space-y-8">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-bold">Dashboard</h1>
+          <p className="text-muted-foreground">
+            Bem-vindo, {profile?.name?.split(' ')[0]}! Gerencie seus eventos e acompanhe métricas em tempo real
+          </p>
         </div>
-      </header>
-
-      <main className="container mx-auto px-4 py-8">
-        <div className="space-y-8">
-          <div className="space-y-2">
-            <h2 className="text-3xl font-bold">Bem-vindo, {profile?.name?.split(' ')[0]}!</h2>
-            <p className="text-muted-foreground">
-              Gerencie seus eventos e acompanhe métricas em tempo real
-            </p>
-          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <Card className="border-0 shadow-lg">
@@ -303,8 +274,8 @@ const Dashboard = () => {
             </Card>
           )}
         </div>
-      </main>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

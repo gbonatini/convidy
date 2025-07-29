@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
+import AdminLayout from '@/components/AdminLayout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -181,53 +182,37 @@ const Events = () => {
   }
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="space-y-1">
-              <h1 className="text-2xl font-bold">Gerenciar Eventos</h1>
-              <p className="text-muted-foreground">
-                Crie e gerencie os eventos da sua empresa
-              </p>
-            </div>
-            
-            <div className="flex items-center space-x-4">
-              <Link to="/settings">
-                <Button variant="outline" className="flex items-center space-x-2">
-                  <Settings className="h-4 w-4" />
-                  <span>Configurações</span>
-                </Button>
-              </Link>
-              
-              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-                <DialogTrigger asChild>
-                  <Button className="flex items-center space-x-2">
-                    <Plus className="h-4 w-4" />
-                    <span>Novo Evento</span>
-                  </Button>
-                </DialogTrigger>
-                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                  <DialogHeader>
-                    <DialogTitle>Criar Novo Evento</DialogTitle>
-                    <DialogDescription>
-                      Preencha as informações do seu evento
-                    </DialogDescription>
-                  </DialogHeader>
-                  <EventForm
-                    onSuccess={handleEventCreated}
-                    companyId={profile?.company_id || ''}
-                  />
-                </DialogContent>
-              </Dialog>
-            </div>
+    <AdminLayout>
+      <div className="space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="space-y-1">
+            <h1 className="text-3xl font-bold">Gerenciar Eventos</h1>
+            <p className="text-muted-foreground">
+              Crie e gerencie os eventos da sua empresa
+            </p>
           </div>
+          
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center space-x-2">
+                <Plus className="h-4 w-4" />
+                <span>Novo Evento</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+              <DialogHeader>
+                <DialogTitle>Criar Novo Evento</DialogTitle>
+                <DialogDescription>
+                  Preencha as informações do seu evento
+                </DialogDescription>
+              </DialogHeader>
+              <EventForm
+                onSuccess={handleEventCreated}
+                companyId={profile?.company_id || ''}
+              />
+            </DialogContent>
+          </Dialog>
         </div>
-      </header>
-
-      {/* Main Content */}
-      <main className="container mx-auto px-4 py-8">
         {events.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent className="space-y-4">
@@ -344,9 +329,8 @@ const Events = () => {
             ))}
           </div>
         )}
-      </main>
 
-      {/* Edit Dialog */}
+        {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
@@ -364,7 +348,8 @@ const Events = () => {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </AdminLayout>
   );
 };
 

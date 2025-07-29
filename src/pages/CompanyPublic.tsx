@@ -191,8 +191,7 @@ const CompanyPublic = () => {
       const { data, error } = await supabase
         .from('registrations')
         .insert([insertData])
-        .select()
-        .single();
+        .select();
 
       console.log('Resultado da inserção:', { data, error });
 

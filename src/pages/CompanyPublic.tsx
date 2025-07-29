@@ -157,9 +157,20 @@ const CompanyPublic = () => {
 
     try {
       // Gerar QR Code único
-      const qrCode = `${selectedEvent.id}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const qrCode = `${selectedEvent.id.slice(0, 8)}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
       
-      const { error } = await supabase
+      console.log('Tentando inserir registro:', {
+        event_id: selectedEvent.id,
+        name: formData.name,
+        email: formData.email || `${formData.phone.replace(/\D/g, '')}@temp.com`,
+        phone: formData.phone,
+        document: formData.document.replace(/\D/g, ''),
+        document_type: 'cpf',
+        qr_code: qrCode,
+        status: 'confirmed'
+      });
+
+      const { data, error } = await supabase
         .from('registrations')
         .insert([{
           event_id: selectedEvent.id,
@@ -170,9 +181,15 @@ const CompanyPublic = () => {
           document_type: 'cpf',
           qr_code: qrCode,
           status: 'confirmed'
-        }]);
+        }])
+        .select();
 
-      if (error) throw error;
+      console.log('Resultado da inserção:', { data, error });
+
+      if (error) {
+        console.error('Erro na inserção:', error);
+        throw error;
+      }
 
       // Efeito de confetti para celebrar!
       confetti({

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
+import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,7 +16,8 @@ import {
   Edit,
   Trash2,
   Eye,
-  Clock
+  Clock,
+  Settings
 } from 'lucide-react';
 import { EventForm } from '@/components/EventForm';
 
@@ -192,26 +193,35 @@ const Events = () => {
               </p>
             </div>
             
-            <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-              <DialogTrigger asChild>
-                <Button className="flex items-center space-x-2">
-                  <Plus className="h-4 w-4" />
-                  <span>Novo Evento</span>
+            <div className="flex items-center space-x-4">
+              <Link to="/settings">
+                <Button variant="outline" className="flex items-center space-x-2">
+                  <Settings className="h-4 w-4" />
+                  <span>Configurações</span>
                 </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-                <DialogHeader>
-                  <DialogTitle>Criar Novo Evento</DialogTitle>
-                  <DialogDescription>
-                    Preencha as informações do seu evento
-                  </DialogDescription>
-                </DialogHeader>
-                <EventForm
-                  onSuccess={handleEventCreated}
-                  companyId={profile?.company_id || ''}
-                />
-              </DialogContent>
-            </Dialog>
+              </Link>
+              
+              <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+                <DialogTrigger asChild>
+                  <Button className="flex items-center space-x-2">
+                    <Plus className="h-4 w-4" />
+                    <span>Novo Evento</span>
+                  </Button>
+                </DialogTrigger>
+                <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+                  <DialogHeader>
+                    <DialogTitle>Criar Novo Evento</DialogTitle>
+                    <DialogDescription>
+                      Preencha as informações do seu evento
+                    </DialogDescription>
+                  </DialogHeader>
+                  <EventForm
+                    onSuccess={handleEventCreated}
+                    companyId={profile?.company_id || ''}
+                  />
+                </DialogContent>
+              </Dialog>
+            </div>
           </div>
         </div>
       </header>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -17,7 +17,7 @@ import {
 } from '@/components/ui/form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Upload, X } from 'lucide-react';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório').max(100, 'Título muito longo'),
@@ -29,7 +29,6 @@ const eventSchema = z.object({
   capacity: z.number().min(1, 'Capacidade deve ser pelo menos 1').max(10000, 'Capacidade muito alta'),
   price: z.number().min(0, 'Preço não pode ser negativo'),
   status: z.enum(['active', 'inactive']),
-  image_url: z.string().url().optional().or(z.literal('')),
 });
 
 type EventFormData = z.infer<typeof eventSchema>;
@@ -56,6 +55,9 @@ interface EventFormProps {
 
 export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyId }) => {
   const { toast } = useToast();
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(event?.image_url || null);
+  const [uploadingImage, setUploadingImage] = useState(false);
   
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -69,12 +71,53 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
       capacity: event?.capacity || 50,
       price: event?.price || 0,
       status: (event?.status as 'active' | 'inactive') || 'active',
-      image_url: event?.image_url || '',
     },
   });
 
+  const uploadImage = async (file: File): Promise<string | null> => {
+    try {
+      setUploadingImage(true);
+      
+      // Gerar nome único para o arquivo
+      const fileExt = file.name.split('.').pop();
+      const fileName = `${Date.now()}-${Math.random().toString(36).substring(2)}.${fileExt}`;
+      const filePath = `${companyId}/${fileName}`;
+
+      const { data, error } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file);
+
+      if (error) throw error;
+
+      // Obter URL pública da imagem
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(data.path);
+
+      return publicUrl;
+    } catch (error) {
+      console.error('Erro ao fazer upload da imagem:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível fazer upload da imagem.",
+      });
+      return null;
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
   const onSubmit = async (data: EventFormData) => {
     try {
+      let imageUrl = imagePreview;
+
+      // Fazer upload da imagem se houver um arquivo selecionado
+      if (imageFile) {
+        imageUrl = await uploadImage(imageFile);
+        if (!imageUrl) return; // Se falhou o upload, não continua
+      }
+
       const eventData = {
         title: data.title,
         description: data.description,
@@ -85,7 +128,7 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
         capacity: data.capacity,
         price: data.price,
         status: data.status,
-        image_url: data.image_url,
+        image_url: imageUrl,
         company_id: companyId,
       };
 
@@ -115,6 +158,25 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
         description: "Não foi possível salvar o evento. Tente novamente.",
       });
     }
+  };
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setImageFile(file);
+      
+      // Criar preview da imagem
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
   };
 
   const isLoading = form.formState.isSubmitting;
@@ -285,32 +347,51 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="image_url"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>URL da Imagem</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="url"
-                    placeholder="https://exemplo.com/imagem.jpg"
-                    {...field}
+          <div className="md:col-span-2">
+            <FormLabel>Imagem do Evento</FormLabel>
+            <div className="mt-2 space-y-4">
+              {imagePreview ? (
+                <div className="relative">
+                  <img 
+                    src={imagePreview} 
+                    alt="Preview do evento" 
+                    className="w-full h-48 object-cover rounded-md border"
                   />
-                </FormControl>
-                <FormDescription>
-                  Opcional: URL de uma imagem para o evento
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+                  <Button
+                    type="button"
+                    variant="destructive"
+                    size="sm"
+                    className="absolute top-2 right-2"
+                    onClick={removeImage}
+                  >
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-8 text-center">
+                  <Upload className="h-8 w-8 mx-auto text-muted-foreground mb-2" />
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Clique para selecionar uma imagem
+                  </p>
+                  <Input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                    className="w-full"
+                  />
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Opcional: Adicione uma imagem para tornar seu evento mais atrativo
+              </p>
+            </div>
+          </div>
         </div>
 
         <div className="flex justify-end space-x-4 pt-4">
-          <Button type="submit" disabled={isLoading}>
-            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            {event ? 'Atualizar Evento' : 'Criar Evento'}
+          <Button type="submit" disabled={isLoading || uploadingImage}>
+            {(isLoading || uploadingImage) && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {uploadingImage ? 'Fazendo upload...' : (event ? 'Atualizar Evento' : 'Criar Evento')}
           </Button>
         </div>
       </form>

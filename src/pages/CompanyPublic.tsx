@@ -156,8 +156,8 @@ const CompanyPublic = () => {
     setIsSubmitting(true);
 
     try {
-      // Gerar QR Code único
-      const qrCode = `${selectedEvent.id.slice(0, 8)}-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      // Gerar QR Code único e mais curto
+      const qrCode = `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       
       console.log('Tentando inserir registro:', {
         event_id: selectedEvent.id,

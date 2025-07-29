@@ -17,7 +17,8 @@ import {
   Plus,
   TrendingUp,
   CheckCircle,
-  Clock
+  Clock,
+  Building
 } from 'lucide-react';
 
 interface DashboardStats {
@@ -25,6 +26,12 @@ interface DashboardStats {
   totalRegistrations: number;
   totalCheckins: number;
   attendanceRate: number;
+}
+
+interface Company {
+  id: string;
+  slug: string;
+  name: string;
 }
 
 const Dashboard = () => {
@@ -36,14 +43,14 @@ const Dashboard = () => {
     totalCheckins: 0,
     attendanceRate: 0
   });
+  const [company, setCompany] = useState<Company | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
 
   const fetchDashboardStats = async () => {
     if (!profile?.company_id) return;
 
     try {
-      setLoadingStats(true);
-
+      // Buscar eventos da empresa
       const { data: events, error: eventsError } = await supabase
         .from('events')
         .select('id')
@@ -51,31 +58,36 @@ const Dashboard = () => {
 
       if (eventsError) throw eventsError;
 
-      const eventIds = events?.map(e => e.id) || [];
-      let totalRegistrations = 0;
-      let totalCheckins = 0;
-
-      if (eventIds.length > 0) {
-        const { data: registrations, error: regError } = await supabase
-          .from('registrations')
-          .select('checked_in')
-          .in('event_id', eventIds);
-
-        if (regError) throw regError;
-
-        totalRegistrations = registrations?.length || 0;
-        totalCheckins = registrations?.filter(r => r.checked_in).length || 0;
+      if (!events || events.length === 0) {
+        setStats({
+          totalEvents: 0,
+          totalRegistrations: 0,
+          totalCheckins: 0,
+          attendanceRate: 0,
+        });
+        setLoadingStats(false);
+        return;
       }
 
-      const attendanceRate = totalRegistrations > 0 
-        ? Math.round((totalCheckins / totalRegistrations) * 100) 
-        : 0;
+      const eventIds = events.map(e => e.id);
+
+      // Buscar registrations
+      const { data: registrations, error: registrationsError } = await supabase
+        .from('registrations')
+        .select('checked_in')
+        .in('event_id', eventIds);
+
+      if (registrationsError) throw registrationsError;
+
+      const totalRegistrations = registrations?.length || 0;
+      const totalCheckins = registrations?.filter(r => r.checked_in).length || 0;
+      const attendanceRate = totalRegistrations > 0 ? Math.round((totalCheckins / totalRegistrations) * 100) : 0;
 
       setStats({
-        totalEvents: events?.length || 0,
-        totalRegistrations,
-        totalCheckins,
-        attendanceRate
+        totalEvents: events.length,
+        totalRegistrations: totalRegistrations,
+        totalCheckins: totalCheckins,
+        attendanceRate: attendanceRate,
       });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
@@ -115,9 +127,27 @@ const Dashboard = () => {
     }
   };
 
+  const fetchCompanyData = async () => {
+    if (!profile?.company_id) return;
+    
+    try {
+      const { data, error } = await supabase
+        .from('companies')
+        .select('id, slug, name')
+        .eq('id', profile.company_id)
+        .single();
+
+      if (error) throw error;
+      setCompany(data);
+    } catch (error) {
+      console.error('Erro ao carregar dados da empresa:', error);
+    }
+  };
+
   useEffect(() => {
     if (profile?.company_id) {
       fetchDashboardStats();
+      fetchCompanyData();
     }
   }, [profile]);
 
@@ -145,11 +175,24 @@ const Dashboard = () => {
   return (
     <AdminLayout>
       <div className="space-y-8">
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold">Dashboard</h1>
-          <p className="text-muted-foreground">
-            Bem-vindo, {profile?.name?.split(' ')[0]}! Gerencie seus eventos e acompanhe métricas em tempo real
-          </p>
+        {/* Welcome Section */}
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold">Dashboard</h1>
+            <p className="text-muted-foreground">
+              Bem-vindo, {profile?.name?.split(' ')[0]}! Gerencie seus eventos e acompanhe métricas em tempo real
+            </p>
+          </div>
+          
+          {/* Company Public Page Link */}
+          {company?.slug && (
+            <a href={`/${company.slug}`} target="_blank" rel="noopener noreferrer">
+              <Button variant="outline" size="sm">
+                <Building className="h-4 w-4 mr-2" />
+                Ver Página Pública
+              </Button>
+            </a>
+          )}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">

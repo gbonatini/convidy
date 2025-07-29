@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import confetti from 'canvas-confetti';
 import { 
   Calendar, 
   MapPin, 
@@ -16,7 +17,8 @@ import {
   Building,
   Phone,
   Mail,
-  Loader2
+  Loader2,
+  CheckCircle
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -59,7 +61,8 @@ const CompanyPublic = () => {
   const [formData, setFormData] = useState({
     name: '',
     document: '',
-    phone: ''
+    phone: '',
+    email: ''
   });
 
   useEffect(() => {
@@ -134,7 +137,7 @@ const CompanyPublic = () => {
       toast({
         variant: "destructive",
         title: "Campos obrigatórios",
-        description: "Por favor, preencha todos os campos.",
+        description: "Por favor, preencha todos os campos obrigatórios.",
       });
       return;
     }
@@ -161,7 +164,7 @@ const CompanyPublic = () => {
         .insert([{
           event_id: selectedEvent.id,
           name: formData.name,
-          email: formData.phone + '@temp.com', // Email temporário até ser implementado
+          email: formData.email || `${formData.phone.replace(/\D/g, '')}@temp.com`,
           phone: formData.phone,
           document: formData.document.replace(/\D/g, ''),
           document_type: 'cpf',
@@ -171,13 +174,20 @@ const CompanyPublic = () => {
 
       if (error) throw error;
 
+      // Efeito de confetti para celebrar!
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
       toast({
-        title: "Confirmação realizada!",
-        description: "Sua presença foi confirmada. Você receberá mais informações em breve.",
+        title: "🎉 Confirmação realizada!",
+        description: "Sua presença foi confirmada com sucesso! Você receberá mais informações em breve.",
       });
 
       // Limpar formulário e fechar modal
-      setFormData({ name: '', document: '', phone: '' });
+      setFormData({ name: '', document: '', phone: '', email: '' });
       setSelectedEvent(null);
 
     } catch (error: any) {
@@ -363,6 +373,7 @@ const CompanyPublic = () => {
                               placeholder="000.000.000-00"
                               value={formData.document}
                               onChange={handleInputChange}
+                              maxLength={14}
                               required
                             />
                           </div>
@@ -379,6 +390,18 @@ const CompanyPublic = () => {
                             />
                           </div>
                           
+                          <div className="space-y-2">
+                            <Label htmlFor="email">Email (opcional)</Label>
+                            <Input
+                              id="email"
+                              name="email"
+                              type="email"
+                              placeholder="seu@email.com"
+                              value={formData.email}
+                              onChange={handleInputChange}
+                            />
+                          </div>
+                          
                           <Button type="submit" className="w-full" disabled={isSubmitting}>
                             {isSubmitting ? (
                               <>
@@ -386,7 +409,10 @@ const CompanyPublic = () => {
                                 Confirmando...
                               </>
                             ) : (
-                              'Confirmar Presença'
+                              <>
+                                <CheckCircle className="mr-2 h-4 w-4" />
+                                Confirmar Presença
+                              </>
                             )}
                           </Button>
                         </form>

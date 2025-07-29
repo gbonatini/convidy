@@ -152,128 +152,127 @@ const Dashboard = () => {
           </p>
         </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            <Card className="border-0 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
-                <Calendar className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalEvents}</div>
-                <p className="text-xs text-muted-foreground">Eventos criados</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Confirmações</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalRegistrations}</div>
-                <p className="text-xs text-muted-foreground">Total de confirmações</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
-                <CheckCircle className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.totalCheckins}</div>
-                <p className="text-xs text-muted-foreground">Check-ins realizados</p>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 shadow-lg">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-medium">Taxa de Presença</CardTitle>
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
-                <p className="text-xs text-muted-foreground">Percentual de comparecimento</p>
-              </CardContent>
-            </Card>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Plus className="h-5 w-5" />
-                  <span>Criar Evento</span>
-                </CardTitle>
-                <CardDescription>
-                  Organize um novo evento e comece a receber confirmações
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full" onClick={() => window.location.href = '/events'}>
-                  <Calendar className="mr-2 h-4 w-4" />
-                  Gerenciar Eventos
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <BarChart3 className="h-5 w-5" />
-                  <span>Relatórios</span>
-                </CardTitle>
-                <CardDescription>
-                  Analise o desempenho dos seus eventos com dados detalhados
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  <BarChart3 className="mr-2 h-4 w-4" />
-                  Ver Relatórios
-                </Button>
-              </CardContent>
-            </Card>
-            
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <CardTitle className="flex items-center space-x-2">
-                  <Settings className="h-5 w-5" />
-                  <span>Configurações</span>
-                </CardTitle>
-                <CardDescription>
-                  Configure sua empresa e personalize suas páginas públicas
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" className="w-full">
-                  <Settings className="mr-2 h-4 w-4" />
-                  Configurar
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {stats.totalEvents === 0 && (
-            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-              <CardHeader>
-                <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center space-x-2">
-                  <Clock className="h-5 w-5" />
-                  <span>Primeiros Passos</span>
-                </CardTitle>
-                <CardDescription className="text-blue-700 dark:text-blue-300">
-                  Parece que você ainda não criou nenhum evento. Que tal começar criando seu primeiro evento?
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button className="w-full sm:w-auto" onClick={() => window.location.href = '/events'}>
-                  <Plus className="mr-2 h-4 w-4" />
-                  Criar Primeiro Evento
-                </Button>
-              </CardContent>
-            </Card>
-          )}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
+              <Calendar className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalEvents}</div>
+              <p className="text-xs text-muted-foreground">Eventos criados</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Confirmações</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalRegistrations}</div>
+              <p className="text-xs text-muted-foreground">Total de confirmações</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalCheckins}</div>
+              <p className="text-xs text-muted-foreground">Check-ins realizados</p>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Taxa de Presença</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
+              <p className="text-xs text-muted-foreground">Percentual de comparecimento</p>
+            </CardContent>
+          </Card>
         </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Plus className="h-5 w-5" />
+                <span>Criar Evento</span>
+              </CardTitle>
+              <CardDescription>
+                Organize um novo evento e comece a receber confirmações
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full" onClick={() => window.location.href = '/events'}>
+                <Calendar className="mr-2 h-4 w-4" />
+                Gerenciar Eventos
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <BarChart3 className="h-5 w-5" />
+                <span>Relatórios</span>
+              </CardTitle>
+              <CardDescription>
+                Analise o desempenho dos seus eventos com dados detalhados
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full">
+                <BarChart3 className="mr-2 h-4 w-4" />
+                Ver Relatórios
+              </Button>
+            </CardContent>
+          </Card>
+          
+          <Card className="border-0 shadow-lg">
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Settings className="h-5 w-5" />
+                <span>Configurações</span>
+              </CardTitle>
+              <CardDescription>
+                Configure sua empresa e personalize suas páginas públicas
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button variant="outline" className="w-full">
+                <Settings className="mr-2 h-4 w-4" />
+                Configurar
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+
+        {stats.totalEvents === 0 && (
+          <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+            <CardHeader>
+              <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center space-x-2">
+                <Clock className="h-5 w-5" />
+                <span>Primeiros Passos</span>
+              </CardTitle>
+              <CardDescription className="text-blue-700 dark:text-blue-300">
+                Parece que você ainda não criou nenhum evento. Que tal começar criando seu primeiro evento?
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button className="w-full sm:w-auto" onClick={() => window.location.href = '/events'}>
+                <Plus className="mr-2 h-4 w-4" />
+                Criar Primeiro Evento
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     </AdminLayout>
   );

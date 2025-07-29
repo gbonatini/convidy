@@ -195,6 +195,39 @@ export type Database = {
           },
         ]
       }
+      profiles: {
+        Row: {
+          company_id: string | null
+          created_at: string | null
+          email: string
+          id: string
+          name: string
+          role: string | null
+          updated_at: string | null
+          user_id: string
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string | null
+          email: string
+          id?: string
+          name: string
+          role?: string | null
+          updated_at?: string | null
+          user_id: string
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string | null
+          email?: string
+          id?: string
+          name?: string
+          role?: string | null
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       registrations: {
         Row: {
           checked_in: boolean | null

@@ -146,7 +146,9 @@ const Events = () => {
   };
 
   const formatDate = (date: string) => {
-    return new Date(date).toLocaleDateString('pt-BR');
+    // Usar diretamente a string da data sem conversão para evitar problemas de fuso horário
+    const [year, month, day] = date.split('-');
+    return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR');
   };
 
   const formatTime = (time: string) => {

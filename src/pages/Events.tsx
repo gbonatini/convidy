@@ -250,7 +250,18 @@ const Events = () => {
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {events.map((event) => (
-              <Card key={event.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow">
+              <Card key={event.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
+                {/* Imagem do evento */}
+                {event.image_url && (
+                  <div className="aspect-video w-full overflow-hidden">
+                    <img 
+                      src={event.image_url} 
+                      alt={event.title}
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+                
                 <CardHeader className="space-y-3">
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">

@@ -65,7 +65,7 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
       title: event?.title || '',
       description: event?.description || '',
       date: event?.date || '',
-      time: event?.time || '',
+      time: event?.time ? event.time.slice(0, 5) : '', // Remove segundos se existir
       location: event?.location || '',
       address: event?.address || '',
       capacity: event?.capacity || 50,

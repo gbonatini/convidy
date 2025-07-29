@@ -66,6 +66,7 @@ const Events = () => {
 
     try {
       setLoadingEvents(true);
+      console.log('Buscando eventos para company_id:', profile.company_id);
 
       const { data: eventsData, error } = await supabase
         .from('events')
@@ -78,6 +79,7 @@ const Events = () => {
 
       if (error) throw error;
 
+      console.log('Eventos carregados:', eventsData);
       setEvents(eventsData || []);
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);
@@ -101,6 +103,7 @@ const Events = () => {
   };
 
   const handleEventUpdated = () => {
+    console.log('Evento atualizado, fechando modal e recarregando eventos...');
     setIsEditDialogOpen(false);
     setSelectedEvent(null);
     fetchEvents();

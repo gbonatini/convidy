@@ -73,15 +73,22 @@ const CompanyPublic = () => {
 
   const fetchCompanyAndEvents = async () => {
     try {
+      console.log('Slug capturado:', slug);
+      
       // Buscar empresa pelo slug
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('*')
         .eq('slug', slug)
         .eq('status', 'active')
-        .single();
+        .maybeSingle();
+
+      console.log('Resultado da busca da empresa:', { companyData, companyError });
 
       if (companyError) throw companyError;
+      if (!companyData) {
+        throw new Error('Empresa não encontrada');
+      }
       
       setCompany(companyData);
 
@@ -133,7 +140,12 @@ const CompanyPublic = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('Iniciando handleSubmit...');
+    console.log('Dados do formulário:', formData);
+    console.log('Evento selecionado:', selectedEvent);
+    
     if (!formData.name || !formData.document || !formData.phone) {
+      console.log('Campos obrigatórios não preenchidos');
       toast({
         variant: "destructive",
         title: "Campos obrigatórios",
@@ -143,6 +155,7 @@ const CompanyPublic = () => {
     }
 
     if (!validateCPF(formData.document)) {
+      console.log('CPF inválido');
       toast({
         variant: "destructive",
         title: "CPF inválido",
@@ -151,7 +164,10 @@ const CompanyPublic = () => {
       return;
     }
 
-    if (!selectedEvent) return;
+    if (!selectedEvent) {
+      console.log('Nenhum evento selecionado');
+      return;
+    }
 
     setIsSubmitting(true);
 
@@ -159,7 +175,7 @@ const CompanyPublic = () => {
       // Gerar QR Code único e mais curto
       const qrCode = `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
       
-      console.log('Tentando inserir registro:', {
+      const insertData = {
         event_id: selectedEvent.id,
         name: formData.name,
         email: formData.email || `${formData.phone.replace(/\D/g, '')}@temp.com`,
@@ -168,21 +184,15 @@ const CompanyPublic = () => {
         document_type: 'cpf',
         qr_code: qrCode,
         status: 'confirmed'
-      });
+      };
+
+      console.log('Tentando inserir registro:', insertData);
 
       const { data, error } = await supabase
         .from('registrations')
-        .insert([{
-          event_id: selectedEvent.id,
-          name: formData.name,
-          email: formData.email || `${formData.phone.replace(/\D/g, '')}@temp.com`,
-          phone: formData.phone,
-          document: formData.document.replace(/\D/g, ''),
-          document_type: 'cpf',
-          qr_code: qrCode,
-          status: 'confirmed'
-        }])
-        .select();
+        .insert([insertData])
+        .select()
+        .single();
 
       console.log('Resultado da inserção:', { data, error });
 
@@ -190,6 +200,8 @@ const CompanyPublic = () => {
         console.error('Erro na inserção:', error);
         throw error;
       }
+
+      console.log('Registro inserido com sucesso!', data);
 
       // Efeito de confetti para celebrar!
       confetti({
@@ -216,11 +228,17 @@ const CompanyPublic = () => {
           title: "Já confirmado",
           description: "Este CPF já foi usado para confirmar presença neste evento.",
         });
+      } else if (error.message?.includes('RLS')) {
+        toast({
+          variant: "destructive",
+          title: "Erro de permissão",
+          description: "Não é possível confirmar presença neste evento no momento.",
+        });
       } else {
         toast({
           variant: "destructive",
           title: "Erro ao confirmar presença",
-          description: "Tente novamente em alguns instantes.",
+          description: error.message || "Tente novamente em alguns instantes.",
         });
       }
     } finally {

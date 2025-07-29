@@ -135,6 +135,15 @@ const Setup = () => {
     setIsLoading(true);
 
     try {
+      // Gerar slug único para a empresa
+      const baseSlug = formData.companyName.toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '') // Remove acentos
+        .replace(/[^a-z0-9\s]/g, '') // Remove caracteres especiais
+        .replace(/\s+/g, '-') // Substitui espaços por hífens
+        .replace(/-+/g, '-') // Remove hífens duplicados
+        .replace(/^-|-$/g, ''); // Remove hífens do início e fim
+
       // Criar empresa
       const { data: company, error: companyError } = await supabase
         .from('companies')
@@ -146,7 +155,7 @@ const Setup = () => {
           phone: formData.phone,
           address: formData.address,
           plan_id: formData.planId,
-          slug: formData.companyName.toLowerCase().replace(/[^a-z0-9]/g, '-'),
+          slug: baseSlug || 'empresa',
           status: 'active',
         }])
         .select()

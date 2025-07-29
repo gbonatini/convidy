@@ -37,19 +37,19 @@ const Setup = () => {
     planId: '',
   });
 
-  // Redirecionar se não autenticado
+  useEffect(() => {
+    fetchPlans();
+  }, []);
+
+  // Redirecionar se não autenticado (após todos os hooks)
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
   }
 
-  // Redirecionar se já tem empresa configurada
+  // Redirecionar se já tem empresa configurada (após todos os hooks)
   if (!loading && profile?.company_id) {
     return <Navigate to="/dashboard" replace />;
   }
-
-  useEffect(() => {
-    fetchPlans();
-  }, []);
 
   const fetchPlans = async () => {
     try {

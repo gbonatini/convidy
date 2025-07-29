@@ -37,6 +37,12 @@ const Dashboard = () => {
   });
   const [loadingStats, setLoadingStats] = useState(true);
 
+  // Debug logs
+  console.log('Dashboard - loading:', loading);
+  console.log('Dashboard - user:', user);
+  console.log('Dashboard - profile:', profile);
+  console.log('Dashboard - loadingStats:', loadingStats);
+
   // Redirecionar se não autenticado
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
@@ -44,17 +50,26 @@ const Dashboard = () => {
 
   // Redirecionar para setup se não tem empresa
   if (!loading && profile && !profile.company_id) {
+    console.log('Redirecionando para setup - profile sem company_id:', profile);
     return <Navigate to="/setup" replace />;
   }
 
   useEffect(() => {
+    console.log('Dashboard useEffect - profile?.company_id:', profile?.company_id);
     if (profile?.company_id) {
       fetchDashboardStats();
+    } else {
+      console.log('Dashboard - não chamando fetchDashboardStats, company_id não encontrado');
     }
   }, [profile]);
 
   const fetchDashboardStats = async () => {
-    if (!profile?.company_id) return;
+    if (!profile?.company_id) {
+      console.log('fetchDashboardStats - company_id não encontrado:', profile);
+      return;
+    }
+
+    console.log('fetchDashboardStats - iniciando com company_id:', profile.company_id);
 
     try {
       setLoadingStats(true);

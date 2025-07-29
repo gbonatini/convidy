@@ -258,9 +258,9 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full">
+                <Button className="w-full" onClick={() => window.location.href = '/events'}>
                   <Calendar className="mr-2 h-4 w-4" />
-                  Novo Evento
+                  Gerenciar Eventos
                 </Button>
               </CardContent>
             </Card>
@@ -330,7 +330,7 @@ const Dashboard = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <Button className="w-full sm:w-auto">
+                <Button className="w-full sm:w-auto" onClick={() => window.location.href = '/events'}>
                   <Plus className="mr-2 h-4 w-4" />
                   Criar Primeiro Evento
                 </Button>

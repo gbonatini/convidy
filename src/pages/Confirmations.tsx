@@ -37,13 +37,13 @@ interface Registration {
   checkin_time: string | null;
   created_at: string;
   qr_code: string;
-  event: {
+  event?: {
     id: string;
     title: string;
     date: string;
     time: string;
     location: string;
-  };
+  } | null;
 }
 
 interface Company {
@@ -187,7 +187,7 @@ const Confirmations = () => {
   const filteredRegistrations = registrations.filter(reg =>
     reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
     reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    reg.event.title.toLowerCase().includes(searchTerm.toLowerCase())
+    (reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase()))
   );
 
   const formatDate = (dateString: string) => {
@@ -314,15 +314,15 @@ const Confirmations = () => {
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4 text-muted-foreground" />
                       <div>
-                        <p className="font-medium">{registration.event.title}</p>
+                        <p className="font-medium">{registration.event?.title || 'Evento não encontrado'}</p>
                         <p className="text-muted-foreground">
-                          {formatDate(registration.event.date)} às {formatTime(registration.event.time)}
+                          {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'} às {registration.event?.time ? formatTime(registration.event.time) : 'Horário não disponível'}
                         </p>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{registration.event.location}</span>
+                      <span>{registration.event?.location || 'Local não disponível'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Clock className="h-4 w-4 text-muted-foreground" />

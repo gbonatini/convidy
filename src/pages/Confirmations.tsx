@@ -68,17 +68,29 @@ const Confirmations = () => {
 
   const fetchCompanyAndRegistrations = async () => {
     try {
+      console.log('Iniciando fetchCompanyAndRegistrations...');
+      
       // Buscar perfil do usuário para obter company_id
       const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      console.log('Usuário:', user);
+      
+      if (!user) {
+        console.log('Usuário não encontrado');
+        return;
+      }
 
-      const { data: profile } = await supabase
+      const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('company_id')
         .eq('user_id', user.id)
         .single();
 
-      if (!profile?.company_id) return;
+      console.log('Profile:', { profile, profileError });
+
+      if (!profile?.company_id) {
+        console.log('company_id não encontrado no profile');
+        return;
+      }
 
       // Buscar dados da empresa
       const { data: companyData } = await supabase
@@ -87,22 +99,31 @@ const Confirmations = () => {
         .eq('id', profile.company_id)
         .single();
 
+      console.log('Dados da empresa:', companyData);
       setCompany(companyData);
 
-      // Buscar confirmações com dados dos eventos
+      // Primeiro, buscar todos os eventos da empresa
+      const { data: events, error: eventsError } = await supabase
+        .from('events')
+        .select('id, title, date, time, location')
+        .eq('company_id', profile.company_id);
+
+      console.log('Eventos da empresa:', { events, eventsError });
+
+      if (eventsError) throw eventsError;
+
+      if (!events || events.length === 0) {
+        console.log('Nenhum evento encontrado para esta empresa');
+        setRegistrations([]);
+        return;
+      }
+
+      // Buscar confirmações desses eventos
+      const eventIds = events.map(e => e.id);
       let query = supabase
         .from('registrations')
-        .select(`
-          *,
-          events:event_id (
-            id,
-            title,
-            date,
-            time,
-            location
-          )
-        `)
-        .eq('events.company_id', profile.company_id)
+        .select('*')
+        .in('event_id', eventIds)
         .order('created_at', { ascending: false });
 
       // Filtrar por evento específico se especificado na URL
@@ -112,14 +133,20 @@ const Confirmations = () => {
 
       const { data: registrationsData, error } = await query;
 
+      console.log('Dados das confirmações:', { registrationsData, error });
+
       if (error) throw error;
 
-      // Reformatar dados para o tipo esperado
-      const formattedRegistrations = registrationsData?.map(reg => ({
-        ...reg,
-        event: reg.events
-      })) || [];
+      // Combinar dados de registrations com eventos
+      const formattedRegistrations = registrationsData?.map(reg => {
+        const eventData = events.find(e => e.id === reg.event_id);
+        return {
+          ...reg,
+          event: eventData || { id: '', title: 'Evento não encontrado', date: '', time: '', location: '' }
+        };
+      }) || [];
 
+      console.log('Confirmações formatadas:', formattedRegistrations);
       setRegistrations(formattedRegistrations);
     } catch (error) {
       console.error('Erro ao carregar confirmações:', error);

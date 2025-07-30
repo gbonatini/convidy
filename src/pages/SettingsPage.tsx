@@ -168,7 +168,7 @@ const SettingsPage = () => {
         .from('companies')
         .update(updateData)
         .eq('id', company.id)
-        .select(); // Adicionar select para ver o que foi atualizado
+        .select('*'); // Especificar todas as colunas
 
       console.log('Resposta do banco:', { data, error });
 
@@ -176,8 +176,24 @@ const SettingsPage = () => {
 
       console.log('Dados salvos com sucesso no banco:', data);
 
-      // Atualizar o estado local com os dados salvos
-      if (data && data[0]) {
+      // Se não retornou dados mas não deu erro, significa que salvou
+      // Vamos buscar os dados atualizados
+      if (!data || data.length === 0) {
+        console.log('Nenhum dado retornado, buscando dados atualizados...');
+        const { data: updatedData, error: fetchError } = await supabase
+          .from('companies')
+          .select('*')
+          .eq('id', company.id)
+          .single();
+        
+        if (fetchError) {
+          console.error('Erro ao buscar dados atualizados:', fetchError);
+        } else {
+          console.log('Dados atualizados buscados:', updatedData);
+          setCompany(updatedData);
+        }
+      } else {
+        // Atualizar o estado local com os dados salvos
         setCompany(data[0]);
       }
 

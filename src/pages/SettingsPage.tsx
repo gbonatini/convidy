@@ -126,10 +126,12 @@ const SettingsPage = () => {
 
   const handleCompanyChange = (field: keyof Company, value: string) => {
     if (!company) return;
+    console.log(`Alterando ${field}:`, value);
     setCompany({
       ...company,
       [field]: value,
     });
+    console.log('Estado atualizado da empresa:', { ...company, [field]: value });
   };
 
   const handleNotificationChange = (field: keyof NotificationSettings, value: boolean) => {
@@ -142,20 +144,37 @@ const SettingsPage = () => {
   const saveCompanyData = async () => {
     if (!company) return;
 
+    console.log('=== SALVANDO DADOS DA EMPRESA ===');
+    console.log('Dados completos da empresa:', company);
+    console.log('ID da empresa:', company.id);
+    console.log('Nome:', company.name);
+    console.log('Telefone:', company.phone);
+    console.log('Endereço completo:', company.address);
+    console.log('Logo URL:', company.logo_url);
+
     setIsSaving(true);
     try {
-      const { error } = await supabase
+      const updateData = {
+        name: company.name,
+        description: company.description,
+        phone: company.phone,
+        address: company.address,
+        logo_url: company.logo_url,
+      };
+      
+      console.log('Dados que serão enviados para o banco:', updateData);
+
+      const { data, error } = await supabase
         .from('companies')
-        .update({
-          name: company.name,
-          description: company.description,
-          phone: company.phone,
-          address: company.address,
-          logo_url: company.logo_url,
-        })
-        .eq('id', company.id);
+        .update(updateData)
+        .eq('id', company.id)
+        .select(); // Adicionar select para ver o que foi atualizado
+
+      console.log('Resposta do banco:', { data, error });
 
       if (error) throw error;
+
+      console.log('Dados salvos com sucesso no banco:', data);
 
       toast({
         title: "Dados salvos!",

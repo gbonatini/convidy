@@ -36,7 +36,7 @@ interface Company {
   slug: string;
   plan: string;
   status: string;
-  logo_url: string;
+  logo_url: string | null;
 }
 
 interface NotificationSettings {
@@ -159,7 +159,7 @@ const SettingsPage = () => {
         description: company.description,
         phone: company.phone,
         address: company.address,
-        logo_url: company.logo_url,
+        logo_url: company.logo_url || null,
       };
       
       console.log('Dados que serão enviados para o banco:', updateData);
@@ -175,6 +175,11 @@ const SettingsPage = () => {
       if (error) throw error;
 
       console.log('Dados salvos com sucesso no banco:', data);
+
+      // Atualizar o estado local com os dados salvos
+      if (data && data[0]) {
+        setCompany(data[0]);
+      }
 
       toast({
         title: "Dados salvos!",
@@ -391,10 +396,9 @@ const SettingsPage = () => {
                       placeholder="Nome da rua, número"
                       value={company?.address?.split(', ')[0] || ''}
                       onChange={(e) => {
-                        const addressParts = company?.address?.split(', ') || ['', '', ''];
-                        const newAddress = [e.target.value, addressParts[1] || '', addressParts[2] || '']
-                          .filter(Boolean)
-                          .join(', ');
+                        const parts = (company?.address || '').split(', ');
+                        const newParts = [e.target.value, parts[1] || '', parts[2] || ''];
+                        const newAddress = newParts.filter(part => part.trim()).join(', ');
                         handleCompanyChange('address', newAddress);
                       }}
                     />
@@ -407,10 +411,9 @@ const SettingsPage = () => {
                       placeholder="Nome da cidade"
                       value={company?.address?.split(', ')[1] || ''}
                       onChange={(e) => {
-                        const addressParts = company?.address?.split(', ') || ['', '', ''];
-                        const newAddress = [addressParts[0] || '', e.target.value, addressParts[2] || '']
-                          .filter(Boolean)
-                          .join(', ');
+                        const parts = (company?.address || '').split(', ');
+                        const newParts = [parts[0] || '', e.target.value, parts[2] || ''];
+                        const newAddress = newParts.filter(part => part.trim()).join(', ');
                         handleCompanyChange('address', newAddress);
                       }}
                     />
@@ -424,10 +427,9 @@ const SettingsPage = () => {
                       maxLength={2}
                       value={company?.address?.split(', ')[2] || ''}
                       onChange={(e) => {
-                        const addressParts = company?.address?.split(', ') || ['', '', ''];
-                        const newAddress = [addressParts[0] || '', addressParts[1] || '', e.target.value]
-                          .filter(Boolean)
-                          .join(', ');
+                        const parts = (company?.address || '').split(', ');
+                        const newParts = [parts[0] || '', parts[1] || '', e.target.value];
+                        const newAddress = newParts.filter(part => part.trim()).join(', ');
                         handleCompanyChange('address', newAddress);
                       }}
                     />

@@ -144,13 +144,11 @@ const SettingsPage = () => {
   const saveCompanyData = async () => {
     if (!company) return;
 
-    console.log('=== SALVANDO DADOS DA EMPRESA ===');
-    console.log('Dados completos da empresa:', company);
-    console.log('ID da empresa:', company.id);
-    console.log('Nome:', company.name);
-    console.log('Telefone:', company.phone);
-    console.log('Endereço completo:', company.address);
-    console.log('Logo URL:', company.logo_url);
+    console.log('=== VERIFICANDO DADOS ANTES DE SALVAR ===');
+    console.log('User ID:', user?.id);
+    console.log('Profile:', profile);
+    console.log('Company ID:', company.id);
+    console.log('Profile Company ID:', profile?.company_id);
 
     setIsSaving(true);
     try {
@@ -162,40 +160,41 @@ const SettingsPage = () => {
         logo_url: company.logo_url || null,
       };
       
-      console.log('Dados que serão enviados para o banco:', updateData);
+      console.log('Dados para atualizar:', updateData);
 
       const { data, error } = await supabase
         .from('companies')
         .update(updateData)
         .eq('id', company.id)
-        .select('*'); // Especificar todas as colunas
+        .select('*');
 
-      console.log('Resposta do banco:', { data, error });
+      console.log('Resposta completa:', { data, error });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Erro detalhado:', error);
+        throw error;
+      }
 
-      console.log('Dados salvos com sucesso no banco:', data);
-
-      // Se não retornou dados mas não deu erro, significa que salvou
-      // Vamos buscar os dados atualizados
       if (!data || data.length === 0) {
-        console.log('Nenhum dado retornado, buscando dados atualizados...');
-        const { data: updatedData, error: fetchError } = await supabase
+        console.log('Nenhum registro foi atualizado - verificando se o registro existe...');
+        
+        const { data: existingData, error: selectError } = await supabase
           .from('companies')
           .select('*')
-          .eq('id', company.id)
-          .single();
+          .eq('id', company.id);
+          
+        console.log('Dados existentes:', { existingData, selectError });
         
-        if (fetchError) {
-          console.error('Erro ao buscar dados atualizados:', fetchError);
-        } else {
-          console.log('Dados atualizados buscados:', updatedData);
-          setCompany(updatedData);
+        if (!existingData || existingData.length === 0) {
+          throw new Error('Empresa não encontrada');
         }
-      } else {
-        // Atualizar o estado local com os dados salvos
-        setCompany(data[0]);
+        
+        // Se existe mas não foi atualizado, pode ser problema de permissão
+        throw new Error('Não foi possível atualizar os dados. Verifique suas permissões.');
       }
+
+      console.log('Dados atualizados com sucesso:', data);
+      setCompany(data[0]);
 
       toast({
         title: "Dados salvos!",
@@ -206,7 +205,7 @@ const SettingsPage = () => {
       toast({
         variant: "destructive",
         title: "Erro ao salvar",
-        description: "Não foi possível salvar os dados da empresa.",
+        description: error instanceof Error ? error.message : "Não foi possível salvar os dados da empresa.",
       });
     } finally {
       setIsSaving(false);

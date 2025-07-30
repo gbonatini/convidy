@@ -9,6 +9,7 @@ import Auth from "./pages/Auth";
 import Setup from "./pages/Setup";
 import Dashboard from "./pages/Dashboard";
 import Events from "./pages/Events";
+import Invites from "./pages/Invites";
 import Confirmations from "./pages/Confirmations";
 import SettingsPage from "./pages/SettingsPage";
 import CompanyPublic from "./pages/CompanyPublic";
@@ -29,6 +30,7 @@ const App = () => (
             <Route path="/setup" element={<Setup />} />
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/events" element={<Events />} />
+            <Route path="/invites" element={<Invites />} />
             <Route path="/confirmations" element={<Confirmations />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/:slug" element={<CompanyPublic />} />

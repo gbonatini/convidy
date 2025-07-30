@@ -154,6 +154,60 @@ export type Database = {
           },
         ]
       }
+      invites: {
+        Row: {
+          company_id: string
+          cpf: string
+          created_at: string
+          email: string | null
+          event_id: string
+          full_name: string
+          id: string
+          status: string
+          updated_at: string
+          whatsapp: string
+        }
+        Insert: {
+          company_id: string
+          cpf: string
+          created_at?: string
+          email?: string | null
+          event_id: string
+          full_name: string
+          id?: string
+          status?: string
+          updated_at?: string
+          whatsapp: string
+        }
+        Update: {
+          company_id?: string
+          cpf?: string
+          created_at?: string
+          email?: string | null
+          event_id?: string
+          full_name?: string
+          id?: string
+          status?: string
+          updated_at?: string
+          whatsapp?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fk_invites_company"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fk_invites_event"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notification_settings: {
         Row: {
           checkin_alert: boolean | null

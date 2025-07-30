@@ -286,7 +286,7 @@ export default function Invites() {
 
   const handleSendWhatsApp = async (invite: Invite) => {
     const event = invite.events;
-    const eventDate = new Date(event.date).toLocaleDateString('pt-BR');
+    const eventDate = new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR');
     const whatsappNumber = invite.whatsapp.replace(/\D/g, '');
     
     // Fetch company to get slug
@@ -503,7 +503,7 @@ export default function Invites() {
                         .filter(event => new Date(event.date) >= new Date())
                         .map((event) => (
                           <SelectItem key={event.id} value={event.id}>
-                            {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
+                             {event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                           </SelectItem>
                         ))}
                     </SelectContent>
@@ -700,7 +700,7 @@ export default function Invites() {
                         <div>
                           <div className="font-medium">{invite.events.title}</div>
                           <div className="text-sm text-muted-foreground">
-                            {new Date(invite.events.date).toLocaleDateString('pt-BR')}
+                            {new Date(invite.events.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                           </div>
                         </div>
                       </TableCell>
@@ -758,7 +758,7 @@ export default function Invites() {
                   <SelectContent>
                     {events.map((event) => (
                       <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
+                        {event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}
                       </SelectItem>
                     ))}
                   </SelectContent>

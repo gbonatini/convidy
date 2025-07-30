@@ -12,8 +12,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, MessageCircle, Edit, Trash2, Loader2 } from "lucide-react";
+import { Plus, MessageCircle, Edit, Trash2, Loader2, Send, Clock, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import AdminLayout from "@/components/AdminLayout";
 
 interface Invite {
   id: string;
@@ -440,40 +441,273 @@ export default function Invites() {
     }
   };
 
+  // Calculate stats
+  const totalInvites = invites.length;
+  const pendingInvites = invites.filter(invite => invite.status === 'pending').length;
+  const sentInvites = invites.filter(invite => invite.status === 'sent').length;
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
+      <AdminLayout>
+        <div className="flex items-center justify-center min-h-screen">
+          <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+      </AdminLayout>
     );
   }
 
   return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold">Convites</h1>
-          <p className="text-muted-foreground">Gerencie os convites para seus eventos</p>
+    <AdminLayout>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-3xl font-bold">Convites</h1>
+            <p className="text-muted-foreground">Gerencie os convites para seus eventos</p>
+          </div>
+          
+          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+            <DialogTrigger asChild>
+              <Button>
+                <Plus className="h-4 w-4 mr-2" />
+                Convidar
+              </Button>
+            </DialogTrigger>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Novo Convite</DialogTitle>
+                <DialogDescription>
+                  Convide pessoas para seus eventos através do WhatsApp
+                </DialogDescription>
+              </DialogHeader>
+              
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="event">Evento</Label>
+                  <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um evento" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {events.map((event) => (
+                        <SelectItem key={event.id} value={event.id}>
+                          {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <Tabs defaultValue="bulk" className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="bulk">Convite em Massa</TabsTrigger>
+                    <TabsTrigger value="manual">Convite Manual</TabsTrigger>
+                  </TabsList>
+                  
+                  <TabsContent value="bulk" className="space-y-4">
+                    <div>
+                      <Label htmlFor="bulk-data">Dados dos Convidados</Label>
+                      <Textarea
+                        id="bulk-data"
+                        placeholder="Nome Completo | CPF | WhatsApp | Email (opcional)&#10;João Silva | 12345678901 | 11999999999 | joao@email.com&#10;Maria Santos | 09876543210 | 11888888888"
+                        value={bulkData}
+                        onChange={(e) => setBulkData(e.target.value)}
+                        rows={8}
+                      />
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Use o formato: Nome | CPF | WhatsApp | Email (um por linha)
+                      </p>
+                    </div>
+                    <Button onClick={handleBulkInvite} disabled={submitting}>
+                      {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      Criar Convites
+                    </Button>
+                  </TabsContent>
+                  
+                  <TabsContent value="manual" className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <Label htmlFor="full_name">Nome Completo *</Label>
+                        <Input
+                          id="full_name"
+                          value={manualForm.full_name}
+                          onChange={(e) => setManualForm(prev => ({ ...prev, full_name: e.target.value }))}
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="cpf">CPF *</Label>
+                        <Input
+                          id="cpf"
+                          value={manualForm.cpf}
+                          onChange={(e) => setManualForm(prev => ({ ...prev, cpf: e.target.value }))}
+                          placeholder="12345678901"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="whatsapp">WhatsApp *</Label>
+                        <Input
+                          id="whatsapp"
+                          value={manualForm.whatsapp}
+                          onChange={(e) => setManualForm(prev => ({ ...prev, whatsapp: e.target.value }))}
+                          placeholder="11999999999"
+                        />
+                      </div>
+                      <div>
+                        <Label htmlFor="email">Email</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={manualForm.email}
+                          onChange={(e) => setManualForm(prev => ({ ...prev, email: e.target.value }))}
+                        />
+                      </div>
+                    </div>
+                    <Button onClick={handleManualInvite} disabled={submitting}>
+                      {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                      Criar Convite
+                    </Button>
+                  </TabsContent>
+                </Tabs>
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
-        
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogTrigger asChild>
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              Convidar
-            </Button>
-          </DialogTrigger>
-          <DialogContent className="max-w-2xl">
+
+        {/* Indicadores */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Convites</CardTitle>
+              <Send className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{totalInvites}</div>
+              <p className="text-xs text-muted-foreground">
+                Todos os convites criados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Convites Pendentes</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{pendingInvites}</div>
+              <p className="text-xs text-muted-foreground">
+                Aguardando envio
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Convites Enviados</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{sentInvites}</div>
+              <p className="text-xs text-muted-foreground">
+                Já enviados via WhatsApp
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Lista de Convites */}
+        {invites.length === 0 ? (
+          <Card>
+            <CardHeader>
+              <CardTitle>Nenhum convite encontrado</CardTitle>
+              <CardDescription>
+                Comece criando seus primeiros convites para os eventos.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        ) : (
+          <Card>
+            <CardHeader>
+              <CardTitle>Lista de Convites</CardTitle>
+              <CardDescription>
+                Total de {invites.length} convites
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Nome</TableHead>
+                    <TableHead>CPF</TableHead>
+                    <TableHead>WhatsApp</TableHead>
+                    <TableHead>Email</TableHead>
+                    <TableHead>Evento</TableHead>
+                    <TableHead>Status</TableHead>
+                    <TableHead>Ações</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {invites.map((invite) => (
+                    <TableRow key={invite.id}>
+                      <TableCell className="font-medium">{invite.full_name}</TableCell>
+                      <TableCell>{formatCPF(invite.cpf)}</TableCell>
+                      <TableCell>{formatWhatsApp(invite.whatsapp)}</TableCell>
+                      <TableCell>{invite.email || "-"}</TableCell>
+                      <TableCell>
+                        <div>
+                          <div className="font-medium">{invite.events.title}</div>
+                          <div className="text-sm text-muted-foreground">
+                            {new Date(invite.events.date).toLocaleDateString('pt-BR')}
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell>{getStatusBadge(invite.status)}</TableCell>
+                      <TableCell>
+                        <div className="flex space-x-2">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleSendWhatsApp(invite)}
+                          >
+                            <MessageCircle className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleEdit(invite)}
+                          >
+                            <Edit className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleDelete(invite.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Edit Dialog */}
+        <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+          <DialogContent>
             <DialogHeader>
-              <DialogTitle>Novo Convite</DialogTitle>
+              <DialogTitle>Editar Convite</DialogTitle>
               <DialogDescription>
-                Convide pessoas para seus eventos através do WhatsApp
+                Atualize os dados do convite
               </DialogDescription>
             </DialogHeader>
             
             <div className="space-y-4">
               <div>
-                <Label htmlFor="event">Evento</Label>
+                <Label htmlFor="edit-event">Evento</Label>
                 <Select value={selectedEventId} onValueChange={setSelectedEventId}>
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um evento" />
@@ -488,235 +722,55 @@ export default function Invites() {
                 </Select>
               </div>
 
-              <Tabs defaultValue="bulk" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="bulk">Convite em Massa</TabsTrigger>
-                  <TabsTrigger value="manual">Convite Manual</TabsTrigger>
-                </TabsList>
-                
-                <TabsContent value="bulk" className="space-y-4">
-                  <div>
-                    <Label htmlFor="bulk-data">Dados dos Convidados</Label>
-                    <Textarea
-                      id="bulk-data"
-                      placeholder="Nome Completo | CPF | WhatsApp | Email (opcional)&#10;João Silva | 12345678901 | 11999999999 | joao@email.com&#10;Maria Santos | 09876543210 | 11888888888"
-                      value={bulkData}
-                      onChange={(e) => setBulkData(e.target.value)}
-                      rows={8}
-                    />
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Use o formato: Nome | CPF | WhatsApp | Email (um por linha)
-                    </p>
-                  </div>
-                  <Button onClick={handleBulkInvite} disabled={submitting}>
-                    {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Criar Convites
-                  </Button>
-                </TabsContent>
-                
-                <TabsContent value="manual" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <Label htmlFor="full_name">Nome Completo *</Label>
-                      <Input
-                        id="full_name"
-                        value={manualForm.full_name}
-                        onChange={(e) => setManualForm(prev => ({ ...prev, full_name: e.target.value }))}
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="cpf">CPF *</Label>
-                      <Input
-                        id="cpf"
-                        value={manualForm.cpf}
-                        onChange={(e) => setManualForm(prev => ({ ...prev, cpf: e.target.value }))}
-                        placeholder="12345678901"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="whatsapp">WhatsApp *</Label>
-                      <Input
-                        id="whatsapp"
-                        value={manualForm.whatsapp}
-                        onChange={(e) => setManualForm(prev => ({ ...prev, whatsapp: e.target.value }))}
-                        placeholder="11999999999"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
-                      <Input
-                        id="email"
-                        type="email"
-                        value={manualForm.email}
-                        onChange={(e) => setManualForm(prev => ({ ...prev, email: e.target.value }))}
-                      />
-                    </div>
-                  </div>
-                  <Button onClick={handleManualInvite} disabled={submitting}>
-                    {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                    Criar Convite
-                  </Button>
-                </TabsContent>
-              </Tabs>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="edit-full_name">Nome Completo *</Label>
+                  <Input
+                    id="edit-full_name"
+                    value={manualForm.full_name}
+                    onChange={(e) => setManualForm(prev => ({ ...prev, full_name: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-cpf">CPF *</Label>
+                  <Input
+                    id="edit-cpf"
+                    value={manualForm.cpf}
+                    onChange={(e) => setManualForm(prev => ({ ...prev, cpf: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-whatsapp">WhatsApp *</Label>
+                  <Input
+                    id="edit-whatsapp"
+                    value={manualForm.whatsapp}
+                    onChange={(e) => setManualForm(prev => ({ ...prev, whatsapp: e.target.value }))}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="edit-email">Email</Label>
+                  <Input
+                    id="edit-email"
+                    type="email"
+                    value={manualForm.email}
+                    onChange={(e) => setManualForm(prev => ({ ...prev, email: e.target.value }))}
+                  />
+                </div>
+              </div>
+              
+              <div className="flex justify-end space-x-2">
+                <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+                  Cancelar
+                </Button>
+                <Button onClick={handleUpdateInvite} disabled={submitting}>
+                  {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+                  Atualizar
+                </Button>
+              </div>
             </div>
           </DialogContent>
         </Dialog>
       </div>
-
-      {invites.length === 0 ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Nenhum convite encontrado</CardTitle>
-            <CardDescription>
-              Comece criando seus primeiros convites para os eventos.
-            </CardDescription>
-          </CardHeader>
-        </Card>
-      ) : (
-        <Card>
-          <CardHeader>
-            <CardTitle>Lista de Convites</CardTitle>
-            <CardDescription>
-              Total de {invites.length} convites
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>CPF</TableHead>
-                  <TableHead>WhatsApp</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Evento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Ações</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {invites.map((invite) => (
-                  <TableRow key={invite.id}>
-                    <TableCell className="font-medium">{invite.full_name}</TableCell>
-                    <TableCell>{formatCPF(invite.cpf)}</TableCell>
-                    <TableCell>{formatWhatsApp(invite.whatsapp)}</TableCell>
-                    <TableCell>{invite.email || "-"}</TableCell>
-                    <TableCell>
-                      <div>
-                        <div className="font-medium">{invite.events.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {new Date(invite.events.date).toLocaleDateString('pt-BR')}
-                        </div>
-                      </div>
-                    </TableCell>
-                    <TableCell>{getStatusBadge(invite.status)}</TableCell>
-                    <TableCell>
-                      <div className="flex space-x-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleSendWhatsApp(invite)}
-                        >
-                          <MessageCircle className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEdit(invite)}
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleDelete(invite.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Edit Dialog */}
-      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Editar Convite</DialogTitle>
-            <DialogDescription>
-              Atualize os dados do convite
-            </DialogDescription>
-          </DialogHeader>
-          
-          <div className="space-y-4">
-            <div>
-              <Label htmlFor="edit-event">Evento</Label>
-              <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um evento" />
-                </SelectTrigger>
-                <SelectContent>
-                  {events.map((event) => (
-                    <SelectItem key={event.id} value={event.id}>
-                      {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="edit-full_name">Nome Completo *</Label>
-                <Input
-                  id="edit-full_name"
-                  value={manualForm.full_name}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, full_name: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-cpf">CPF *</Label>
-                <Input
-                  id="edit-cpf"
-                  value={manualForm.cpf}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, cpf: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-whatsapp">WhatsApp *</Label>
-                <Input
-                  id="edit-whatsapp"
-                  value={manualForm.whatsapp}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, whatsapp: e.target.value }))}
-                />
-              </div>
-              <div>
-                <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  value={manualForm.email}
-                  onChange={(e) => setManualForm(prev => ({ ...prev, email: e.target.value }))}
-                />
-              </div>
-            </div>
-            
-            <div className="flex justify-end space-x-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleUpdateInvite} disabled={submitting}>
-                {submitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
-                Atualizar
-              </Button>
-            </div>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </div>
+    </AdminLayout>
   );
 }

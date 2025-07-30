@@ -12,7 +12,12 @@ import {
   Zap,
   CheckCircle,
   ArrowRight,
-  Star
+  Star,
+  MessageCircle,
+  QrCode,
+  Activity,
+  TrendingUp,
+  Clock
 } from 'lucide-react';
 
 const Index = () => {
@@ -53,8 +58,9 @@ const Index = () => {
                 </span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                A plataforma completa para empresas organizarem eventos corporativos, 
-                gerenciarem confirmações e realizarem check-ins com segurança.
+                Convide pelo WhatsApp, acompanhe confirmações em tempo real, 
+                realize check-ins com QR Code e analise o perfil comportamental 
+                de cada participante para eventos mais assertivos.
               </p>
             </div>
             
@@ -100,11 +106,11 @@ const Index = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Users className="h-6 w-6 text-primary" />
+                  <MessageCircle className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Gestão Completa</CardTitle>
+                <CardTitle>Convites via WhatsApp</CardTitle>
                 <CardDescription>
-                  Organize eventos, gerencie confirmações e realize check-ins em uma plataforma única e intuitiva
+                  Envie convites personalizados diretamente pelo WhatsApp com links únicos para confirmação
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -112,11 +118,23 @@ const Index = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Smartphone className="h-6 w-6 text-primary" />
+                  <Activity className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Mobile First</CardTitle>
+                <CardTitle>Confirmações em Tempo Real</CardTitle>
                 <CardDescription>
-                  Páginas públicas otimizadas para smartphones garantem a melhor experiência para seus participantes
+                  Acompanhe instantaneamente as confirmações dos participantes e visualize a lista de presença
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <QrCode className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Check-in com QR Code</CardTitle>
+                <CardDescription>
+                  Check-ins instantâneos no dia do evento com QR Codes únicos e monitoramento em tempo real
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -126,9 +144,9 @@ const Index = () => {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <BarChart3 className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Analytics Avançado</CardTitle>
+                <CardTitle>Indicadores de Performance</CardTitle>
                 <CardDescription>
-                  Insights detalhados sobre comportamento dos participantes e métricas de engajamento
+                  Monitore taxa de confirmação, presença, pontualidade e outros KPIs importantes do evento
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -136,11 +154,11 @@ const Index = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Shield className="h-6 w-6 text-primary" />
+                  <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Segurança LGPD</CardTitle>
+                <CardTitle>Analytics por Participante</CardTitle>
                 <CardDescription>
-                  Proteção de dados pessoais com criptografia e políticas de segurança em conformidade com a LGPD
+                  Histórico completo: eventos que participou, taxa de confirmação, presença e preferências
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -148,23 +166,11 @@ const Index = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Zap className="h-6 w-6 text-primary" />
+                  <Clock className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>QR Code Seguro</CardTitle>
+                <CardTitle>Perfil Comportamental</CardTitle>
                 <CardDescription>
-                  Check-ins rápidos e seguros com QR Codes únicos gerados automaticamente para cada participante
-                </CardDescription>
-              </CardHeader>
-            </Card>
-            
-            <Card className="border-0 shadow-lg">
-              <CardHeader>
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Calendar className="h-6 w-6 text-primary" />
-                </div>
-                <CardTitle>Páginas Personalizadas</CardTitle>
-                <CardDescription>
-                  Cada empresa possui sua própria página pública com visual personalizado e domínio exclusivo
+                  Identifique horários preferenciais, tipos de eventos favoritos e padrões para convites mais assertivos
                 </CardDescription>
               </CardHeader>
             </Card>

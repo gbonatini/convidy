@@ -12,13 +12,16 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
+import { LogoEditor } from '@/components/LogoEditor';
 import {
   Building,
   Bell,
   User,
   Save,
   Loader2,
-  Shield
+  Shield,
+  Edit,
+  Image
 } from 'lucide-react';
 
 interface Company {
@@ -57,6 +60,7 @@ const SettingsPage = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isLogoEditorOpen, setIsLogoEditorOpen] = useState(false);
 
   // Redirecionar se não autenticado
   if (!loading && !user) {
@@ -215,6 +219,19 @@ const SettingsPage = () => {
     }
   };
 
+  const handleLogoSaved = (logoUrl: string) => {
+    if (company) {
+      setCompany({
+        ...company,
+        logo_url: logoUrl
+      });
+      toast({
+        title: "Logo atualizado!",
+        description: "O logotipo foi salvo. Não esqueça de salvar as alterações da empresa.",
+      });
+    }
+  };
+
   if (loading || isLoading) {
     return (
       <AdminLayout>
@@ -340,29 +357,46 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="logo-url">Logotipo da Empresa</Label>
-                  <Input
-                    id="logo-url"
-                    placeholder="URL da imagem do logotipo"
-                    value={company?.logo_url || ''}
-                    onChange={(e) => handleCompanyChange('logo_url', e.target.value)}
-                  />
+                  <Label>Logotipo da Empresa</Label>
+                  <div className="flex items-center space-x-4">
+                    {company?.logo_url ? (
+                      <div className="flex items-center space-x-3 p-3 border rounded-lg bg-muted/30">
+                        <img 
+                          src={company.logo_url} 
+                          alt="Logo atual" 
+                          className="h-12 w-12 object-cover rounded border"
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                        <div className="flex flex-col space-y-1">
+                          <span className="text-sm font-medium">Logo atual</span>
+                          <span className="text-xs text-muted-foreground">Clique em "Editar" para alterar</span>
+                        </div>
+                      </div>
+                    ) : (
+                      <div className="flex items-center space-x-3 p-3 border border-dashed rounded-lg">
+                        <div className="h-12 w-12 bg-muted rounded flex items-center justify-center">
+                          <Image className="h-6 w-6 text-muted-foreground" />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <span className="text-sm font-medium">Nenhum logo</span>
+                          <span className="text-xs text-muted-foreground">Adicione um logotipo</span>
+                        </div>
+                      </div>
+                    )}
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsLogoEditorOpen(true)}
+                      className="flex items-center space-x-2"
+                    >
+                      <Edit className="h-4 w-4" />
+                      <span>{company?.logo_url ? 'Editar' : 'Adicionar'}</span>
+                    </Button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     Este logotipo será exibido na página pública da empresa
                   </p>
-                  {company?.logo_url && (
-                    <div className="flex items-center space-x-2 p-2 border rounded">
-                      <img 
-                        src={company.logo_url} 
-                        alt="Preview do logo" 
-                        className="h-8 w-8 object-cover rounded"
-                        onError={(e) => {
-                          e.currentTarget.style.display = 'none';
-                        }}
-                      />
-                      <span className="text-sm text-muted-foreground">Preview do logotipo</span>
-                    </div>
-                  )}
                 </div>
 
                 {/* Read-only fields */}
@@ -542,6 +576,15 @@ const SettingsPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
+
+        {/* Logo Editor Dialog */}
+        <LogoEditor
+          isOpen={isLogoEditorOpen}
+          onClose={() => setIsLogoEditorOpen(false)}
+          onLogoSaved={handleLogoSaved}
+          currentLogoUrl={company?.logo_url}
+          companyId={company?.id || ''}
+        />
       </div>
     </AdminLayout>
   );

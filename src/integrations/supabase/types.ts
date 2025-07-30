@@ -602,6 +602,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      generate_qr_data: {
+        Args: { event_uuid: string; document_text: string }
+        Returns: string
+      }
       is_super_admin: {
         Args: { user_email: string }
         Returns: boolean

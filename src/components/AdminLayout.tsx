@@ -22,7 +22,8 @@ import {
   Users,
   LogOut,
   Building,
-  Send
+  Send,
+  QrCode
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -32,6 +33,7 @@ const menuItems = [
   { title: 'Eventos', url: '/events', icon: Calendar },
   { title: 'Convites', url: '/invites', icon: Send },
   { title: 'Confirmações', url: '/confirmations', icon: Users },
+  { title: 'Check-in', url: '/checkin', icon: QrCode },
   { title: 'Configurações', url: '/settings', icon: Settings },
 ];
 

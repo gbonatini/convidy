@@ -18,8 +18,11 @@ import {
   Phone,
   Mail,
   Loader2,
-  CheckCircle
+  CheckCircle,
+  QrCode,
+  Download
 } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -64,6 +67,8 @@ const CompanyPublic = () => {
     phone: '',
     email: ''
   });
+  const [registrationData, setRegistrationData] = useState<any>(null);
+  const [showQRCode, setShowQRCode] = useState(false);
 
   useEffect(() => {
     if (slug) {
@@ -172,9 +177,6 @@ const CompanyPublic = () => {
     setIsSubmitting(true);
 
     try {
-      // Gerar QR Code único e mais curto
-      const qrCode = `${Date.now()}-${Math.random().toString(36).substr(2, 6)}`;
-      
       const insertData = {
         event_id: selectedEvent.id,
         name: formData.name,
@@ -182,7 +184,6 @@ const CompanyPublic = () => {
         phone: formData.phone,
         document: formData.document.replace(/\D/g, ''),
         document_type: 'cpf',
-        qr_code: qrCode,
         status: 'confirmed'
       };
 
@@ -209,14 +210,27 @@ const CompanyPublic = () => {
         origin: { y: 0.6 }
       });
 
+      // Aguardar um momento para o trigger gerar o QR code e buscar novamente
+      setTimeout(async () => {
+        const { data: updatedData } = await supabase
+          .from('registrations')
+          .select('*')
+          .eq('id', data[0].id)
+          .single();
+        
+        if (updatedData?.qr_code) {
+          setRegistrationData(updatedData);
+          setShowQRCode(true);
+        }
+      }, 1000);
+
       toast({
         title: "🎉 Confirmação realizada!",
         description: "Sua presença foi confirmada com sucesso! Você receberá mais informações em breve.",
       });
 
-      // Limpar formulário e fechar modal
+      // Limpar formulário 
       setFormData({ name: '', document: '', phone: '', email: '' });
-      setSelectedEvent(null);
 
     } catch (error: any) {
       console.error('Erro ao confirmar presença:', error);

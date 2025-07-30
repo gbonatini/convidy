@@ -294,7 +294,7 @@ export type Database = {
           id: string
           name: string
           phone: string | null
-          qr_code: string
+          qr_code: string | null
           status: string | null
           updated_at: string | null
         }
@@ -309,7 +309,7 @@ export type Database = {
           id?: string
           name: string
           phone?: string | null
-          qr_code: string
+          qr_code?: string | null
           status?: string | null
           updated_at?: string | null
         }
@@ -324,7 +324,7 @@ export type Database = {
           id?: string
           name?: string
           phone?: string | null
-          qr_code?: string
+          qr_code?: string | null
           status?: string | null
           updated_at?: string | null
         }

@@ -10,7 +10,7 @@ import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { QrCodeIcon, ScanIcon, UserCheckIcon, UserIcon, TrendingUpIcon, ClockIcon } from 'lucide-react';
-import QrScanner from 'react-qr-scanner';
+import { QrReader } from 'react-qr-reader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 
@@ -185,12 +185,12 @@ const CheckIn = () => {
     });
   };
 
-  const handleQRCodeScan = async (data: string | null) => {
-    if (!data) return;
+  const handleQRCodeScan = async (result: any) => {
+    if (!result) return;
 
     try {
       // Decode base64 QR data
-      const decodedData = JSON.parse(atob(data));
+      const decodedData = JSON.parse(atob(result.text));
       const { event_id, document_hash } = decodedData;
 
       await processCheckIn(document_hash, event_id);
@@ -414,11 +414,10 @@ const CheckIn = () => {
                   <DialogTitle>Scanner de QR Code</DialogTitle>
                 </DialogHeader>
                 <div className="space-y-4">
-                  <QrScanner
-                    delay={300}
-                    onError={(error) => console.error('Scanner error:', error)}
-                    onScan={handleQRCodeScan}
-                    style={{ width: '100%' }}
+                  <QrReader
+                    onResult={handleQRCodeScan}
+                    constraints={{ facingMode: 'environment' }}
+                    containerStyle={{ width: '100%' }}
                   />
                 </div>
               </DialogContent>

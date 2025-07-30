@@ -67,9 +67,11 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
   }, [isOpen, currentLogoUrl]);
 
   const loadImageToCanvas = (canvas: FabricCanvas, imageUrl: string) => {
+    console.log('loadImageToCanvas chamado com:', imageUrl);
     FabricImage.fromURL(imageUrl, {
       crossOrigin: 'anonymous'
     }).then((img) => {
+      console.log('Imagem carregada pelo Fabric:', img);
       // Centralizar e redimensionar a imagem para caber no canvas
       const canvasWidth = canvas.getWidth();
       const canvasHeight = canvas.getHeight();
@@ -86,6 +88,7 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
       canvas.setActiveObject(img);
       setLogoImage(img);
       canvas.renderAll();
+      console.log('Imagem adicionada ao canvas com sucesso');
     }).catch((error) => {
       console.error('Erro ao carregar imagem:', error);
       toast({
@@ -97,11 +100,18 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
   };
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('handleFileSelect chamado', event);
     const file = event.target.files?.[0];
-    if (!file || !fabricCanvas) return;
+    console.log('Arquivo selecionado:', file);
+    
+    if (!file || !fabricCanvas) {
+      console.log('Sem arquivo ou canvas:', { file: !!file, fabricCanvas: !!fabricCanvas });
+      return;
+    }
 
     // Verificar tipo de arquivo
     if (!file.type.startsWith('image/')) {
+      console.log('Tipo de arquivo inválido:', file.type);
       toast({
         variant: "destructive",
         title: "Arquivo inválido",
@@ -110,8 +120,10 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
       return;
     }
 
+    console.log('Iniciando leitura do arquivo...');
     const reader = new FileReader();
     reader.onload = (e) => {
+      console.log('Arquivo carregado, iniciando processamento...');
       const imageUrl = e.target?.result as string;
       
       // Limpar canvas
@@ -121,6 +133,16 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
       // Carregar nova imagem
       loadImageToCanvas(fabricCanvas, imageUrl);
     };
+    
+    reader.onerror = (error) => {
+      console.error('Erro ao ler arquivo:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Erro ao ler o arquivo selecionado.",
+      });
+    };
+    
     reader.readAsDataURL(file);
   };
 
@@ -247,7 +269,10 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
             <div className="flex items-center space-x-2">
               <Button
                 variant="outline"
-                onClick={() => fileInputRef.current?.click()}
+                onClick={() => {
+                  console.log('Botão upload clicado, abrindo seletor...');
+                  fileInputRef.current?.click();
+                }}
                 className="flex items-center space-x-2"
               >
                 <Upload className="h-4 w-4" />
@@ -257,9 +282,15 @@ export const LogoEditor: React.FC<LogoEditorProps> = ({
                 ref={fileInputRef}
                 type="file"
                 accept="image/*"
-                onChange={handleFileSelect}
+                onChange={(e) => {
+                  console.log('Input file onChange disparado:', e.target.files);
+                  handleFileSelect(e);
+                }}
                 className="hidden"
               />
+              <span className="text-sm text-muted-foreground">
+                Formatos: JPG, PNG, GIF
+              </span>
             </div>
           </div>
 

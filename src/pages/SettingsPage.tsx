@@ -387,7 +387,10 @@ const SettingsPage = () => {
                     )}
                     <Button
                       variant="outline"
-                      onClick={() => setIsLogoEditorOpen(true)}
+                      onClick={() => {
+                        console.log('Botão editar logo clicado');
+                        setIsLogoEditorOpen(true);
+                      }}
                       className="flex items-center space-x-2"
                     >
                       <Edit className="h-4 w-4" />

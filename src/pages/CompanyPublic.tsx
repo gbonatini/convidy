@@ -250,11 +250,25 @@ const CompanyPublic = () => {
       
       if (error.code === '23505') {
         console.log('Erro de constraint única detectado');
-        toast({
-          variant: "destructive",
-          title: "Registro duplicado",
-          description: "Este CPF ou email já foi usado para confirmar presença neste evento.",
-        });
+        if (error.message?.includes('registrations_event_document_unique')) {
+          toast({
+            variant: "destructive",
+            title: "CPF já confirmado",
+            description: "Este CPF já foi usado para confirmar presença neste evento.",
+          });
+        } else if (error.message?.includes('registrations_event_id_email_key')) {
+          toast({
+            variant: "destructive", 
+            title: "Email já usado",
+            description: "Este email já foi usado para confirmar presença neste evento.",
+          });
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Registro duplicado", 
+            description: "Já existe uma confirmação para estes dados neste evento.",
+          });
+        }
       } else if (error.message?.includes('RLS')) {
         toast({
           variant: "destructive",

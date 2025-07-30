@@ -48,6 +48,7 @@ export default function Invites() {
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [editingInvite, setEditingInvite] = useState<Invite | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [filterEventId, setFilterEventId] = useState<string>("all");
 
   // Form states
   const [selectedEventId, setSelectedEventId] = useState("");
@@ -103,14 +104,13 @@ export default function Invites() {
     if (!profile?.company_id) return;
 
     try {
-      const today = new Date().toISOString().split('T')[0];
+      // Fetch all events (not just future ones) for filtering
       const { data, error } = await supabase
         .from("events")
         .select("id, title, date")
         .eq("company_id", profile.company_id)
         .eq("status", "active")
-        .gte("date", today)
-        .order("date", { ascending: true });
+        .order("date", { ascending: false });
 
       if (error) throw error;
       setEvents(data || []);
@@ -441,10 +441,20 @@ export default function Invites() {
     }
   };
 
-  // Calculate stats
-  const totalInvites = invites.length;
-  const pendingInvites = invites.filter(invite => invite.status === 'pending').length;
-  const sentInvites = invites.filter(invite => invite.status === 'sent').length;
+  // Filter invites based on selected event
+  const filteredInvites = filterEventId === "all" 
+    ? invites 
+    : invites.filter(invite => invite.event_id === filterEventId);
+
+  // Calculate stats based on filtered data
+  const totalInvites = filteredInvites.length;
+  const pendingInvites = filteredInvites.filter(invite => invite.status === 'pending').length;
+  const sentInvites = filteredInvites.filter(invite => invite.status === 'sent').length;
+
+  // Get selected event info for context
+  const selectedEvent = filterEventId === "all" 
+    ? null 
+    : events.find(event => event.id === filterEventId);
 
   if (loading) {
     return (
@@ -489,11 +499,13 @@ export default function Invites() {
                       <SelectValue placeholder="Selecione um evento" />
                     </SelectTrigger>
                     <SelectContent>
-                      {events.map((event) => (
-                        <SelectItem key={event.id} value={event.id}>
-                          {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
-                        </SelectItem>
-                      ))}
+                      {events
+                        .filter(event => new Date(event.date) >= new Date())
+                        .map((event) => (
+                          <SelectItem key={event.id} value={event.id}>
+                            {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                 </div>
@@ -573,6 +585,31 @@ export default function Invites() {
           </Dialog>
         </div>
 
+        {/* Filtro por Evento */}
+        <div className="flex items-center space-x-4">
+          <div className="flex-1">
+            <Label htmlFor="filter-event">Filtrar por Evento</Label>
+            <Select value={filterEventId} onValueChange={setFilterEventId}>
+              <SelectTrigger className="w-full max-w-md">
+                <SelectValue placeholder="Todos os eventos" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todos os eventos</SelectItem>
+                {events.map((event) => (
+                  <SelectItem key={event.id} value={event.id}>
+                    {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {selectedEvent && (
+            <div className="text-sm text-muted-foreground">
+              Exibindo convites para: <strong>{selectedEvent.title}</strong>
+            </div>
+          )}
+        </div>
+
         {/* Indicadores */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           <Card>
@@ -616,12 +653,15 @@ export default function Invites() {
         </div>
 
         {/* Lista de Convites */}
-        {invites.length === 0 ? (
+        {filteredInvites.length === 0 ? (
           <Card>
             <CardHeader>
               <CardTitle>Nenhum convite encontrado</CardTitle>
               <CardDescription>
-                Comece criando seus primeiros convites para os eventos.
+                {filterEventId === "all" 
+                  ? "Comece criando seus primeiros convites para os eventos."
+                  : `Nenhum convite encontrado para ${selectedEvent?.title}.`
+                }
               </CardDescription>
             </CardHeader>
           </Card>
@@ -630,7 +670,10 @@ export default function Invites() {
             <CardHeader>
               <CardTitle>Lista de Convites</CardTitle>
               <CardDescription>
-                Total de {invites.length} convites
+                {filterEventId === "all"
+                  ? `Total de ${filteredInvites.length} convites`
+                  : `${filteredInvites.length} convites para ${selectedEvent?.title}`
+                }
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -647,7 +690,7 @@ export default function Invites() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {invites.map((invite) => (
+                  {filteredInvites.map((invite) => (
                     <TableRow key={invite.id}>
                       <TableCell className="font-medium">{invite.full_name}</TableCell>
                       <TableCell>{formatCPF(invite.cpf)}</TableCell>

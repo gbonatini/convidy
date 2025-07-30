@@ -158,8 +158,8 @@ const SettingsPage = () => {
       if (error) throw error;
 
       toast({
-        title: "Dados salvos",
-        description: "Os dados da empresa foram atualizados com sucesso.",
+        title: "Dados salvos!",
+        description: "As informações da empresa foram atualizadas com sucesso.",
       });
     } catch (error) {
       console.error('Erro ao salvar dados da empresa:', error);
@@ -261,7 +261,7 @@ const SettingsPage = () => {
 
       toast({
         title: "Logo enviado!",
-        description: "Não esqueça de salvar as alterações da empresa.",
+        description: "Logo salvo com sucesso. Clique em 'Salvar Alterações' para confirmar.",
       });
 
     } catch (error) {
@@ -372,8 +372,10 @@ const SettingsPage = () => {
                       placeholder="Nome da rua, número"
                       value={company?.address?.split(', ')[0] || ''}
                       onChange={(e) => {
-                        const addressParts = company?.address?.split(', ') || ['', ''];
-                        const newAddress = `${e.target.value}, ${addressParts[1] || ''}`.replace(/, $/, '');
+                        const addressParts = company?.address?.split(', ') || ['', '', ''];
+                        const newAddress = [e.target.value, addressParts[1] || '', addressParts[2] || '']
+                          .filter(Boolean)
+                          .join(', ');
                         handleCompanyChange('address', newAddress);
                       }}
                     />
@@ -386,8 +388,10 @@ const SettingsPage = () => {
                       placeholder="Nome da cidade"
                       value={company?.address?.split(', ')[1] || ''}
                       onChange={(e) => {
-                        const addressParts = company?.address?.split(', ') || ['', ''];
-                        const newAddress = `${addressParts[0] || ''}, ${e.target.value}`.replace(/^, /, '');
+                        const addressParts = company?.address?.split(', ') || ['', '', ''];
+                        const newAddress = [addressParts[0] || '', e.target.value, addressParts[2] || '']
+                          .filter(Boolean)
+                          .join(', ');
                         handleCompanyChange('address', newAddress);
                       }}
                     />
@@ -402,7 +406,9 @@ const SettingsPage = () => {
                       value={company?.address?.split(', ')[2] || ''}
                       onChange={(e) => {
                         const addressParts = company?.address?.split(', ') || ['', '', ''];
-                        const newAddress = `${addressParts[0] || ''}, ${addressParts[1] || ''}, ${e.target.value}`.replace(/^, /, '').replace(/, $/, '');
+                        const newAddress = [addressParts[0] || '', addressParts[1] || '', e.target.value]
+                          .filter(Boolean)
+                          .join(', ');
                         handleCompanyChange('address', newAddress);
                       }}
                     />

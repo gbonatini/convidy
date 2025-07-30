@@ -270,70 +270,86 @@ const Confirmations = () => {
         ) : (
           <div className="grid gap-4">
             {filteredRegistrations.map((registration) => (
-              <Card key={registration.id} className="hover:shadow-md transition-shadow">
-                <CardHeader className="pb-3">
+                <Card key={registration.id} className="border-l-4 border-l-primary/20 hover:shadow-md transition-all duration-200">
+                <CardHeader className="pb-4">
                   <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-lg">{registration.name}</CardTitle>
-                      <div className="flex items-center space-x-4 text-sm text-muted-foreground">
-                        <div className="flex items-center space-x-1">
-                          <Mail className="h-3 w-3" />
-                          <span>{registration.email}</span>
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-3">
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <span className="text-sm font-semibold text-primary">
+                            {registration.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                          </span>
                         </div>
-                        <div className="flex items-center space-x-1">
-                          <Phone className="h-3 w-3" />
-                          <span>{registration.phone}</span>
+                        <div>
+                          <CardTitle className="text-lg">{registration.name}</CardTitle>
+                          <p className="text-sm text-muted-foreground">
+                            {registration.document_type?.toUpperCase()}: {registration.document}
+                          </p>
                         </div>
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={registration.checked_in ? "default" : "secondary"}>
-                        {registration.checked_in ? "Check-in feito" : "Confirmado"}
+                      <Badge variant={registration.checked_in ? "default" : "secondary"} className="text-xs">
+                        {registration.checked_in ? "✓ Check-in feito" : "⏳ Confirmado"}
                       </Badge>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setSelectedRegistration(registration)}
-                      >
-                        <Edit className="h-3 w-3 mr-1" />
-                        Editar
-                      </Button>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => handleDeleteRegistration(registration.id)}
-                      >
-                        <Trash2 className="h-3 w-3 mr-1" />
-                        Excluir
-                      </Button>
                     </div>
                   </div>
                 </CardHeader>
-                <CardContent className="pt-0">
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                    <div className="flex items-center space-x-2">
-                      <Calendar className="h-4 w-4 text-muted-foreground" />
-                      <div>
-                        <p className="font-medium">{registration.event?.title || 'Evento não encontrado'}</p>
-                        <p className="text-muted-foreground">
-                          {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'} às {registration.event?.time ? formatTime(registration.event.time) : 'Horário não disponível'}
-                        </p>
+                <CardContent className="pt-0 space-y-4">
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
+                        <Calendar className="h-4 w-4 text-primary" />
+                        <div>
+                          <p className="font-medium text-sm">{registration.event?.title || 'Evento não encontrado'}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'} às {registration.event?.time ? formatTime(registration.event.time) : 'Horário não disponível'}
+                          </p>
+                        </div>
+                      </div>
+                      
+                      <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
+                        <MapPin className="h-4 w-4 text-primary" />
+                        <span className="text-sm">{registration.event?.location || 'Local não disponível'}</span>
                       </div>
                     </div>
-                    <div className="flex items-center space-x-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{registration.event?.location || 'Local não disponível'}</span>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-muted-foreground" />
-                      <span>Confirmado em {formatCreatedAt(registration.created_at)}</span>
+                    
+                    <div className="space-y-3">
+                      <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
+                        <Clock className="h-4 w-4 text-primary" />
+                        <span className="text-sm">Confirmado em {formatCreatedAt(registration.created_at)}</span>
+                      </div>
+                      
+                      {registration.checked_in && registration.checkin_time && (
+                        <div className="flex items-center space-x-2 p-2 bg-green-50 border border-green-200 rounded-md">
+                          <UserCheck className="h-4 w-4 text-green-600" />
+                          <span className="text-sm text-green-700">
+                            Check-in: {formatCreatedAt(registration.checkin_time)}
+                          </span>
+                        </div>
+                      )}
                     </div>
                   </div>
-                  <div className="flex items-center space-x-2 mt-3">
-                    <FileText className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm text-muted-foreground">
-                      {registration.document_type?.toUpperCase()}: {registration.document}
-                    </span>
+                  
+                  <div className="flex items-center justify-end space-x-2 pt-2 border-t">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedRegistration(registration)}
+                      className="text-blue-600 hover:text-blue-700"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleDeleteRegistration(registration.id)}
+                      className="text-red-600 hover:text-red-700"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Excluir
+                    </Button>
                   </div>
                 </CardContent>
               </Card>

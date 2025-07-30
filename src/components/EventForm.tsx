@@ -27,7 +27,6 @@ const eventSchema = z.object({
   location: z.string().min(1, 'Local é obrigatório'),
   address: z.string().optional(),
   capacity: z.number().min(1, 'Capacidade deve ser pelo menos 1').max(10000, 'Capacidade muito alta'),
-  price: z.number().min(0, 'Preço não pode ser negativo'),
   status: z.enum(['active', 'inactive']),
 });
 
@@ -69,7 +68,6 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
       location: event?.location || '',
       address: event?.address || '',
       capacity: event?.capacity || 50,
-      price: event?.price || 0,
       status: (event?.status as 'active' | 'inactive') || 'active',
     },
   });
@@ -126,7 +124,7 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
         location: data.location,
         address: data.address,
         capacity: data.capacity,
-        price: data.price,
+        price: 0,
         status: data.status,
         image_url: imageUrl,
         company_id: companyId,
@@ -305,28 +303,6 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="price"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Preço (R$)</FormLabel>
-                <FormControl>
-                  <Input 
-                    type="number" 
-                    step="0.01"
-                    placeholder="0.00"
-                    {...field}
-                    onChange={(e) => field.onChange(parseFloat(e.target.value) || 0)}
-                  />
-                </FormControl>
-                <FormDescription>
-                  Digite 0 para evento gratuito
-                </FormDescription>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
 
           <FormField
             control={form.control}

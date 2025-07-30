@@ -276,9 +276,17 @@ const CompanyPublic = () => {
         <div className="container mx-auto px-4 py-6">
           <div className="text-center space-y-4">
             <div className="flex items-center justify-center space-x-3">
-              <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                <Building className="h-6 w-6 text-primary" />
-              </div>
+              {company.logo_url ? (
+                <img 
+                  src={company.logo_url} 
+                  alt={`Logo ${company.name}`}
+                  className="h-12 w-12 rounded-lg object-cover"
+                />
+              ) : (
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Building className="h-6 w-6 text-primary" />
+                </div>
+              )}
               <h1 className="text-3xl font-bold">{company.name}</h1>
             </div>
             {company.description && (
@@ -287,21 +295,6 @@ const CompanyPublic = () => {
               </p>
             )}
             
-            {/* Contact Info */}
-            <div className="flex flex-col sm:flex-row items-center justify-center space-y-2 sm:space-y-0 sm:space-x-6 text-sm text-muted-foreground">
-              {company.email && (
-                <div className="flex items-center space-x-1">
-                  <Mail className="h-4 w-4" />
-                  <span>{company.email}</span>
-                </div>
-              )}
-              {company.phone && (
-                <div className="flex items-center space-x-1">
-                  <Phone className="h-4 w-4" />
-                  <span>{company.phone}</span>
-                </div>
-              )}
-            </div>
           </div>
         </div>
       </header>
@@ -327,12 +320,25 @@ const CompanyPublic = () => {
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {events.map((event) => (
-                <Card key={event.id} className="hover:shadow-lg transition-shadow">
+                <Card key={event.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  {/* Imagem do evento */}
+                  {event.image_url && (
+                    <div className="aspect-video w-full overflow-hidden">
+                      <img 
+                        src={event.image_url} 
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+                  )}
+                  
                   <CardHeader>
                     <div className="flex items-start justify-between">
                       <div className="space-y-1">
                         <CardTitle className="text-lg">{event.title}</CardTitle>
-                        <Badge variant="secondary">Confirmações Abertas</Badge>
+                        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200">
+                          🟢 Confirmações Abertas
+                        </Badge>
                       </div>
                     </div>
                   </CardHeader>
@@ -361,12 +367,6 @@ const CompanyPublic = () => {
                         <Users className="h-4 w-4 text-muted-foreground" />
                         <span>Capacidade: {event.capacity} pessoas</span>
                       </div>
-                      
-                      {event.price > 0 && (
-                        <div className="text-lg font-semibold text-primary">
-                          R$ {event.price.toFixed(2)}
-                        </div>
-                      )}
                     </div>
 
                     <Dialog>

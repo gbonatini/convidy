@@ -34,6 +34,7 @@ interface Company {
   slug: string;
   plan: string;
   status: string;
+  logo_url: string;
 }
 
 interface NotificationSettings {
@@ -147,7 +148,7 @@ const SettingsPage = () => {
           description: company.description,
           phone: company.phone,
           address: company.address,
-          primary_color: company.primary_color,
+          logo_url: company.logo_url,
         })
         .eq('id', company.id);
 
@@ -293,31 +294,75 @@ const SettingsPage = () => {
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="company-address">Endereço</Label>
-                  <Input
-                    id="company-address"
-                    value={company?.address || ''}
-                    onChange={(e) => handleCompanyChange('address', e.target.value)}
-                  />
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="company-street">Rua</Label>
+                    <Input
+                      id="company-street"
+                      placeholder="Nome da rua, número"
+                      value={company?.address?.split(', ')[0] || ''}
+                      onChange={(e) => {
+                        const addressParts = company?.address?.split(', ') || ['', ''];
+                        const newAddress = `${e.target.value}, ${addressParts[1] || ''}`.replace(/, $/, '');
+                        handleCompanyChange('address', newAddress);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="company-city">Cidade</Label>
+                    <Input
+                      id="company-city"
+                      placeholder="Nome da cidade"
+                      value={company?.address?.split(', ')[1] || ''}
+                      onChange={(e) => {
+                        const addressParts = company?.address?.split(', ') || ['', ''];
+                        const newAddress = `${addressParts[0] || ''}, ${e.target.value}`.replace(/^, /, '');
+                        handleCompanyChange('address', newAddress);
+                      }}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="company-state">Estado</Label>
+                    <Input
+                      id="company-state"
+                      placeholder="UF"
+                      maxLength={2}
+                      value={company?.address?.split(', ')[2] || ''}
+                      onChange={(e) => {
+                        const addressParts = company?.address?.split(', ') || ['', '', ''];
+                        const newAddress = `${addressParts[0] || ''}, ${addressParts[1] || ''}, ${e.target.value}`.replace(/^, /, '').replace(/, $/, '');
+                        handleCompanyChange('address', newAddress);
+                      }}
+                    />
+                  </div>
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="primary-color">Cor Primária</Label>
-                  <div className="flex items-center space-x-3">
-                    <Input
-                      id="primary-color"
-                      type="color"
-                      value={company?.primary_color || '#3B82F6'}
-                      onChange={(e) => handleCompanyChange('primary_color', e.target.value)}
-                      className="w-16 h-10"
-                    />
-                    <Input
-                      value={company?.primary_color || '#3B82F6'}
-                      onChange={(e) => handleCompanyChange('primary_color', e.target.value)}
-                      className="flex-1"
-                    />
-                  </div>
+                  <Label htmlFor="logo-url">Logotipo da Empresa</Label>
+                  <Input
+                    id="logo-url"
+                    placeholder="URL da imagem do logotipo"
+                    value={company?.logo_url || ''}
+                    onChange={(e) => handleCompanyChange('logo_url', e.target.value)}
+                  />
+                  <p className="text-xs text-muted-foreground">
+                    Este logotipo será exibido na página pública da empresa
+                  </p>
+                  {company?.logo_url && (
+                    <div className="flex items-center space-x-2 p-2 border rounded">
+                      <img 
+                        src={company.logo_url} 
+                        alt="Preview do logo" 
+                        className="h-8 w-8 object-cover rounded"
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                      <span className="text-sm text-muted-foreground">Preview do logotipo</span>
+                    </div>
+                  )}
                 </div>
 
                 {/* Read-only fields */}

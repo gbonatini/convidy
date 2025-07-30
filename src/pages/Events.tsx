@@ -298,12 +298,8 @@ const Events = () => {
                     </p>
                   )}
                   
-                  <div className="flex items-center justify-between pt-2">
-                    <div className="text-lg font-semibold">
-                      {event.price > 0 ? `R$ ${event.price.toFixed(2)}` : 'Gratuito'}
-                    </div>
-                    
-                    <div className="flex items-center space-x-2">
+                   <div className="flex items-center justify-end pt-2">
+                     <div className="flex items-center space-x-2">
                       {/* Botão Ver Confirmações */}
                       <Button
                         variant="outline"

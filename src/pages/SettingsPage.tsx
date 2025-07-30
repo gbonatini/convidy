@@ -12,7 +12,6 @@ import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
-import { LogoEditor } from '@/components/LogoEditor';
 import {
   Building,
   Bell,
@@ -20,8 +19,8 @@ import {
   Save,
   Loader2,
   Shield,
-  Edit,
-  Image
+  Upload,
+  X
 } from 'lucide-react';
 
 interface Company {
@@ -60,7 +59,7 @@ const SettingsPage = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
-  const [isLogoEditorOpen, setIsLogoEditorOpen] = useState(false);
+  const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
   // Redirecionar se não autenticado
   if (!loading && !user) {
@@ -219,15 +218,69 @@ const SettingsPage = () => {
     }
   };
 
-  const handleLogoSaved = (logoUrl: string) => {
+  const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !company) return;
+
+    // Verificar se é imagem
+    if (!file.type.startsWith('image/')) {
+      toast({
+        variant: "destructive",
+        title: "Arquivo inválido",
+        description: "Por favor, selecione uma imagem.",
+      });
+      return;
+    }
+
+    setIsUploadingLogo(true);
+    try {
+      // Gerar nome único
+      const fileExt = file.name.split('.').pop();
+      const fileName = `logo-${company.id}-${Date.now()}.${fileExt}`;
+      const filePath = `logos/${fileName}`;
+
+      // Upload para Supabase Storage
+      const { data, error } = await supabase.storage
+        .from('event-images')
+        .upload(filePath, file, {
+          upsert: true
+        });
+
+      if (error) throw error;
+
+      // Obter URL pública
+      const { data: { publicUrl } } = supabase.storage
+        .from('event-images')
+        .getPublicUrl(data.path);
+
+      // Atualizar estado local
+      setCompany({
+        ...company,
+        logo_url: publicUrl
+      });
+
+      toast({
+        title: "Logo enviado!",
+        description: "Não esqueça de salvar as alterações da empresa.",
+      });
+
+    } catch (error) {
+      console.error('Erro ao fazer upload:', error);
+      toast({
+        variant: "destructive",
+        title: "Erro",
+        description: "Não foi possível fazer upload do logotipo.",
+      });
+    } finally {
+      setIsUploadingLogo(false);
+    }
+  };
+
+  const handleRemoveLogo = () => {
     if (company) {
       setCompany({
         ...company,
-        logo_url: logoUrl
-      });
-      toast({
-        title: "Logo atualizado!",
-        description: "O logotipo foi salvo. Não esqueça de salvar as alterações da empresa.",
+        logo_url: ''
       });
     }
   };
@@ -358,47 +411,63 @@ const SettingsPage = () => {
 
                 <div className="space-y-2">
                   <Label>Logotipo da Empresa</Label>
-                  <div className="flex items-center space-x-4">
+                  <div className="space-y-3">
                     {company?.logo_url ? (
-                      <div className="flex items-center space-x-3 p-3 border rounded-lg bg-muted/30">
+                      <div className="relative inline-block">
                         <img 
                           src={company.logo_url} 
-                          alt="Logo atual" 
-                          className="h-12 w-12 object-cover rounded border"
+                          alt="Logo da empresa" 
+                          className="h-20 w-20 object-cover rounded-lg border shadow-sm"
                           onError={(e) => {
                             e.currentTarget.style.display = 'none';
                           }}
                         />
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-sm font-medium">Logo atual</span>
-                          <span className="text-xs text-muted-foreground">Clique em "Editar" para alterar</span>
-                        </div>
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0"
+                          onClick={handleRemoveLogo}
+                        >
+                          <X className="h-3 w-3" />
+                        </Button>
                       </div>
                     ) : (
-                      <div className="flex items-center space-x-3 p-3 border border-dashed rounded-lg">
-                        <div className="h-12 w-12 bg-muted rounded flex items-center justify-center">
-                          <Image className="h-6 w-6 text-muted-foreground" />
-                        </div>
-                        <div className="flex flex-col space-y-1">
-                          <span className="text-sm font-medium">Nenhum logo</span>
-                          <span className="text-xs text-muted-foreground">Adicione um logotipo</span>
-                        </div>
+                      <div className="h-20 w-20 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                        <Upload className="h-6 w-6 text-muted-foreground" />
                       </div>
                     )}
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        console.log('Botão editar logo clicado');
-                        setIsLogoEditorOpen(true);
-                      }}
-                      className="flex items-center space-x-2"
-                    >
-                      <Edit className="h-4 w-4" />
-                      <span>{company?.logo_url ? 'Editar' : 'Adicionar'}</span>
-                    </Button>
+                    
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        disabled={isUploadingLogo}
+                        onClick={() => document.getElementById('logo-upload')?.click()}
+                      >
+                        {isUploadingLogo ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Enviando...
+                          </>
+                        ) : (
+                          <>
+                            <Upload className="mr-2 h-4 w-4" />
+                            {company?.logo_url ? 'Trocar Logo' : 'Enviar Logo'}
+                          </>
+                        )}
+                      </Button>
+                      <Input
+                        id="logo-upload"
+                        type="file"
+                        accept="image/*"
+                        onChange={handleLogoUpload}
+                        className="hidden"
+                      />
+                    </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
-                    Este logotipo será exibido na página pública da empresa
+                    O logotipo será exibido automaticamente na página pública da empresa
                   </p>
                 </div>
 
@@ -579,15 +648,6 @@ const SettingsPage = () => {
             </Card>
           </TabsContent>
         </Tabs>
-
-        {/* Logo Editor Dialog */}
-        <LogoEditor
-          isOpen={isLogoEditorOpen}
-          onClose={() => setIsLogoEditorOpen(false)}
-          onLogoSaved={handleLogoSaved}
-          currentLogoUrl={company?.logo_url}
-          companyId={company?.id || ''}
-        />
       </div>
     </AdminLayout>
   );

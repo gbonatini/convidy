@@ -280,11 +280,11 @@ const CompanyPublic = () => {
                 <img 
                   src={company.logo_url} 
                   alt={`Logo ${company.name}`}
-                  className="h-12 w-12 rounded-lg object-cover"
+                  className="h-16 w-16 rounded-lg object-cover border shadow-sm"
                 />
               ) : (
-                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building className="h-6 w-6 text-primary" />
+                <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                  <Building className="h-8 w-8 text-primary" />
                 </div>
               )}
               <h1 className="text-3xl font-bold">{company.name}</h1>

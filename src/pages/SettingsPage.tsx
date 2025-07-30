@@ -61,6 +61,13 @@ const SettingsPage = () => {
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
 
+  useEffect(() => {
+    if (profile?.company_id) {
+      fetchCompanyData();
+      fetchNotificationSettings();
+    }
+  }, [profile]);
+
   // Redirecionar se não autenticado
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
@@ -70,13 +77,6 @@ const SettingsPage = () => {
   if (!loading && profile && !profile.company_id) {
     return <Navigate to="/setup" replace />;
   }
-
-  useEffect(() => {
-    if (profile?.company_id) {
-      fetchCompanyData();
-      fetchNotificationSettings();
-    }
-  }, [profile]);
 
   const fetchCompanyData = async () => {
     try {

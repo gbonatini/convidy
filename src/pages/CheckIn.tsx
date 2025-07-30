@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import CryptoJS from 'crypto-js';
 import { QrCodeIcon, ScanIcon, UserCheckIcon, UserIcon, TrendingUpIcon, ClockIcon } from 'lucide-react';
 import { QrReader } from 'react-qr-reader';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
@@ -206,12 +207,8 @@ const CheckIn = () => {
       return;
     }
 
-    // Hash the document to match stored hash
-    const encoder = new TextEncoder();
-    const data = encoder.encode(manualDocument.replace(/\D/g, ''));
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-    const hashArray = Array.from(new Uint8Array(hashBuffer));
-    const document_hash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+    // Usar MD5 para corresponder ao hash usado no banco
+    const document_hash = CryptoJS.MD5(manualDocument.replace(/\D/g, '')).toString();
 
     await processCheckIn(document_hash);
     setManualDocument('');

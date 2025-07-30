@@ -142,6 +142,7 @@ const CompanyPublic = () => {
     return cleanCPF.length === 11;
   };
 
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     

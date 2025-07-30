@@ -210,6 +210,17 @@ const CompanyPublic = () => {
       }
 
       console.log('Registro inserido com sucesso!', data);
+      
+      if (!data || data.length === 0) {
+        console.error('Nenhum dado retornado da inserção');
+        toast({
+          variant: "destructive",
+          title: "Erro interno",
+          description: "Registro salvo mas dados não retornados. Recarregue a página.",
+        });
+        setIsSubmitting(false);
+        return;
+      }
 
       // Efeito de confetti para celebrar!
       confetti({
@@ -218,28 +229,80 @@ const CompanyPublic = () => {
         origin: { y: 0.6 }
       });
 
-      // Aguardar um momento para o trigger gerar o QR code e buscar novamente
-      setTimeout(async () => {
-        const { data: updatedData } = await supabase
-          .from('registrations')
-          .select('*')
-          .eq('id', data[0].id)
-          .single();
-        
-        if (updatedData?.qr_code) {
-          setRegistrationData(updatedData);
-          setSelectedEvent(null); // Fechar o modal de confirmação
-          setShowQRCode(true); // Mostrar QR Code automaticamente
-        }
-      }, 1000);
-
       toast({
         title: "🎉 Confirmação realizada!",
         description: "Aguarde... gerando seu QR Code de check-in!",
       });
 
+      console.log('Fechando modal de confirmação...');
+      setSelectedEvent(null); // Fechar o modal de confirmação imediatamente
+      
+      console.log('Limprando formulário...');
       // Limpar formulário 
       setFormData({ name: '', document: '', phone: '', email: '' });
+
+      console.log('Configurando timeout para buscar QR code...');
+      // Aguardar um momento para o trigger gerar o QR code e buscar novamente
+      setTimeout(async () => {
+        console.log('Executando busca do QR code...');
+        try {
+          const { data: updatedData, error: fetchError } = await supabase
+            .from('registrations')
+            .select('*')
+            .eq('id', data[0].id)
+            .single();
+          
+          console.log('Resultado da busca do QR code:', { updatedData, fetchError });
+          
+          if (fetchError) {
+            console.error('Erro ao buscar dados atualizados:', fetchError);
+            toast({
+              variant: "destructive",
+              title: "Erro ao gerar QR Code",
+              description: "Registro salvo, mas houve problema ao gerar QR Code. Recarregue a página.",
+            });
+            return;
+          }
+          
+          if (updatedData?.qr_code) {
+            console.log('QR Code encontrado, abrindo modal:', updatedData.qr_code.substring(0, 20) + '...');
+            setRegistrationData(updatedData);
+            setShowQRCode(true); // Mostrar QR Code automaticamente
+          } else {
+            console.warn('QR Code ainda não foi gerado, tentando novamente em 2s...');
+            // Tentar mais uma vez após mais tempo
+            setTimeout(async () => {
+              const { data: retryData } = await supabase
+                .from('registrations')
+                .select('*')
+                .eq('id', data[0].id)
+                .single();
+              
+              console.log('Segunda tentativa de busca:', retryData);
+              
+              if (retryData?.qr_code) {
+                console.log('QR Code encontrado na segunda tentativa');
+                setRegistrationData(retryData);
+                setShowQRCode(true);
+              } else {
+                console.error('QR Code não foi gerado mesmo após 3 segundos');
+                toast({
+                  variant: "destructive",
+                  title: "Problema na geração do QR Code",
+                  description: "Registro salvo, mas QR Code não foi gerado. Entre em contato com o suporte.",
+                });
+              }
+            }, 2000);
+          }
+        } catch (error) {
+          console.error('Erro no timeout de busca do QR code:', error);
+          toast({
+            variant: "destructive",
+            title: "Erro interno",
+            description: "Registro salvo, mas houve problema técnico. Recarregue a página.",
+          });
+        }
+      }, 1000);
 
     } catch (error: any) {
       console.error('=== ERRO NA CONFIRMAÇÃO ===');

@@ -283,11 +283,13 @@ const CompanyPublic = () => {
                   className="h-16 w-16 rounded-lg object-cover border shadow-sm"
                 />
               ) : (
-                <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                  <Building className="h-8 w-8 text-primary" />
-                </div>
+                <>
+                  <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Building className="h-8 w-8 text-primary" />
+                  </div>
+                  <h1 className="text-3xl font-bold">{company.name}</h1>
+                </>
               )}
-              <h1 className="text-3xl font-bold">{company.name}</h1>
             </div>
             {company.description && (
               <p className="text-lg text-muted-foreground max-w-2xl mx-auto">

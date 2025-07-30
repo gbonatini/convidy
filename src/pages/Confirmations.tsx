@@ -20,7 +20,11 @@ import {
   Clock,
   Mail,
   Phone,
-  FileText
+  FileText,
+  Send,
+  CheckCircle,
+  UserX,
+  TrendingUp
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
@@ -51,11 +55,23 @@ interface Company {
   name: string;
 }
 
+interface Invite {
+  id: string;
+  full_name: string;
+  cpf: string;
+  whatsapp: string;
+  email?: string;
+  status: string;
+  created_at: string;
+  event_id: string;
+}
+
 const Confirmations = () => {
   const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const eventFilter = searchParams.get('event');
   const [registrations, setRegistrations] = useState<Registration[]>([]);
+  const [invites, setInvites] = useState<Invite[]>([]);
   const [company, setCompany] = useState<Company | null>(null);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -115,7 +131,19 @@ const Confirmations = () => {
       if (!events || events.length === 0) {
         console.log('Nenhum evento encontrado para esta empresa');
         setRegistrations([]);
+        setInvites([]);
         return;
+      }
+
+      // Buscar convites da empresa para cruzamento de dados
+      const { data: invitesData, error: invitesError } = await supabase
+        .from('invites')
+        .select('*')
+        .eq('company_id', profile.company_id);
+
+      console.log('Convites da empresa:', { invitesData, invitesError });
+      if (!invitesError) {
+        setInvites(invitesData || []);
       }
 
       // Buscar confirmações desses eventos
@@ -202,6 +230,41 @@ const Confirmations = () => {
     return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
+  // Cálculos de indicadores com cruzamento de dados
+  const normalizeDocument = (doc: string) => doc.replace(/\D/g, '');
+  
+  // Filtrar convites e confirmações por evento se especificado
+  const filteredInvites = eventFilter 
+    ? invites.filter(invite => invite.event_id === eventFilter)
+    : invites;
+  
+  const filteredConfirmations = eventFilter
+    ? registrations.filter(reg => reg.event?.id === eventFilter)
+    : registrations;
+
+  // Encontrar confirmações que vieram de convites (cross-reference por CPF)
+  const confirmedFromInvites = filteredConfirmations.filter(reg => {
+    const regDoc = normalizeDocument(reg.document);
+    return filteredInvites.some(invite => normalizeDocument(invite.cpf) === regDoc);
+  });
+
+  // Convites que ainda não confirmaram
+  const invitesNotConfirmed = filteredInvites.filter(invite => {
+    const inviteDoc = normalizeDocument(invite.cpf);
+    return !filteredConfirmations.some(reg => normalizeDocument(reg.document) === inviteDoc);
+  });
+
+  // Confirmações espontâneas (não vieram de convites)
+  const spontaneousConfirmations = filteredConfirmations.filter(reg => {
+    const regDoc = normalizeDocument(reg.document);
+    return !filteredInvites.some(invite => normalizeDocument(invite.cpf) === regDoc);
+  });
+
+  // Taxa de conversão
+  const conversionRate = filteredInvites.length > 0 
+    ? (confirmedFromInvites.length / filteredInvites.length * 100).toFixed(1)
+    : '0';
+
   if (loading) {
     return (
       <AdminLayout>
@@ -241,6 +304,61 @@ const Confirmations = () => {
               </Button>
             )}
           </div>
+        </div>
+
+        {/* Indicadores Importantes */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total de Confirmações</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{filteredConfirmations.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Pessoas confirmadas
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Vindos de Convites</CardTitle>
+              <Send className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{confirmedFromInvites.length}</div>
+              <p className="text-xs text-muted-foreground">
+                De {filteredInvites.length} convites enviados
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Taxa de Conversão</CardTitle>
+              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{conversionRate}%</div>
+              <p className="text-xs text-muted-foreground">
+                Convites → Confirmações
+              </p>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Confirmações Espontâneas</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{spontaneousConfirmations.length}</div>
+              <p className="text-xs text-muted-foreground">
+                Não vieram de convites
+              </p>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Busca */}

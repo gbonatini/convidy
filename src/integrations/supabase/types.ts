@@ -603,7 +603,9 @@ export type Database = {
     }
     Functions: {
       generate_qr_data: {
-        Args: { event_uuid: string; document_text: string }
+        Args:
+          | { event_uuid: string; document_text: string }
+          | { event_uuid: string; document_text: string }
         Returns: string
       }
       is_super_admin: {

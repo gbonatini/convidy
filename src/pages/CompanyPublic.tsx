@@ -177,6 +177,10 @@ const CompanyPublic = () => {
     setIsSubmitting(true);
 
     try {
+      console.log('=== INÍCIO DA CONFIRMAÇÃO ===');
+      console.log('Evento selecionado:', selectedEvent);
+      console.log('Dados do formulário:', formData);
+      
       const insertData = {
         event_id: selectedEvent.id,
         name: formData.name,
@@ -188,6 +192,8 @@ const CompanyPublic = () => {
         status: 'confirmed'
       } as any;
 
+      console.log('Dados para inserção:', insertData);
+
       console.log('Tentando inserir registro:', insertData);
 
       const { data, error } = await supabase
@@ -196,6 +202,7 @@ const CompanyPublic = () => {
         .select();
 
       console.log('Resultado da inserção:', { data, error });
+      console.log('Erro completo:', error);
 
       if (error) {
         console.error('Erro na inserção:', error);
@@ -235,13 +242,18 @@ const CompanyPublic = () => {
       setFormData({ name: '', document: '', phone: '', email: '' });
 
     } catch (error: any) {
-      console.error('Erro ao confirmar presença:', error);
+      console.error('=== ERRO NA CONFIRMAÇÃO ===');
+      console.error('Erro completo:', error);
+      console.error('Código do erro:', error.code);
+      console.error('Mensagem do erro:', error.message);
+      console.error('Detalhes do erro:', error.details);
       
       if (error.code === '23505') {
+        console.log('Erro de constraint única detectado');
         toast({
           variant: "destructive",
-          title: "Já confirmado",
-          description: "Este CPF já foi usado para confirmar presença neste evento.",
+          title: "Registro duplicado",
+          description: "Este CPF ou email já foi usado para confirmar presença neste evento.",
         });
       } else if (error.message?.includes('RLS')) {
         toast({

@@ -404,53 +404,77 @@ const SettingsPage = () => {
                   />
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="company-street">Rua</Label>
-                    <Input
-                      id="company-street"
-                      placeholder="Nome da rua, número"
-                      value={company?.address?.split(', ')[0] || ''}
-                      onChange={(e) => {
-                        const parts = (company?.address || '').split(', ');
-                        const newParts = [e.target.value, parts[1] || '', parts[2] || ''];
-                        const newAddress = newParts.filter(part => part.trim()).join(', ');
-                        handleCompanyChange('address', newAddress);
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="company-city">Cidade</Label>
-                    <Input
-                      id="company-city"
-                      placeholder="Nome da cidade"
-                      value={company?.address?.split(', ')[1] || ''}
-                      onChange={(e) => {
-                        const parts = (company?.address || '').split(', ');
-                        const newParts = [parts[0] || '', e.target.value, parts[2] || ''];
-                        const newAddress = newParts.filter(part => part.trim()).join(', ');
-                        handleCompanyChange('address', newAddress);
-                      }}
-                    />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label htmlFor="company-state">Estado</Label>
-                    <Input
-                      id="company-state"
-                      placeholder="UF"
-                      maxLength={2}
-                      value={company?.address?.split(', ')[2] || ''}
-                      onChange={(e) => {
-                        const parts = (company?.address || '').split(', ');
-                        const newParts = [parts[0] || '', parts[1] || '', e.target.value];
-                        const newAddress = newParts.filter(part => part.trim()).join(', ');
-                        handleCompanyChange('address', newAddress);
-                      }}
-                    />
-                  </div>
-                </div>
+                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                   <div className="space-y-2">
+                     <Label htmlFor="company-street">Rua</Label>
+                     <Input
+                       id="company-street"
+                       placeholder="Nome da rua, número"
+                       value={(() => {
+                         const addressParts = (company?.address || '').split(', ');
+                         return addressParts[0] || '';
+                       })()}
+                       onChange={(e) => {
+                         const currentAddress = company?.address || '';
+                         const parts = currentAddress.split(', ');
+                         const newParts = [e.target.value.trim(), parts[1] || '', parts[2] || ''];
+                         const filteredParts = newParts.filter((part, index) => {
+                           if (index === 0) return part !== ''; // Rua pode estar vazia
+                           return part.trim() !== '';
+                         });
+                         const newAddress = filteredParts.join(', ');
+                         handleCompanyChange('address', newAddress);
+                       }}
+                     />
+                   </div>
+                   
+                   <div className="space-y-2">
+                     <Label htmlFor="company-city">Cidade</Label>
+                     <Input
+                       id="company-city"
+                       placeholder="Nome da cidade"
+                       value={(() => {
+                         const addressParts = (company?.address || '').split(', ');
+                         return addressParts[1] || '';
+                       })()}
+                       onChange={(e) => {
+                         const currentAddress = company?.address || '';
+                         const parts = currentAddress.split(', ');
+                         const newParts = [parts[0] || '', e.target.value.trim(), parts[2] || ''];
+                         const filteredParts = newParts.filter((part, index) => {
+                           if (index === 1) return part !== ''; // Cidade pode estar vazia
+                           return part.trim() !== '';
+                         });
+                         const newAddress = filteredParts.join(', ');
+                         handleCompanyChange('address', newAddress);
+                       }}
+                     />
+                   </div>
+                   
+                   <div className="space-y-2">
+                     <Label htmlFor="company-state">Estado</Label>
+                     <Input
+                       id="company-state"
+                       placeholder="UF"
+                       maxLength={2}
+                       value={(() => {
+                         const addressParts = (company?.address || '').split(', ');
+                         return addressParts[2] || '';
+                       })()}
+                       onChange={(e) => {
+                         const currentAddress = company?.address || '';
+                         const parts = currentAddress.split(', ');
+                         const newParts = [parts[0] || '', parts[1] || '', e.target.value.trim().toUpperCase()];
+                         const filteredParts = newParts.filter((part, index) => {
+                           if (index === 2) return part !== ''; // Estado pode estar vazio
+                           return part.trim() !== '';
+                         });
+                         const newAddress = filteredParts.join(', ');
+                         handleCompanyChange('address', newAddress);
+                       }}
+                     />
+                   </div>
+                 </div>
 
                 <div className="space-y-2">
                   <Label>Logotipo da Empresa</Label>

@@ -17,7 +17,10 @@ import {
   QrCode,
   Activity,
   TrendingUp,
-  Clock
+  Clock,
+  Globe,
+  UserCheck,
+  Database
 } from 'lucide-react';
 
 const Index = () => {
@@ -58,9 +61,9 @@ const Index = () => {
                 </span>
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-2xl mx-auto">
-                Convide pelo WhatsApp, acompanhe confirmações em tempo real, 
-                realize check-ins com QR Code e analise o perfil comportamental 
-                de cada participante para eventos mais assertivos.
+                Gestão completa de ponta a ponta: convites por WhatsApp, área pública 
+                personalizada para confirmações, check-ins com QR Code e análise 
+                comportamental por CPF para eventos mais assertivos.
               </p>
             </div>
             
@@ -118,6 +121,18 @@ const Index = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Globe className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Área Pública Personalizada</CardTitle>
+                <CardDescription>
+                  Sua empresa ganha um link público exclusivo para compartilhar eventos, totalmente customizado para confirmações fáceis
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <Activity className="h-6 w-6 text-primary" />
                 </div>
                 <CardTitle>Confirmações em Tempo Real</CardTitle>
@@ -146,7 +161,19 @@ const Index = () => {
                 </div>
                 <CardTitle>Indicadores de Performance</CardTitle>
                 <CardDescription>
-                  Monitore taxa de confirmação, presença, pontualidade e outros KPIs importantes do evento
+                  Monitore números reais: taxa de confirmação, presença, pontualidade e KPIs em tempo real
+                </CardDescription>
+              </CardHeader>
+            </Card>
+            
+            <Card className="border-0 shadow-lg">
+              <CardHeader>
+                <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
+                  <Database className="h-6 w-6 text-primary" />
+                </div>
+                <CardTitle>Análise por CPF - Diferencial Único</CardTitle>
+                <CardDescription>
+                  Cruze informações entre eventos, analise histórico de presença e indique os melhores profissionais para cada evento
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -156,9 +183,9 @@ const Index = () => {
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
                   <TrendingUp className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Analytics por Participante</CardTitle>
+                <CardTitle>Estatísticas Comportamentais</CardTitle>
                 <CardDescription>
-                  Histórico completo: eventos que participou, taxa de confirmação, presença e preferências
+                  Taxa de confirmação e presença, tipos de eventos preferidos, horários ideais para convites mais assertivos
                 </CardDescription>
               </CardHeader>
             </Card>
@@ -166,11 +193,11 @@ const Index = () => {
             <Card className="border-0 shadow-lg">
               <CardHeader>
                 <div className="h-12 w-12 rounded-lg bg-primary/10 flex items-center justify-center mb-4">
-                  <Clock className="h-6 w-6 text-primary" />
+                  <UserCheck className="h-6 w-6 text-primary" />
                 </div>
-                <CardTitle>Perfil Comportamental</CardTitle>
+                <CardTitle>Perfil Completo do Convidado</CardTitle>
                 <CardDescription>
-                  Identifique horários preferenciais, tipos de eventos favoritos e padrões para convites mais assertivos
+                  Histórico de eventos, frequência de participação e padrões comportamentais com total sigilo e segurança
                 </CardDescription>
               </CardHeader>
             </Card>

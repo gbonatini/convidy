@@ -7,6 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { useTour } from '@/hooks/useTour';
+import Joyride, { STATUS, EVENTS } from 'react-joyride';
 import { 
   Loader2, 
   LogOut, 
@@ -37,6 +39,7 @@ interface Company {
 const Dashboard = () => {
   const { user, profile, loading } = useAuth();
   const { toast } = useToast();
+  const { shouldShowTour, run, setRun, completeTour } = useTour();
   const [stats, setStats] = useState<DashboardStats>({
     totalEvents: 0,
     totalRegistrations: 0,
@@ -45,6 +48,52 @@ const Dashboard = () => {
   });
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+
+  const tourSteps = [
+    {
+      target: '[data-tour="public-page"]',
+      content: 'Esta é sua página pública! Compartilhe este link nas redes sociais ou nos convites para que as pessoas confirmem presença facilmente.',
+      placement: 'bottom' as const,
+    },
+    {
+      target: '[data-tour="sidebar-events"]',
+      content: 'Aqui você gerencia todos os seus eventos: criar, editar, visualizar confirmações e muito mais.',
+      placement: 'right' as const,
+    },
+    {
+      target: '[data-tour="sidebar-invites"]',
+      content: 'Nesta seção você pode enviar convites por WhatsApp e acompanhar o status de cada convite.',
+      placement: 'right' as const,
+    },
+    {
+      target: '[data-tour="sidebar-confirmations"]',
+      content: 'Veja todas as confirmações de presença em tempo real e gerencie a lista de participantes.',
+      placement: 'right' as const,
+    },
+    {
+      target: '[data-tour="sidebar-checkin"]',
+      content: 'No dia do evento, use esta ferramenta para fazer check-in com QR Code e acompanhar chegadas em tempo real.',
+      placement: 'right' as const,
+    },
+    {
+      target: '[data-tour="sidebar-settings"]',
+      content: 'Configure sua empresa, personalize as páginas públicas e ajuste preferências do sistema.',
+      placement: 'right' as const,
+    },
+    {
+      target: '[data-tour="stats-cards"]',
+      content: 'Estes cards mostram as principais métricas dos seus eventos: total de eventos, confirmações, check-ins e taxa de presença.',
+      placement: 'bottom' as const,
+    },
+  ];
+
+  const handleJoyrideCallback = (data: any) => {
+    const { status, type } = data;
+    
+    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+      completeTour();
+    }
+  };
 
   const fetchDashboardStats = async () => {
     if (!profile?.company_id) return;
@@ -174,6 +223,32 @@ const Dashboard = () => {
 
   return (
     <AdminLayout>
+      {shouldShowTour && (
+        <Joyride
+          steps={tourSteps}
+          run={run}
+          continuous
+          showProgress
+          showSkipButton
+          callback={handleJoyrideCallback}
+          styles={{
+            options: {
+              primaryColor: 'hsl(var(--primary))',
+              backgroundColor: 'hsl(var(--background))',
+              textColor: 'hsl(var(--foreground))',
+              arrowColor: 'hsl(var(--background))',
+            }
+          }}
+          locale={{
+            back: 'Voltar',
+            close: 'Fechar',
+            last: 'Finalizar',
+            next: 'Próximo',
+            skip: 'Pular',
+          }}
+        />
+      )}
+      
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="flex items-center justify-between">
@@ -186,16 +261,18 @@ const Dashboard = () => {
           
           {/* Company Public Page Link */}
           {company?.slug && (
-            <a href={`/${company.slug}`} target="_blank" rel="noopener noreferrer">
-              <Button variant="outline" size="sm">
-                <Building className="h-4 w-4 mr-2" />
-                Ver Página Pública
-              </Button>
-            </a>
+            <div data-tour="public-page">
+              <a href={`/${company.slug}`} target="_blank" rel="noopener noreferrer">
+                <Button variant="outline" size="sm">
+                  <Building className="h-4 w-4 mr-2" />
+                  Ver Página Pública
+                </Button>
+              </a>
+            </div>
           )}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="stats-cards">
           <Card className="border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>

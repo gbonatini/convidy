@@ -29,12 +29,12 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
 const menuItems = [
-  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard },
-  { title: 'Eventos', url: '/events', icon: Calendar },
-  { title: 'Convites', url: '/invites', icon: Send },
-  { title: 'Confirmações', url: '/confirmations', icon: Users },
-  { title: 'Check-in', url: '/checkin', icon: QrCode },
-  { title: 'Configurações', url: '/settings', icon: Settings },
+  { title: 'Dashboard', url: '/dashboard', icon: LayoutDashboard, tourId: 'sidebar-dashboard' },
+  { title: 'Eventos', url: '/events', icon: Calendar, tourId: 'sidebar-events' },
+  { title: 'Convites', url: '/invites', icon: Send, tourId: 'sidebar-invites' },
+  { title: 'Confirmações', url: '/confirmations', icon: Users, tourId: 'sidebar-confirmations' },
+  { title: 'Check-in', url: '/checkin', icon: QrCode, tourId: 'sidebar-checkin' },
+  { title: 'Configurações', url: '/settings', icon: Settings, tourId: 'sidebar-settings' },
 ];
 
 function AppSidebar() {
@@ -94,6 +94,7 @@ function AppSidebar() {
                   <SidebarMenuButton asChild>
                     <NavLink 
                       to={item.url} 
+                      data-tour={item.tourId}
                       className={({ isActive }) =>
                         isActive 
                           ? "bg-sidebar-accent text-sidebar-accent-foreground font-medium" 

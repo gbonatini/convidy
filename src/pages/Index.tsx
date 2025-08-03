@@ -58,16 +58,7 @@ const Index = () => {
   }];
   return <div className="min-h-screen bg-background">
       {/* Urgency Banner */}
-      <div className="bg-destructive text-destructive-foreground py-2 text-center text-sm font-medium">
-        <div className="container mx-auto px-4 flex items-center justify-center space-x-2">
-          <Flame className="h-4 w-4" />
-          <span>OFERTA LIMITADA: 14 dias PRO grátis terminam em</span>
-          <span className="font-bold">
-            {String(timeLeft.hours).padStart(2, '0')}:{String(timeLeft.minutes).padStart(2, '0')}:{String(timeLeft.seconds).padStart(2, '0')}
-          </span>
-          <span>⏰</span>
-        </div>
-      </div>
+      
 
       {/* Header */}
       <header className="border-b bg-card sticky top-0 z-50">
@@ -96,11 +87,11 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 lg:py-32 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden">
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden lg:py-[68px]">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8 max-w-5xl mx-auto">
             {/* Segmentation Badge */}
-            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 px-4 py-2">
+            <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 py-2 px-[15px]">
               Feito sob medida para agências, RHs e organizadores de eventos corporativos
             </Badge>
             

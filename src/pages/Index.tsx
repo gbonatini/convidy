@@ -3,94 +3,60 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { 
-  Users, 
-  Calendar, 
-  BarChart3, 
-  Shield, 
-  Smartphone, 
-  Zap,
-  CheckCircle,
-  ArrowRight,
-  Star,
-  MessageCircle,
-  QrCode,
-  Activity,
-  TrendingUp,
-  Clock,
-  Globe,
-  UserCheck,
-  Database,
-  Award,
-  Target,
-  X,
-  Check,
-  AlertTriangle,
-  Timer,
-  ChevronDown,
-  Building2,
-  Briefcase,
-  Users2,
-  Gift,
-  Crown,
-  Flame
-} from 'lucide-react';
-
+import { Users, Calendar, BarChart3, Shield, Smartphone, Zap, CheckCircle, ArrowRight, Star, MessageCircle, QrCode, Activity, TrendingUp, Clock, Globe, UserCheck, Database, Award, Target, X, Check, AlertTriangle, Timer, ChevronDown, Building2, Briefcase, Users2, Gift, Crown, Flame } from 'lucide-react';
 const Index = () => {
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
     minutes: 59,
     seconds: 59
   });
-
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
-
   useEffect(() => {
     const timer = setInterval(() => {
       setTimeLeft(prev => {
         if (prev.seconds > 0) {
-          return { ...prev, seconds: prev.seconds - 1 };
+          return {
+            ...prev,
+            seconds: prev.seconds - 1
+          };
         } else if (prev.minutes > 0) {
-          return { ...prev, minutes: prev.minutes - 1, seconds: 59 };
+          return {
+            ...prev,
+            minutes: prev.minutes - 1,
+            seconds: 59
+          };
         } else if (prev.hours > 0) {
-          return { hours: prev.hours - 1, minutes: 59, seconds: 59 };
+          return {
+            hours: prev.hours - 1,
+            minutes: 59,
+            seconds: 59
+          };
         }
         return prev;
       });
     }, 1000);
-
     return () => clearInterval(timer);
   }, []);
-
-  const faqs = [
-    {
-      question: "É realmente gratuito?",
-      answer: "Sim! O plano básico é 100% gratuito para sempre. Você só paga se quiser recursos avançados do plano PRO, mas pode começar sem custo algum."
-    },
-    {
-      question: "Preciso baixar algum app?",
-      answer: "Não! O Convidy funciona 100% no navegador. Seus convidados recebem links e acessam tudo pelo WhatsApp e navegador, sem downloads."
-    },
-    {
-      question: "Funciona pra eventos híbridos?",
-      answer: "Perfeitamente! Você pode gerenciar eventos presenciais, online ou híbridos na mesma plataforma, com check-ins específicos para cada formato."
-    },
-    {
-      question: "Como funciona a análise por CPF?",
-      answer: "Com total segurança e conformidade LGPD, cruzamos dados de participação entre eventos para identificar padrões de comportamento e otimizar futuras ações."
-    },
-    {
-      question: "Meus dados estão seguros?",
-      answer: "100% seguros! Somos totalmente conformes com a LGPD, seus dados ficam criptografados e você tem controle total sobre eles."
-    },
-    {
-      question: "Posso cancelar quando quiser?",
-      answer: "Claro! Não há fidelidade. Pode cancelar a qualquer momento e continuar usando o plano gratuito normalmente."
-    }
-  ];
-
-  return (
-    <div className="min-h-screen bg-background">
+  const faqs = [{
+    question: "É realmente gratuito?",
+    answer: "Sim! O plano básico é 100% gratuito para sempre. Você só paga se quiser recursos avançados do plano PRO, mas pode começar sem custo algum."
+  }, {
+    question: "Preciso baixar algum app?",
+    answer: "Não! O Convidy funciona 100% no navegador. Seus convidados recebem links e acessam tudo pelo WhatsApp e navegador, sem downloads."
+  }, {
+    question: "Funciona pra eventos híbridos?",
+    answer: "Perfeitamente! Você pode gerenciar eventos presenciais, online ou híbridos na mesma plataforma, com check-ins específicos para cada formato."
+  }, {
+    question: "Como funciona a análise por CPF?",
+    answer: "Com total segurança e conformidade LGPD, cruzamos dados de participação entre eventos para identificar padrões de comportamento e otimizar futuras ações."
+  }, {
+    question: "Meus dados estão seguros?",
+    answer: "100% seguros! Somos totalmente conformes com a LGPD, seus dados ficam criptografados e você tem controle total sobre eles."
+  }, {
+    question: "Posso cancelar quando quiser?",
+    answer: "Claro! Não há fidelidade. Pode cancelar a qualquer momento e continuar usando o plano gratuito normalmente."
+  }];
+  return <div className="min-h-screen bg-background">
       {/* Urgency Banner */}
       <div className="bg-destructive text-destructive-foreground py-2 text-center text-sm font-medium">
         <div className="container mx-auto px-4 flex items-center justify-center space-x-2">
@@ -152,22 +118,7 @@ const Index = () => {
             </div>
             
             {/* Urgency Offer Box */}
-            <div className="bg-gradient-to-r from-primary/10 to-destructive/10 border border-primary/20 rounded-2xl p-6 max-w-2xl mx-auto">
-              <div className="flex items-center justify-center space-x-2 mb-4">
-                <Crown className="h-6 w-6 text-primary" />
-                <span className="text-lg font-bold">OFERTA ESPECIAL</span>
-                <Crown className="h-6 w-6 text-primary" />
-              </div>
-              <p className="text-lg mb-4">
-                <strong>Cadastre-se hoje e ganhe 14 dias do plano PRO totalmente grátis</strong> – sem cartão e com suporte VIP
-              </p>
-              <div className="text-sm text-muted-foreground mb-4">
-                🎁 <strong>Bônus exclusivo:</strong> Template de convite profissional + Guia de métricas
-              </div>
-              <p className="text-sm text-destructive font-medium">
-                ⏳ Válido até amanhã, 23:59. Depois, volta pro plano básico.
-              </p>
-            </div>
+            
             
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link to="/auth">
@@ -229,23 +180,7 @@ const Index = () => {
             </div>
 
             {/* Case Study */}
-            <div className="bg-gradient-to-r from-green-50 to-blue-50 border border-green-200 rounded-xl p-6 max-w-3xl mx-auto">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="h-12 w-12 bg-green-500 rounded-full flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-white" />
-                </div>
-                <div>
-                  <h3 className="font-bold text-lg">Case de Sucesso</h3>
-                  <p className="text-sm text-muted-foreground">TechCorp - Empresa de Tecnologia</p>
-                </div>
-              </div>
-              <p className="text-lg font-medium text-green-800 mb-2">
-                "Aumentamos nossa taxa de presença em <strong>72% no primeiro mês</strong> com o Convidy"
-              </p>
-              <p className="text-sm text-muted-foreground">
-                De 45% de presença nos eventos para 77% utilizando WhatsApp + QR Code + análise comportamental
-              </p>
-            </div>
+            
 
             {/* Key Numbers */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
@@ -482,9 +417,7 @@ const Index = () => {
             <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
-                  ))}
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />)}
                 </div>
                 <p className="text-lg mb-4 italic">
                   "Nossos eventos corporativos eram um caos. Com o Convidy, triplicamos a presença e ainda economizamos 5 horas de trabalho por evento."
@@ -504,9 +437,7 @@ const Index = () => {
             <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100/50">
               <CardContent className="p-6">
                 <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => (
-                    <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />
-                  ))}
+                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />)}
                 </div>
                 <p className="text-lg mb-4 italic">
                   "Meus clientes ficaram impressionados com a organização. O check-in por QR Code é profissional demais. Virou diferencial da agência."
@@ -572,24 +503,17 @@ const Index = () => {
           </div>
           
           <div className="max-w-3xl mx-auto space-y-4">
-            {faqs.map((faq, index) => (
-              <Card key={index} className="border">
-                <CardHeader 
-                  className="cursor-pointer"
-                  onClick={() => setFaqOpen(faqOpen === index ? null : index)}
-                >
+            {faqs.map((faq, index) => <Card key={index} className="border">
+                <CardHeader className="cursor-pointer" onClick={() => setFaqOpen(faqOpen === index ? null : index)}>
                   <div className="flex items-center justify-between">
                     <CardTitle className="text-left text-lg">{faq.question}</CardTitle>
                     <ChevronDown className={`h-5 w-5 transition-transform ${faqOpen === index ? 'rotate-180' : ''}`} />
                   </div>
                 </CardHeader>
-                {faqOpen === index && (
-                  <CardContent className="pt-0">
+                {faqOpen === index && <CardContent className="pt-0">
                     <p className="text-muted-foreground">{faq.answer}</p>
-                  </CardContent>
-                )}
-              </Card>
-            ))}
+                  </CardContent>}
+              </Card>)}
           </div>
         </div>
       </section>
@@ -599,15 +523,7 @@ const Index = () => {
         <div className="container mx-auto px-4 text-center relative z-10">
           <div className="space-y-8 max-w-3xl mx-auto">
             {/* Urgency reminder */}
-            <div className="bg-white/10 border border-white/20 rounded-xl p-4 mb-8">
-              <div className="flex items-center justify-center space-x-2 mb-2">
-                <Timer className="h-5 w-5" />
-                <span className="font-bold">ÚLTIMA CHANCE!</span>
-              </div>
-              <p className="text-lg">
-                Apenas <strong>{String(timeLeft.hours).padStart(2, '0')}h {String(timeLeft.minutes).padStart(2, '0')}m {String(timeLeft.seconds).padStart(2, '0')}s</strong> para garantir seus 14 dias PRO grátis
-              </p>
-            </div>
+            
 
             <h2 className="text-3xl md:text-5xl font-bold">
               Pronto para ter eventos lotados?
@@ -628,10 +544,7 @@ const Index = () => {
             </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm opacity-90 max-w-xl mx-auto">
-              <div className="flex items-center justify-center space-x-2">
-                <Gift className="h-4 w-4" />
-                <span>14 dias PRO grátis</span>
-              </div>
+              
               <div className="flex items-center justify-center space-x-2">
                 <Shield className="h-4 w-4" />
                 <span>Sem cartão de crédito</span>
@@ -642,9 +555,7 @@ const Index = () => {
               </div>
             </div>
 
-            <p className="text-sm opacity-75">
-              ⚠️ Oferta válida apenas até amanhã às 23:59. Depois disso, volta para o plano básico.
-            </p>
+            
           </div>
         </div>
         
@@ -675,8 +586,6 @@ const Index = () => {
           </div>
         </div>
       </footer>
-    </div>
-  );
+    </div>;
 };
-
 export default Index;

@@ -34,6 +34,14 @@ All colors MUST be HSL.
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
+    /* Status Colors - Light and accessible */
+    --success: 142 76% 36%;
+    --success-foreground: 355 100% 98%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 54 100% 6%;
+    --info: 199 89% 48%;
+    --info-foreground: 355 100% 98%;
+
     --border: 214.3 31.8% 91.4%;
     --input: 214.3 31.8% 91.4%;
     --ring: 217 91% 60%;

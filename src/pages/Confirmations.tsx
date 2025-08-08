@@ -407,7 +407,7 @@ const Confirmations = () => {
                       </div>
                     </div>
                     <div className="flex items-center space-x-2">
-                      <Badge variant={registration.checked_in ? "default" : "secondary"} className="text-xs">
+                      <Badge variant={registration.checked_in ? "success" : "info"} className="text-xs">
                         {registration.checked_in ? "✓ Check-in feito" : "⏳ Confirmado"}
                       </Badge>
                     </div>

@@ -602,6 +602,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_inactivate_expired_events: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       generate_qr_data: {
         Args:
           | { event_uuid: string; document_text: string }

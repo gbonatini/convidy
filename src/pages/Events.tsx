@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import AdminLayout from '@/components/AdminLayout';
+import { useAutoInactivateEvents } from '@/hooks/useAutoInactivateEvents';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -41,6 +42,9 @@ interface Event {
 const Events = () => {
   const { user, profile, loading } = useAuth();
   const { toast } = useToast();
+  
+  // Auto-inactivate expired events
+  useAutoInactivateEvents();
   const [events, setEvents] = useState<Event[]>([]);
   const [loadingEvents, setLoadingEvents] = useState(true);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
@@ -265,7 +269,9 @@ const Events = () => {
                     <div className="space-y-1 flex-1">
                       <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
                       <div className="flex items-center space-x-2">
-                        <Badge className={getStatusColor(event.status)}>
+                        <Badge 
+                          variant={event.status === 'active' ? 'success' : 'warning'}
+                        >
                           {event.status === 'active' ? 'Ativo' : 
                            event.status === 'completed' ? 'Finalizado' : 'Inativo'}
                         </Badge>

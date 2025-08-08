@@ -413,8 +413,13 @@ const CheckIn = () => {
                 <div className="space-y-4">
                   <QrReader
                     onResult={handleQRCodeScan}
-                    constraints={{ facingMode: 'environment' }}
+                    constraints={{ 
+                      facingMode: 'environment',
+                      aspectRatio: 1,
+                      frameRate: { ideal: 30, max: 60 }
+                    }}
                     containerStyle={{ width: '100%' }}
+                    videoStyle={{ width: '100%', height: 'auto' }}
                   />
                 </div>
               </DialogContent>
@@ -477,8 +482,7 @@ const CheckIn = () => {
                   </TableCell>
                   <TableCell>
                     <Badge 
-                      variant={registration.checked_in ? "default" : "secondary"}
-                      className={registration.checked_in ? "bg-green-100 text-green-800" : ""}
+                      variant={registration.checked_in ? "success" : "warning"}
                     >
                       {registration.checked_in ? 'Check-in Realizado' : 'Pendente'}
                     </Badge>

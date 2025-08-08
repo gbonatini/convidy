@@ -386,90 +386,131 @@ const Confirmations = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4">
+          <div className="grid gap-6">
             {filteredRegistrations.map((registration) => (
-                <Card key={registration.id} className="border-l-4 border-l-primary/20 hover:shadow-md transition-all duration-200">
-                <CardHeader className="pb-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2">
-                      <div className="flex items-center space-x-3">
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <span className="text-sm font-semibold text-primary">
-                            {registration.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+              <Card key={registration.id} className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary">
+                <div className="grid lg:grid-cols-3 gap-6">
+                  {/* Seção do Convidado */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center text-white font-semibold text-lg">
+                        {registration.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-primary text-sm uppercase tracking-wide">Convidado</h4>
+                      </div>
+                    </div>
+                    <div className="space-y-3">
+                      <h3 className="font-bold text-xl text-foreground">{registration.name}</h3>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span className="text-sm text-muted-foreground">{registration.email}</span>
+                        </div>
+                        <div className="flex items-center gap-2">
+                          <div className="w-2 h-2 bg-primary rounded-full"></div>
+                          <span className="text-sm text-muted-foreground">
+                            CPF: {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.$3-**')}
                           </span>
                         </div>
-                        <div>
-                          <CardTitle className="text-lg">{registration.name}</CardTitle>
-                          <p className="text-sm text-muted-foreground">
-                            {registration.document_type?.toUpperCase()}: {registration.document}
-                          </p>
-                        </div>
+                        {registration.phone && (
+                          <div className="flex items-center gap-2">
+                            <div className="w-2 h-2 bg-primary rounded-full"></div>
+                            <span className="text-sm text-muted-foreground">Tel: {registration.phone}</span>
+                          </div>
+                        )}
                       </div>
-                    </div>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant={registration.checked_in ? "success" : "info"} className="text-xs">
-                        {registration.checked_in ? "✓ Check-in feito" : "⏳ Confirmado"}
-                      </Badge>
                     </div>
                   </div>
-                </CardHeader>
-                <CardContent className="pt-0 space-y-4">
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+                  {/* Seção do Evento */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <Calendar className="h-6 w-6 text-primary" />
+                      <h4 className="font-semibold text-primary text-sm uppercase tracking-wide">Evento</h4>
+                    </div>
                     <div className="space-y-3">
-                      <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
-                        <Calendar className="h-4 w-4 text-primary" />
-                        <div>
-                          <p className="font-medium text-sm">{registration.event?.title || 'Evento não encontrado'}</p>
-                          <p className="text-xs text-muted-foreground">
-                            {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'} às {registration.event?.time ? formatTime(registration.event.time) : 'Horário não disponível'}
-                          </p>
+                      <h4 className="font-bold text-lg">{registration.event?.title || 'Evento não encontrado'}</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+                          <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
+                          <span className="text-sm font-medium">{registration.event?.location || 'Local não disponível'}</span>
+                        </div>
+                        <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
+                          <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                          <div className="text-sm">
+                            <div className="font-medium">
+                              {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'}
+                            </div>
+                            <div className="text-muted-foreground">
+                              às {registration.event?.time ? formatTime(registration.event.time) : 'Horário não disponível'}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      
-                      <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
-                        <MapPin className="h-4 w-4 text-primary" />
-                        <span className="text-sm">{registration.event?.location || 'Local não disponível'}</span>
+                    </div>
+                  </div>
+
+                  {/* Seção de Status e Ações */}
+                  <div className="space-y-4">
+                    <div className="flex items-center gap-3 mb-3">
+                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
+                        <div className="h-3 w-3 bg-primary rounded-full"></div>
                       </div>
+                      <h4 className="font-semibold text-primary text-sm uppercase tracking-wide">Status & Ações</h4>
                     </div>
                     
-                    <div className="space-y-3">
-                      <div className="flex items-center space-x-2 p-2 bg-muted/30 rounded-md">
-                        <Clock className="h-4 w-4 text-primary" />
-                        <span className="text-sm">Confirmado em {formatCreatedAt(registration.created_at)}</span>
+                    <div className="space-y-4">
+                      {/* Status Badges */}
+                      <div className="space-y-2">
+                        <Badge 
+                          variant={registration.status === 'confirmed' ? 'success' : 'warning'}
+                          className="text-xs font-medium px-3 py-1"
+                        >
+                          {registration.status === 'confirmed' ? '✓ Confirmado' : '⏳ Pendente'}
+                        </Badge>
+                        {registration.checked_in && (
+                          <div className="flex flex-col gap-1">
+                            <Badge variant="info" className="text-xs font-medium px-3 py-1">
+                              ✓ Check-in Realizado
+                            </Badge>
+                            <p className="text-xs text-muted-foreground">
+                              em {formatCreatedAt(registration.checkin_time || '')}
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      
-                      {registration.checked_in && registration.checkin_time && (
-                        <div className="flex items-center space-x-2 p-2 bg-green-50 border border-green-200 rounded-md">
-                          <UserCheck className="h-4 w-4 text-green-600" />
-                          <span className="text-sm text-green-700">
-                            Check-in: {formatCreatedAt(registration.checkin_time)}
-                          </span>
-                        </div>
-                      )}
+
+                      {/* Informações de tempo */}
+                      <div className="p-3 bg-muted/30 rounded-lg">
+                        <p className="text-xs font-medium text-muted-foreground">Confirmado em</p>
+                        <p className="text-sm font-medium">{formatCreatedAt(registration.created_at)}</p>
+                      </div>
+
+                      {/* Botões de Ação */}
+                      <div className="flex flex-col gap-2 pt-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedRegistration(registration)}
+                          className="w-full justify-start"
+                        >
+                          <Edit className="h-4 w-4 mr-2" />
+                          Editar Informações
+                        </Button>
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDeleteRegistration(registration.id)}
+                          className="w-full justify-start"
+                        >
+                          <Trash2 className="h-4 w-4 mr-2" />
+                          Excluir Confirmação
+                        </Button>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="flex items-center justify-end space-x-2 pt-2 border-t">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedRegistration(registration)}
-                      className="text-blue-600 hover:text-blue-700"
-                    >
-                      <Edit className="h-3 w-3 mr-1" />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => handleDeleteRegistration(registration.id)}
-                      className="text-red-600 hover:text-red-700"
-                    >
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Excluir
-                    </Button>
-                  </div>
-                </CardContent>
+                </div>
               </Card>
             ))}
           </div>

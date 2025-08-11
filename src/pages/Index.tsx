@@ -526,7 +526,7 @@ const Index = () => {
               <Link to="/auth">
                 <Button size="lg" variant="secondary" className="w-full sm:w-auto text-lg px-10 py-4 bg-white text-primary hover:bg-white/90">
                   <Flame className="mr-2 h-5 w-5" />
-                  Garantir meus 14 dias PRO grátis
+                  Começar Agora
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
               </Link>

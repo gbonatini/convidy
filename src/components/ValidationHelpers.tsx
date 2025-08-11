@@ -150,6 +150,7 @@ export const validateRegistration = async (eventId: string, document: string) =>
 
   return { 
     isValid: true,
+    message: undefined,
     event: eventExists.event,
     currentRegistrations: capacityValid.currentRegistrations,
     capacity: capacityValid.capacity

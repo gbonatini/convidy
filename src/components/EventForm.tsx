@@ -17,6 +17,8 @@ import {
 } from '@/components/ui/form';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { LimitWarning } from '@/components/LimitWarning';
 import { Loader2, Upload, X } from 'lucide-react';
 
 const eventSchema = z.object({
@@ -54,6 +56,7 @@ interface EventFormProps {
 
 export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyId }) => {
   const { toast } = useToast();
+  const { canCreateEvent, planName, refreshUsage } = usePlanLimits();
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(event?.image_url || null);
   const [uploadingImage, setUploadingImage] = useState(false);
@@ -153,6 +156,7 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
         if (error) throw error;
       }
 
+      refreshUsage();
       onSuccess();
     } catch (error) {
       console.error('Erro ao salvar evento:', error);
@@ -184,6 +188,18 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
   };
 
   const isLoading = form.formState.isSubmitting;
+
+  // Verificar limite para criar eventos (apenas se não for edição)
+  if (!event && !canCreateEvent()) {
+    return (
+      <LimitWarning
+        type="events"
+        title="Limite de eventos atingido"
+        description={`Seu plano ${planName} não permite criar mais eventos. Faça upgrade para criar eventos ilimitados.`}
+        planName={planName}
+      />
+    );
+  }
 
   return (
     <Form {...form}>

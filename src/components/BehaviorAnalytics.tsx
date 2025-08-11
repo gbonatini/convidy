@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
+import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { LimitWarning } from '@/components/LimitWarning';
 import { 
   Brain, 
   TrendingUp, 
@@ -28,6 +30,7 @@ interface BehaviorAnalyticsProps {
 }
 
 export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId }) => {
+  const { planName } = usePlanLimits();
   const [insights, setInsights] = useState<BehaviorInsight[]>([]);
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
@@ -36,6 +39,18 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
     averageAttendanceRate: 0,
     behaviorPredictions: 0
   });
+
+  // Verificar se o plano permite analytics comportamental
+  if (planName.toLowerCase() !== 'empresarial') {
+    return (
+      <LimitWarning
+        type="features"
+        title="Analytics Comportamental - Plano Empresarial"
+        description="Os relatórios de análise comportamental estão disponíveis apenas no plano Empresarial. Faça upgrade para obter insights avançados sobre seus participantes."
+        planName={planName}
+      />
+    );
+  }
 
   useEffect(() => {
     generateBehaviorInsights();

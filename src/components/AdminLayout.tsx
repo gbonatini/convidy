@@ -24,8 +24,10 @@ import {
   Building,
   Send,
   QrCode,
-  ExternalLink
+  ExternalLink,
+  Crown
 } from 'lucide-react';
+import { PlanStatusBanner } from '@/components/PlanStatusBanner';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 
@@ -35,6 +37,7 @@ const menuItems = [
   { title: 'Convites', url: '/invites', icon: Send, tourId: 'sidebar-invites' },
   { title: 'Confirmações', url: '/confirmations', icon: Users, tourId: 'sidebar-confirmations' },
   { title: 'Check-in', url: '/checkin', icon: QrCode, tourId: 'sidebar-checkin' },
+  { title: 'Planos', url: '/plans', icon: Crown, tourId: 'sidebar-plans' },
   { title: 'Configurações', url: '/settings', icon: Settings, tourId: 'sidebar-settings' },
 ];
 
@@ -134,6 +137,13 @@ function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Plan Status */}
+        {!collapsed && (
+          <div className="px-4 pb-4">
+            <PlanStatusBanner />
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-auto">

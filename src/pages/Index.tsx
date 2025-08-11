@@ -47,8 +47,8 @@ const Index = () => {
     question: "Funciona pra eventos híbridos?",
     answer: "Perfeitamente! Você pode gerenciar eventos presenciais, online ou híbridos na mesma plataforma, com check-ins específicos para cada formato."
   }, {
-    question: "Como funciona a análise por CPF?",
-    answer: "Com total segurança e conformidade LGPD, cruzamos dados de participação entre eventos para identificar padrões de comportamento e otimizar futuras ações."
+    question: "Como funciona a IA de análise comportamental?",
+    answer: "Nossa IA analisa padrões de comparecimento, horários preferidos, tipos de eventos favoritos e histórico de participação por CPF (com total conformidade LGPD) para prever presença e otimizar futuros convites."
   }, {
     question: "Meus dados estão seguros?",
     answer: "100% seguros! Somos totalmente conformes com a LGPD, seus dados ficam criptografados e você tem controle total sobre eles."
@@ -102,7 +102,8 @@ const Index = () => {
               </h1>
               <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
                 Seu evento lotado, no horário certo e com dados na mão – sem stress. 
-                A plataforma de eventos que pensa como você: eficiente, direta e automatizada.
+                A única plataforma com <strong>IA integrada</strong> que analisa comportamentos dos convidados 
+                para garantir cada vez mais presença nos seus eventos.
               </p>
             </div>
             
@@ -280,8 +281,8 @@ const Index = () => {
                 <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
                   <Check className="h-5 w-5 text-green-600 mt-0.5" />
                   <div>
-                    <h4 className="font-medium">Análise comportamental por CPF</h4>
-                    <p className="text-sm text-muted-foreground">Cada evento fica melhor que o anterior</p>
+                    <h4 className="font-medium">IA analisa comportamentos e otimiza eventos</h4>
+                    <p className="text-sm text-muted-foreground">Nossa inteligência artificial cruza dados de CPF e identifica padrões para prever presença e melhorar cada evento</p>
                   </div>
                 </div>
               </div>
@@ -377,7 +378,7 @@ const Index = () => {
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Previsão de presença com IA</span>
+                  <span className="text-sm">IA prevê presença analisando histórico comportamental</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
@@ -385,7 +386,7 @@ const Index = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Dados comportamentais únicos</span>
+                  <span className="text-sm">Relatórios inteligentes com insights únicos</span>
                 </div>
               </CardContent>
             </Card>

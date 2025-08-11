@@ -40,28 +40,38 @@ const Billing = () => {
     if (!profile?.company_id) return;
 
     try {
-      const { data, error } = await supabase
+      // Primeiro buscar dados da empresa
+      const { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .select(`
-          plan_id,
-          plan_expires_at,
-          plan_status,
-          system_plans(
-            name,
-            slug,
-            description,
-            price,
-            max_events,
-            max_registrations_per_event,
-            max_total_registrations,
-            features
-          )
-        `)
+        .select('plan_id, plan_expires_at, plan_status')
         .eq('id', profile.company_id)
         .single();
 
-      if (error) throw error;
-      setCurrentPlan(data as any);
+      if (companyError) throw companyError;
+
+      if (!companyData?.plan_id) {
+        console.error('❌ No plan_id found for company in Billing');
+        return;
+      }
+
+      // Depois buscar dados do plano separadamente
+      const { data: planData, error: planError } = await supabase
+        .from('system_plans')
+        .select('name, slug, description, price, max_events, max_registrations_per_event, max_total_registrations, features')
+        .eq('id', companyData.plan_id)
+        .single();
+
+      if (planError) throw planError;
+
+      // Combinar os dados
+      const combinedData = {
+        plan_id: companyData.plan_id,
+        plan_expires_at: companyData.plan_expires_at,
+        plan_status: companyData.plan_status,
+        system_plans: planData
+      };
+
+      setCurrentPlan(combinedData as any);
     } catch (error) {
       console.error('Erro ao carregar plano atual:', error);
       toast({

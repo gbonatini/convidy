@@ -243,16 +243,27 @@ const Dashboard = () => {
     }
   }, [profile]);
 
+  // Debug - adicionar logs para identificar o problema
+  console.log('🔍 Dashboard Debug:', {
+    loading,
+    user: !!user,
+    profile: !!profile,
+    company_id: profile?.company_id
+  });
+
   // Redirecionar se não autenticado
   if (!loading && !user) {
+    console.log('❌ Dashboard - Redirecionando para /auth (não autenticado)');
     return <Navigate to="/auth" replace />;
   }
 
   // Redirecionar para setup se não tem empresa
   if (!loading && profile && !profile.company_id) {
+    console.log('❌ Dashboard - Redirecionando para /setup (sem company_id)');
     return <Navigate to="/setup" replace />;
   }
   if (loading || loadingStats) {
+    console.log('⏳ Dashboard - Loading state:', { loading, loadingStats });
     return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
@@ -260,6 +271,8 @@ const Dashboard = () => {
         </div>
       </div>;
   }
+
+  console.log('✅ Dashboard - Renderizando dashboard normalmente');
   return <AdminLayout>
       {shouldShowTour && <Joyride steps={tourSteps} run={run} continuous showProgress showSkipButton callback={handleJoyrideCallback} styles={{
       options: {

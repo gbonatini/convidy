@@ -71,9 +71,25 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   useEffect(() => {
+    // Limpar storage de auth quebrado
+    const cleanupAuthState = () => {
+      Object.keys(localStorage).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          localStorage.removeItem(key);
+        }
+      });
+      Object.keys(sessionStorage || {}).forEach((key) => {
+        if (key.startsWith('supabase.auth.') || key.includes('sb-')) {
+          sessionStorage.removeItem(key);
+        }
+      });
+    };
+
     // Configurar listener de mudanças de auth PRIMEIRO
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log('🔐 Auth state change:', { event, hasSession: !!session, hasUser: !!session?.user });
+        
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -84,6 +100,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           }, 0);
         } else {
           setProfile(null);
+          // Se não tem sessão, limpar storage
+          if (event === 'SIGNED_OUT' || event === 'TOKEN_REFRESHED') {
+            cleanupAuthState();
+          }
         }
         
         setLoading(false);
@@ -91,7 +111,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     );
 
     // DEPOIS verificar sessão existente
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      console.log('🔍 Initial session check:', { hasSession: !!session, error });
+      
+      if (error) {
+        console.error('❌ Session error:', error);
+        cleanupAuthState();
+        setLoading(false);
+        return;
+      }
+      
       setSession(session);
       setUser(session?.user ?? null);
       

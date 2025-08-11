@@ -98,13 +98,6 @@ export type Database = {
             referencedRelation: "system_plans"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "fk_companies_plan_id"
-            columns: ["plan_id"]
-            isOneToOne: false
-            referencedRelation: "system_plans"
-            referencedColumns: ["id"]
-          },
         ]
       }
       events: {

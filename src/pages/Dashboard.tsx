@@ -13,6 +13,7 @@ import { BehaviorAnalytics } from '@/components/BehaviorAnalytics';
 import EventFunnel from '@/components/EventFunnel';
 import EventProjections from '@/components/EventProjections';
 import EventIndicators from '@/components/EventIndicators';
+import EventIndividualFunnel from '@/components/EventIndividualFunnel';
 import { Loader2, LogOut, Users, Calendar, BarChart3, Settings, Plus, TrendingUp, CheckCircle, Clock, Building } from 'lucide-react';
 interface DashboardStats {
   totalEvents: number;
@@ -370,6 +371,9 @@ const Dashboard = () => {
               monthlyGrowth: stats.monthlyGrowth,
               eventsByMonth: stats.eventsByMonth
             }} />
+            
+            {/* Funil Individual por Evento */}
+            <EventIndividualFunnel companyId={profile.company_id} />
           </div>
         )}
 

@@ -40,7 +40,7 @@ serve(async (req) => {
     }
 
     // Se já foi aprovada, retornar sucesso
-    if (transaction.status === 'approved') {
+    if (transaction.status === 'approved' || transaction.status === 'paid' || transaction.status === 'completed') {
       return new Response(
         JSON.stringify({
           success: true,
@@ -53,63 +53,91 @@ serve(async (req) => {
       );
     }
 
-    // Aqui você integraria com a API da FlowsPay para verificar o status real
-    // Por enquanto, vamos simular uma aprovação após um tempo
-    const createdAt = new Date(transaction.created_at);
-    const now = new Date();
-    const minutesElapsed = (now.getTime() - createdAt.getTime()) / (1000 * 60);
+    // Verificar status real no FlowsPay
+    const flowsApiKey = Deno.env.get('FLOWSPAY_API_KEY');
+    if (flowsApiKey) {
+      try {
+        const flowsResponse = await fetch(`https://api.flowspay.com.br/v1/payments/${transactionId}`, {
+          headers: {
+            'Authorization': `Bearer ${flowsApiKey}`,
+            'Content-Type': 'application/json',
+          },
+        });
 
-    // Simular aprovação após 2-5 minutos para PIX
-    if (transaction.payment_method === 'pix' && minutesElapsed > 2) {
-      // Atualizar status para aprovado
-      const { error: updateError } = await supabase
-        .from('payment_transactions')
-        .update({
-          status: 'approved',
-          paid_at: new Date().toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction.id);
+        if (flowsResponse.ok) {
+          const flowsData = await flowsResponse.json();
+          console.log('FlowsPay status check:', flowsData);
 
-      if (updateError) {
-        console.error('Error updating transaction:', updateError);
-        throw updateError;
-      }
+          // Se o status mudou, atualizar no banco
+          if (flowsData.status !== transaction.status) {
+            const { error: updateError } = await supabase
+              .from('payment_transactions')
+              .update({
+                status: flowsData.status,
+                payment_provider_data: flowsData,
+                paid_at: flowsData.paid_at ? new Date(flowsData.paid_at).toISOString() : null,
+                updated_at: new Date().toISOString()
+              })
+              .eq('id', transaction.id);
 
-      // Atualizar plano da empresa
-      const nextPaymentDue = new Date();
-      nextPaymentDue.setMonth(nextPaymentDue.getMonth() + 1);
+            if (!updateError && (flowsData.status === 'approved' || flowsData.status === 'paid' || flowsData.status === 'completed')) {
+              // Atualizar plano da empresa
+              const nextPaymentDue = new Date();
+              nextPaymentDue.setMonth(nextPaymentDue.getMonth() + 1);
 
-      const { error: companyError } = await supabase
-        .from('companies')
-        .update({
-          plan_id: transaction.plan_id,
-          plan_status: 'active',
-          payment_status: 'active',
-          next_payment_due: nextPaymentDue.toISOString(),
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', transaction.company_id);
+              const { data: plan } = await supabase
+                .from('system_plans')
+                .select('*')
+                .eq('id', transaction.plan_id)
+                .single();
 
-      if (companyError) {
-        console.error('Error updating company plan:', companyError);
-        throw companyError;
-      }
+              await supabase
+                .from('companies')
+                .update({
+                  plan_id: transaction.plan_id,
+                  plan_status: 'active',
+                  payment_status: 'active',
+                  next_payment_due: nextPaymentDue.toISOString(),
+                  max_monthly_guests: plan?.slug === 'free' ? 10 : plan?.slug === 'profissional' ? 100 : 500,
+                  updated_at: new Date().toISOString()
+                })
+                .eq('id', transaction.company_id);
 
-      return new Response(
-        JSON.stringify({
-          success: true,
-          status: 'approved',
-          transaction: {
-            ...transaction,
-            status: 'approved',
-            paid_at: new Date().toISOString()
+              return new Response(
+                JSON.stringify({
+                  success: true,
+                  status: 'approved',
+                  transaction: {
+                    ...transaction,
+                    status: flowsData.status,
+                    paid_at: flowsData.paid_at
+                  }
+                }),
+                {
+                  headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+                }
+              );
+            }
+
+            return new Response(
+              JSON.stringify({
+                success: true,
+                status: flowsData.status,
+                transaction: {
+                  ...transaction,
+                  status: flowsData.status
+                }
+              }),
+              {
+                headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+              }
+            );
           }
-        }),
-        {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         }
-      );
+      } catch (flowsError) {
+        console.error('Error checking FlowsPay status:', flowsError);
+        // Continuar com a lógica de fallback
+      }
     }
 
     // Retornar status atual

@@ -22,17 +22,20 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
 
-    const { id: transactionId, status, paid_at } = webhookData;
+    // Extrair dados do webhook do FlowsPay
+    const { id: flowsTransactionId, status, paid_at, external_id } = webhookData;
 
-    // Buscar transação no banco
+    console.log('Processing payment:', { flowsTransactionId, status, external_id });
+
+    // Buscar transação no banco pelo ID do FlowsPay
     const { data: transaction } = await supabase
       .from('payment_transactions')
       .select('*')
-      .eq('flows_transaction_id', transactionId)
+      .eq('transaction_id', flowsTransactionId)
       .single();
 
     if (!transaction) {
-      console.log('Transaction not found:', transactionId);
+      console.log('Transaction not found:', flowsTransactionId);
       return new Response('Transaction not found', { status: 404 });
     }
 
@@ -41,7 +44,7 @@ serve(async (req) => {
       .from('payment_transactions')
       .update({
         status: status,
-        payment_data: webhookData,
+        payment_provider_data: webhookData,
         paid_at: paid_at ? new Date(paid_at).toISOString() : null,
         updated_at: new Date().toISOString()
       })
@@ -53,7 +56,7 @@ serve(async (req) => {
     }
 
     // Se o pagamento foi aprovado, atualizar dados da empresa
-    if (status === 'approved' || status === 'paid') {
+    if (status === 'approved' || status === 'paid' || status === 'completed') {
       console.log('Payment approved, updating company plan');
 
       const nextPaymentDue = new Date();
@@ -72,10 +75,9 @@ serve(async (req) => {
         .update({
           plan_id: transaction.plan_id,
           plan_status: 'active',
-          last_payment_date: new Date().toISOString(),
-          next_payment_due: nextPaymentDue.toISOString(),
           payment_status: 'active',
-          max_monthly_guests: plan?.slug === 'free' ? 10 : plan?.slug === 'pro' ? 100 : 999999,
+          next_payment_due: nextPaymentDue.toISOString(),
+          max_monthly_guests: plan?.slug === 'free' ? 10 : plan?.slug === 'profissional' ? 100 : 500,
           updated_at: new Date().toISOString()
         })
         .eq('id', transaction.company_id);

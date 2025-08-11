@@ -74,10 +74,16 @@ serve(async (req) => {
 
     console.log('Creating FlowsPay payment:', flowsPayload);
 
+    // Verificar se a API key está configurada
+    const flowsApiKey = Deno.env.get('FLOWSPAY_API_KEY');
+    if (!flowsApiKey) {
+      throw new Error('FlowsPay API key not configured');
+    }
+
     const flowsResponse = await fetch('https://api.flowspay.com.br/v1/payments', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer sk_H0S4NzZUxkvU99WqTbo25GzXu5_wD4IaenkjWUjzRosnwKP0`,
+        'Authorization': `Bearer ${flowsApiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(flowsPayload),
@@ -95,18 +101,18 @@ serve(async (req) => {
     // Gerar ID de transação único  
     const transactionId = `${profile.company_id}_${planId}_${Date.now()}`;
     
-    // Salvar transação no banco
+    // Salvar transação no banco com ID do FlowsPay
     const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
       .insert({
         company_id: profile.company_id,
         plan_id: planId,
-        transaction_id: transactionId,
+        transaction_id: paymentData.id, // Usar ID real do FlowsPay
         payment_method: paymentMethod,
         amount: plan.price,
-        status: 'pending',
+        status: paymentData.status || 'pending',
         payment_provider_data: paymentData,
-        expires_at: flowsPayload.expires_at
+        expires_at: paymentData.expires_at || flowsPayload.expires_at
       })
       .select()
       .single();
@@ -120,14 +126,15 @@ serve(async (req) => {
     let response;
     if (paymentMethod === 'pix') {
       response = {
-        transactionId: transaction.transaction_id,
+        transactionId: paymentData.id,
         qrCodeBase64: paymentData.pix?.qr_code_base64,
-        pixCopyPaste: paymentData.pix?.qr_code
+        pixCopyPaste: paymentData.pix?.qr_code,
+        pixKey: paymentData.pix?.key
       };
     } else {
       response = {
-        transactionId: transaction.transaction_id,
-        checkoutUrl: paymentData.checkout_url
+        transactionId: paymentData.id,
+        checkoutUrl: paymentData.checkout_url || paymentData.payment_url
       };
     }
 

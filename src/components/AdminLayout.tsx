@@ -135,41 +135,48 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Link Público */}
-        {companySlug && (
-          <div className="px-4 pb-2">
+        {/* Footer */}
+        <div className="mt-auto">
+          {/* Link Público - Destacado */}
+          {companySlug && (
+            <div className="p-4 border-t bg-primary/5">
+              <Button 
+                variant="default" 
+                size="sm"
+                asChild
+                className="w-full justify-start bg-primary hover:bg-primary/90 text-primary-foreground"
+              >
+                <a 
+                  href={`/${companySlug}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2"
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  {!collapsed && (
+                    <span className="text-sm font-medium">Link Público</span>
+                  )}
+                </a>
+              </Button>
+              {!collapsed && (
+                <p className="text-xs text-muted-foreground mt-1 text-center">
+                  Para compartilhar com convidados
+                </p>
+              )}
+            </div>
+          )}
+          
+          <div className="p-4 border-t">
             <Button 
               variant="ghost" 
-              size="sm"
-              asChild
+              size="sm" 
+              onClick={handleSignOut}
               className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
             >
-              <a 
-                href={`/${companySlug}`} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="flex items-center gap-2"
-              >
-                <ExternalLink className="h-4 w-4" />
-                {!collapsed && (
-                  <span className="text-sm">Link Público</span>
-                )}
-              </a>
+              <LogOut className="h-4 w-4" />
+              {!collapsed && <span className="ml-2">Sair</span>}
             </Button>
           </div>
-        )}
-
-        {/* Footer */}
-        <div className="mt-auto p-4 border-t">
-          <Button 
-            variant="ghost" 
-            size="sm" 
-            onClick={handleSignOut}
-            className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
-          >
-            <LogOut className="h-4 w-4" />
-            {!collapsed && <span className="ml-2">Sair</span>}
-          </Button>
         </div>
       </SidebarContent>
     </Sidebar>

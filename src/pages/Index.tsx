@@ -77,7 +77,7 @@ const Index = () => {
             <Link to="/auth">
               <Button className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
                 <Gift className="mr-2 h-4 w-4" />
-                Garantir PRO Grátis
+                Começar Agora
               </Button>
             </Link>
           </div>
@@ -125,7 +125,7 @@ const Index = () => {
             <div className="flex items-center justify-center space-x-8 text-sm">
               <div className="flex items-center space-x-2 text-green-600">
                 <CheckCircle className="h-4 w-4" />
-                <span className="font-medium">14 dias PRO grátis</span>
+                <span className="font-medium">Totalmente gratuito</span>
               </div>
               <div className="flex items-center space-x-2 text-blue-600">
                 <Shield className="h-4 w-4" />

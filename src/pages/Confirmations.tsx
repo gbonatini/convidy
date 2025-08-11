@@ -10,27 +10,10 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getConfirmationStatusBadge, getCheckinStatusBadge } from '@/lib/status';
-import { 
-  Users, 
-  Search, 
-  Calendar, 
-  MapPin, 
-  Edit, 
-  Trash2, 
-  UserCheck,
-  Clock,
-  Mail,
-  Phone,
-  FileText,
-  Send,
-  CheckCircle,
-  UserX,
-  TrendingUp
-} from 'lucide-react';
+import { Users, Search, Calendar, MapPin, Edit, Trash2, UserCheck, Clock, Mail, Phone, FileText, Send, CheckCircle, UserX, TrendingUp } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ConfirmationFilters } from '@/components/ConfirmationFilters';
-
 interface Registration {
   id: string;
   name: string;
@@ -51,12 +34,10 @@ interface Registration {
     location: string;
   } | null;
 }
-
 interface Company {
   id: string;
   name: string;
 }
-
 interface Invite {
   id: string;
   full_name: string;
@@ -67,9 +48,10 @@ interface Invite {
   created_at: string;
   event_id: string;
 }
-
 const Confirmations = () => {
-  const { toast } = useToast();
+  const {
+    toast
+  } = useToast();
   const [searchParams] = useSearchParams();
   const eventFilter = searchParams.get('event');
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -82,82 +64,70 @@ const Confirmations = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [checkinFilter, setCheckinFilter] = useState('all');
   const [events, setEvents] = useState<any[]>([]);
-
   useEffect(() => {
     fetchCompanyAndRegistrations();
   }, []);
 
   // Real-time subscription for registrations
   useEffect(() => {
-    const channel = supabase
-      .channel('confirmations-realtime')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'registrations'
-        },
-        () => {
-          console.log('Registration updated, refetching...');
-          fetchCompanyAndRegistrations();
-        }
-      )
-      .subscribe();
-
+    const channel = supabase.channel('confirmations-realtime').on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'registrations'
+    }, () => {
+      console.log('Registration updated, refetching...');
+      fetchCompanyAndRegistrations();
+    }).subscribe();
     return () => {
       supabase.removeChannel(channel);
     };
   }, []);
-
   const fetchCompanyAndRegistrations = async () => {
     try {
       console.log('Iniciando fetchCompanyAndRegistrations...');
-      
+
       // Buscar perfil do usuário para obter company_id
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: {
+          user
+        }
+      } = await supabase.auth.getUser();
       console.log('Usuário:', user);
-      
       if (!user) {
         console.log('Usuário não encontrado');
         return;
       }
-
-      const { data: profile, error: profileError } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', user.id)
-        .single();
-
-      console.log('Profile:', { profile, profileError });
-
+      const {
+        data: profile,
+        error: profileError
+      } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      console.log('Profile:', {
+        profile,
+        profileError
+      });
       if (!profile?.company_id) {
         console.log('company_id não encontrado no profile');
         return;
       }
 
       // Buscar dados da empresa
-      const { data: companyData } = await supabase
-        .from('companies')
-        .select('id, name')
-        .eq('id', profile.company_id)
-        .single();
-
+      const {
+        data: companyData
+      } = await supabase.from('companies').select('id, name').eq('id', profile.company_id).single();
       console.log('Dados da empresa:', companyData);
       setCompany(companyData);
 
       // Primeiro, buscar todos os eventos da empresa
-      const { data: events, error: eventsError } = await supabase
-        .from('events')
-        .select('id, title, date, time, location')
-        .eq('company_id', profile.company_id);
-
-      console.log('Eventos da empresa:', { events, eventsError });
-
+      const {
+        data: events,
+        error: eventsError
+      } = await supabase.from('events').select('id, title, date, time, location').eq('company_id', profile.company_id);
+      console.log('Eventos da empresa:', {
+        events,
+        eventsError
+      });
       if (eventsError) throw eventsError;
-
       setEvents(events || []);
-
       if (!events || events.length === 0) {
         console.log('Nenhum evento encontrado para esta empresa');
         setRegistrations([]);
@@ -166,33 +136,36 @@ const Confirmations = () => {
       }
 
       // Buscar convites da empresa para cruzamento de dados
-      const { data: invitesData, error: invitesError } = await supabase
-        .from('invites')
-        .select('*')
-        .eq('company_id', profile.company_id);
-
-      console.log('Convites da empresa:', { invitesData, invitesError });
+      const {
+        data: invitesData,
+        error: invitesError
+      } = await supabase.from('invites').select('*').eq('company_id', profile.company_id);
+      console.log('Convites da empresa:', {
+        invitesData,
+        invitesError
+      });
       if (!invitesError) {
         setInvites(invitesData || []);
       }
 
       // Buscar confirmações desses eventos
       const eventIds = events.map(e => e.id);
-      let query = supabase
-        .from('registrations')
-        .select('*')
-        .in('event_id', eventIds)
-        .order('created_at', { ascending: false });
+      let query = supabase.from('registrations').select('*').in('event_id', eventIds).order('created_at', {
+        ascending: false
+      });
 
       // Filtrar por evento específico se especificado na URL
       if (eventFilter) {
         query = query.eq('event_id', eventFilter);
       }
-
-      const { data: registrationsData, error } = await query;
-
-      console.log('Dados das confirmações:', { registrationsData, error });
-
+      const {
+        data: registrationsData,
+        error
+      } = await query;
+      console.log('Dados das confirmações:', {
+        registrationsData,
+        error
+      });
       if (error) throw error;
 
       // Combinar dados de registrations com eventos
@@ -200,10 +173,15 @@ const Confirmations = () => {
         const eventData = events.find(e => e.id === reg.event_id);
         return {
           ...reg,
-          event: eventData || { id: '', title: 'Evento não encontrado', date: '', time: '', location: '' }
+          event: eventData || {
+            id: '',
+            title: 'Evento não encontrado',
+            date: '',
+            time: '',
+            location: ''
+          }
         };
       }) || [];
-
       console.log('Confirmações formatadas:', formattedRegistrations);
       setRegistrations(formattedRegistrations);
     } catch (error) {
@@ -211,77 +189,63 @@ const Confirmations = () => {
       toast({
         variant: "destructive",
         title: "Erro ao carregar confirmações",
-        description: "Tente novamente em alguns instantes.",
+        description: "Tente novamente em alguns instantes."
       });
     } finally {
       setLoading(false);
     }
   };
-
   const handleDeleteRegistration = async (registrationId: string) => {
     try {
-      const { error } = await supabase
-        .from('registrations')
-        .delete()
-        .eq('id', registrationId);
-
+      const {
+        error
+      } = await supabase.from('registrations').delete().eq('id', registrationId);
       if (error) throw error;
-
       setRegistrations(prev => prev.filter(reg => reg.id !== registrationId));
       toast({
         title: "Confirmação excluída",
-        description: "A confirmação foi removida com sucesso.",
+        description: "A confirmação foi removida com sucesso."
       });
     } catch (error) {
       console.error('Erro ao excluir confirmação:', error);
       toast({
         variant: "destructive",
         title: "Erro ao excluir confirmação",
-        description: "Tente novamente em alguns instantes.",
+        description: "Tente novamente em alguns instantes."
       });
     }
   };
-
   const filteredRegistrations = registrations.filter(reg => {
     // Filtro de texto
-    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      (reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) || reg.email.toLowerCase().includes(searchTerm.toLowerCase()) || reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase());
 
     // Filtro de status
     const matchesStatus = statusFilter === 'all' || reg.status === statusFilter;
 
     // Filtro de check-in
-    const matchesCheckin = checkinFilter === 'all' || 
-      (checkinFilter === 'checked_in' && reg.checked_in) ||
-      (checkinFilter === 'pending' && !reg.checked_in);
-
+    const matchesCheckin = checkinFilter === 'all' || checkinFilter === 'checked_in' && reg.checked_in || checkinFilter === 'pending' && !reg.checked_in;
     return matchesSearch && matchesStatus && matchesCheckin;
   });
-
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR });
+    return format(new Date(dateString + 'T00:00:00'), "dd/MM/yyyy", {
+      locale: ptBR
+    });
   };
-
   const formatTime = (timeString: string) => {
     return timeString.slice(0, 5);
   };
-
   const formatCreatedAt = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
+    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", {
+      locale: ptBR
+    });
   };
 
   // Cálculos de indicadores com cruzamento de dados
   const normalizeDocument = (doc: string) => doc.replace(/\D/g, '');
-  
+
   // Filtrar convites e confirmações por evento se especificado
-  const filteredInvites = eventFilter 
-    ? invites.filter(invite => invite.event_id === eventFilter)
-    : invites;
-  
-  const filteredConfirmations = eventFilter
-    ? registrations.filter(reg => reg.event?.id === eventFilter)
-    : registrations;
+  const filteredInvites = eventFilter ? invites.filter(invite => invite.event_id === eventFilter) : invites;
+  const filteredConfirmations = eventFilter ? registrations.filter(reg => reg.event?.id === eventFilter) : registrations;
 
   // Encontrar confirmações que vieram de convites (cross-reference por CPF)
   const confirmedFromInvites = filteredConfirmations.filter(reg => {
@@ -302,25 +266,18 @@ const Confirmations = () => {
   });
 
   // Taxa de conversão
-  const conversionRate = filteredInvites.length > 0 
-    ? (confirmedFromInvites.length / filteredInvites.length * 100).toFixed(1)
-    : '0';
-
+  const conversionRate = filteredInvites.length > 0 ? (confirmedFromInvites.length / filteredInvites.length * 100).toFixed(1) : '0';
   if (loading) {
-    return (
-      <AdminLayout>
+    return <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Users className="h-8 w-8 animate-pulse mx-auto" />
             <p className="text-muted-foreground">Carregando confirmações...</p>
           </div>
         </div>
-      </AdminLayout>
-    );
+      </AdminLayout>;
   }
-
-  return (
-    <AdminLayout>
+  return <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="flex items-center justify-between">
@@ -329,21 +286,16 @@ const Confirmations = () => {
               {eventFilter ? 'Confirmações do Evento' : 'Confirmações'}
             </h1>
             <p className="text-muted-foreground">
-              {eventFilter 
-                ? `Gerencie as confirmações deste evento específico`
-                : `Gerencie todas as confirmações de presença da ${company?.name}`
-              }
+              {eventFilter ? `Gerencie as confirmações deste evento específico` : `Gerencie todas as confirmações de presença da ${company?.name}`}
             </p>
           </div>
           <div className="flex items-center space-x-2">
             <Badge variant="outline" className="text-sm">
               {registrations.length} confirmações
             </Badge>
-            {eventFilter && (
-              <Button variant="outline" size="sm" asChild>
+            {eventFilter && <Button variant="outline" size="sm" asChild>
                 <a href="/confirmations">Ver Todas</a>
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
 
@@ -403,30 +355,18 @@ const Confirmations = () => {
         </div>
 
         {/* Filtros */}
-        <ConfirmationFilters
-          eventFilter={eventFilter || 'all'}
-          statusFilter={statusFilter}
-          checkinFilter={checkinFilter}
-          searchTerm={searchTerm}
-          onEventFilterChange={(eventId) => {
-            // Atualizar URL se necessário
-            if (eventId === 'all') {
-              window.history.pushState({}, '', '/confirmations');
-            } else {
-              window.history.pushState({}, '', `/confirmations?event=${eventId}`);
-            }
-            fetchCompanyAndRegistrations();
-          }}
-          onStatusFilterChange={setStatusFilter}
-          onCheckinFilterChange={setCheckinFilter}
-          onSearchTermChange={setSearchTerm}
-          events={events}
-          registrations={registrations}
-        />
+        <ConfirmationFilters eventFilter={eventFilter || 'all'} statusFilter={statusFilter} checkinFilter={checkinFilter} searchTerm={searchTerm} onEventFilterChange={eventId => {
+        // Atualizar URL se necessário
+        if (eventId === 'all') {
+          window.history.pushState({}, '', '/confirmations');
+        } else {
+          window.history.pushState({}, '', `/confirmations?event=${eventId}`);
+        }
+        fetchCompanyAndRegistrations();
+      }} onStatusFilterChange={setStatusFilter} onCheckinFilterChange={setCheckinFilter} onSearchTermChange={setSearchTerm} events={events} registrations={registrations} />
 
         {/* Lista de Confirmações */}
-        {filteredRegistrations.length === 0 ? (
-          <Card>
+        {filteredRegistrations.length === 0 ? <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhuma confirmação encontrada</h3>
@@ -434,17 +374,12 @@ const Confirmations = () => {
                 {searchTerm ? 'Nenhuma confirmação corresponde aos critérios de busca.' : 'Ainda não há confirmações de presença.'}
               </p>
             </CardContent>
-          </Card>
-        ) : (
-          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredRegistrations.map((registration) => (
-              <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
+          </Card> : <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredRegistrations.map(registration => <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-4 space-y-3">
                   {/* Header com avatar e nome */}
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center text-white font-semibold text-sm">
-                      {registration.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                    </div>
+                    
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-lg text-foreground truncate">{registration.name}</h3>
                       <p className="text-sm text-muted-foreground truncate">{registration.email}</p>
@@ -453,7 +388,7 @@ const Confirmations = () => {
 
                   {/* Informações do evento */}
                   <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-primary">{registration.event?.title || 'Evento não encontrado'}</h4>
+                    <h4 className="font-semibold text-sm text-gray-500">{registration.event?.title || 'Evento não encontrado'}</h4>
                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
                       <MapPin className="h-3 w-3 flex-shrink-0" />
                       <span className="truncate">{registration.event?.location || 'Local não disponível'}</span>
@@ -477,38 +412,24 @@ const Confirmations = () => {
                       <div>CPF: {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.$3-**')}</div>
                       {registration.phone && <div>Tel: {registration.phone}</div>}
                       <div>Confirmado: {formatCreatedAt(registration.created_at)}</div>
-                      {registration.checked_in && registration.checkin_time && (
-                        <div>Check-in: {formatCreatedAt(registration.checkin_time)}</div>
-                      )}
+                      {registration.checked_in && registration.checkin_time && <div>Check-in: {formatCreatedAt(registration.checkin_time)}</div>}
                     </div>
                   </div>
 
                   {/* Botões de ação compactos */}
                   <div className="flex gap-1 pt-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setSelectedRegistration(registration)}
-                      className="flex-1 text-xs"
-                    >
+                    <Button variant="outline" size="sm" onClick={() => setSelectedRegistration(registration)} className="flex-1 text-xs">
                       <Edit className="h-3 w-3 mr-1" />
                       Editar
                     </Button>
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      onClick={() => handleDeleteRegistration(registration.id)}
-                      className="flex-1 text-xs"
-                    >
+                    <Button variant="destructive" size="sm" onClick={() => handleDeleteRegistration(registration.id)} className="flex-1 text-xs">
                       <Trash2 className="h-3 w-3 mr-1" />
                       Excluir
                     </Button>
                   </div>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
 
         {/* Dialog de Edição */}
         <Dialog open={!!selectedRegistration} onOpenChange={() => setSelectedRegistration(null)}>
@@ -522,28 +443,15 @@ const Confirmations = () => {
             <div className="space-y-4">
               <div className="space-y-2">
                 <Label htmlFor="edit-name">Nome</Label>
-                <Input
-                  id="edit-name"
-                  defaultValue={selectedRegistration?.name}
-                  placeholder="Nome completo"
-                />
+                <Input id="edit-name" defaultValue={selectedRegistration?.name} placeholder="Nome completo" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-email">Email</Label>
-                <Input
-                  id="edit-email"
-                  type="email"
-                  defaultValue={selectedRegistration?.email}
-                  placeholder="email@exemplo.com"
-                />
+                <Input id="edit-email" type="email" defaultValue={selectedRegistration?.email} placeholder="email@exemplo.com" />
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-phone">Telefone</Label>
-                <Input
-                  id="edit-phone"
-                  defaultValue={selectedRegistration?.phone}
-                  placeholder="(11) 99999-9999"
-                />
+                <Input id="edit-phone" defaultValue={selectedRegistration?.phone} placeholder="(11) 99999-9999" />
               </div>
               <div className="flex justify-end space-x-2">
                 <Button variant="outline" onClick={() => setSelectedRegistration(null)}>
@@ -557,8 +465,6 @@ const Confirmations = () => {
           </DialogContent>
         </Dialog>
       </div>
-    </AdminLayout>
-  );
+    </AdminLayout>;
 };
-
 export default Confirmations;

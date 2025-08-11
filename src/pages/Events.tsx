@@ -354,7 +354,7 @@ const filteredEvents = events.filter(event => {
                         variant="outline"
                         size="sm"
                         asChild
-                        className="text-blue-600 hover:text-blue-700"
+                        className="text-primary hover:text-primary/80"
                       >
                         <Link to={`/confirmations?event=${event.id}`}>
                           <Eye className="h-4 w-4 mr-1" />

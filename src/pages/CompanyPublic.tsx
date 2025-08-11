@@ -429,7 +429,7 @@ const CompanyPublic = () => {
                   <CardHeader className="pb-3">
                     <div className="flex flex-col space-y-2">
                       <CardTitle className="text-base sm:text-lg leading-tight">{event.title}</CardTitle>
-                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200 self-start text-xs">
+                      <Badge variant="success" className="self-start text-xs">
                         🟢 Confirmações Abertas
                       </Badge>
                     </div>

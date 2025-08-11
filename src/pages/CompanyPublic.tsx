@@ -365,26 +365,26 @@ const CompanyPublic = () => {
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       {/* Header */}
       <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-6">
+        <div className="container mx-auto px-4 py-4 sm:py-6">
           <div className="text-center space-y-4">
-            <div className="flex items-center justify-center space-x-3">
+            <div className="flex flex-col sm:flex-row items-center justify-center space-y-3 sm:space-y-0 sm:space-x-3">
               {company.logo_url ? (
                 <img 
                   src={company.logo_url} 
                   alt={`Logo ${company.name}`}
-                  className="h-20 max-w-xs object-contain border shadow-sm rounded-lg"
+                  className="h-16 sm:h-20 max-w-xs object-contain border shadow-sm rounded-lg"
                 />
               ) : (
                 <>
-                  <div className="h-16 w-16 rounded-lg bg-primary/10 flex items-center justify-center">
-                    <Building className="h-8 w-8 text-primary" />
+                  <div className="h-12 w-12 sm:h-16 sm:w-16 rounded-lg bg-primary/10 flex items-center justify-center">
+                    <Building className="h-6 w-6 sm:h-8 sm:w-8 text-primary" />
                   </div>
-                  <h1 className="text-3xl font-bold">{company.name}</h1>
+                  <h1 className="text-2xl sm:text-3xl font-bold">{company.name}</h1>
                 </>
               )}
             </div>
             {company.description && (
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              <p className="text-base sm:text-lg text-muted-foreground max-w-2xl mx-auto px-4">
                 {company.description}
               </p>
             )}
@@ -396,9 +396,9 @@ const CompanyPublic = () => {
       {/* Events Section */}
       <main className="container mx-auto px-4 py-8">
         <div className="space-y-6">
-          <div className="text-center space-y-2">
-            <h2 className="text-2xl font-bold">Próximos Eventos</h2>
-            <p className="text-muted-foreground">
+          <div className="text-center space-y-2 px-4">
+            <h2 className="text-xl sm:text-2xl font-bold">Próximos Eventos</h2>
+            <p className="text-sm sm:text-base text-muted-foreground">
               Confira os eventos disponíveis e confirme sua presença
             </p>
           </div>
@@ -412,7 +412,7 @@ const CompanyPublic = () => {
               </p>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
               {events.map((event) => (
                 <Card key={event.id} className="hover:shadow-lg transition-shadow overflow-hidden">
                   {/* Imagem do evento */}
@@ -426,40 +426,38 @@ const CompanyPublic = () => {
                     </div>
                   )}
                   
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="space-y-1">
-                        <CardTitle className="text-lg">{event.title}</CardTitle>
-                        <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200">
-                          🟢 Confirmações Abertas
-                        </Badge>
-                      </div>
+                  <CardHeader className="pb-3">
+                    <div className="flex flex-col space-y-2">
+                      <CardTitle className="text-base sm:text-lg leading-tight">{event.title}</CardTitle>
+                      <Badge variant="default" className="bg-green-100 text-green-800 border-green-200 hover:bg-green-200 self-start text-xs">
+                        🟢 Confirmações Abertas
+                      </Badge>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
+                  <CardContent className="space-y-3 pt-0">
                     {event.description && (
-                      <CardDescription>{event.description}</CardDescription>
+                      <CardDescription className="text-sm line-clamp-2">{event.description}</CardDescription>
                     )}
                     
-                    <div className="space-y-2 text-sm">
+                    <div className="space-y-2 text-xs sm:text-sm">
                       <div className="flex items-center space-x-2">
-                        <Calendar className="h-4 w-4 text-muted-foreground" />
-                        <span>{formatDate(event.date)}</span>
+                        <Calendar className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{formatDate(event.date)}</span>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <Clock className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
                         <span>{formatTime(event.time)}</span>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <MapPin className="h-4 w-4 text-muted-foreground" />
-                        <span>{event.location}</span>
+                        <MapPin className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">{event.location}</span>
                       </div>
                       
                       <div className="flex items-center space-x-2">
-                        <Users className="h-4 w-4 text-muted-foreground" />
-                        <span>Capacidade: {event.capacity} pessoas</span>
+                        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                        <span className="truncate">Capacidade: {event.capacity} pessoas</span>
                       </div>
                     </div>
 

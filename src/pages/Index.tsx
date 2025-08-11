@@ -64,22 +64,23 @@ const Index = () => {
       <header className="border-b bg-card sticky top-0 z-50">
         <div className="container mx-auto px-4 py-4 flex items-center justify-between">
           <div className="flex items-center space-x-2">
-            <h1 className="text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+            <h1 className="text-xl sm:text-2xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Convidy
             </h1>
-            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800">
+            <Badge variant="secondary" className="text-xs bg-green-100 text-green-800 hidden sm:block">
               PRO Grátis
             </Badge>
           </div>
           
-          <div className="flex items-center space-x-4">
-            <Link to="/auth">
-              <Button variant="outline">Entrar</Button>
+          <div className="flex items-center space-x-2 sm:space-x-4">
+            <Link to="/auth" className="hidden sm:block">
+              <Button variant="outline" size="sm">Entrar</Button>
             </Link>
             <Link to="/auth">
-              <Button className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                <Gift className="mr-2 h-4 w-4" />
-                Garantir PRO Grátis
+              <Button size="sm" className="bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+                <Gift className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Garantir PRO Grátis</span>
+                <span className="sm:hidden">PRO Grátis</span>
               </Button>
             </Link>
           </div>
@@ -96,35 +97,37 @@ const Index = () => {
             </Badge>
             
             <div className="space-y-6">
-              <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
+              <h1 className="text-3xl sm:text-4xl md:text-6xl lg:text-7xl font-bold leading-tight">
                 Chega de eventos vazios:
                 <span className="block bg-gradient-to-r from-primary to-destructive bg-clip-text text-transparent">
-                  o jeito inteligente de garantir convidados no dia
+                  IA analisa e garante presença
                 </span>
               </h1>
-              <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-                Seu evento lotado, no horário certo e com dados na mão – sem stress. 
-                A plataforma de eventos que pensa como você: eficiente, direta e automatizada.
+              <p className="text-lg sm:text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed px-4">
+                Nossa IA analisa padrões comportamentais e otimiza seus convites automaticamente. 
+                Eventos lotados, no horário certo, com dados inteligentes na mão.
               </p>
             </div>
             
             {/* Urgency Offer Box */}
             
             
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth">
-                <Button size="lg" className="w-full sm:w-auto text-lg px-8 py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
-                  <Target className="mr-2 h-5 w-5" />
-                  Quero meu evento lotado com 1 clique
-                  <ArrowRight className="ml-2 h-5 w-5" />
+            <div className="flex flex-col sm:flex-row gap-4 justify-center px-4">
+              <Link to="/auth" className="w-full sm:w-auto">
+                <Button size="lg" className="w-full text-base sm:text-lg px-6 sm:px-8 py-4 bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary/70">
+                  <Target className="mr-2 h-4 w-4 sm:h-5 sm:w-5" />
+                  <span className="hidden sm:inline">Quero meu evento lotado com 1 clique</span>
+                  <span className="sm:hidden">Começar Agora</span>
+                  <ArrowRight className="ml-2 h-4 w-4 sm:h-5 sm:w-5" />
                 </Button>
               </Link>
-              <Button variant="outline" size="lg" className="w-full sm:w-auto text-lg px-8 py-4">
-                Ver Como Funciona
+              <Button variant="outline" size="lg" className="w-full sm:w-auto text-base sm:text-lg px-6 sm:px-8 py-4">
+                <span className="hidden sm:inline">Ver Como Funciona</span>
+                <span className="sm:hidden">Como Funciona</span>
               </Button>
             </div>
             
-            <div className="flex items-center justify-center space-x-8 text-sm">
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-8 text-sm px-4">
               <div className="flex items-center space-x-2 text-green-600">
                 <CheckCircle className="h-4 w-4" />
                 <span className="font-medium">14 dias PRO grátis</span>
@@ -279,11 +282,11 @@ const Index = () => {
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
+                 <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
                   <Check className="h-5 w-5 text-green-600 mt-0.5" />
                   <div>
-                    <h4 className="font-medium">Análise comportamental por CPF</h4>
-                    <p className="text-sm text-muted-foreground">Cada evento fica melhor que o anterior</p>
+                    <h4 className="font-medium">IA analisa comportamento por CPF</h4>
+                    <p className="text-sm text-muted-foreground">Inteligência artificial otimiza cada novo evento</p>
                   </div>
                 </div>
               </div>

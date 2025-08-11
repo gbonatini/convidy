@@ -2,6 +2,7 @@ import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import AdminLayout from '@/components/AdminLayout';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -273,10 +274,10 @@ const Dashboard = () => {
   }
 
   console.log('✅ Dashboard - Renderizando dashboard normalmente');
-  return <AdminLayout>
-      {/* Joyride desabilitado temporariamente */}
-      
-      
+  return (
+    <AdminLayout>
+      <ErrorBoundary>
+
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="flex items-center justify-between">
@@ -398,7 +399,7 @@ const Dashboard = () => {
               </Button>
             </CardContent>
           </Card>}
-      </div>
-    </AdminLayout>;
-};
-export default Dashboard;
+        </div>
+      </ErrorBoundary>
+    </AdminLayout>
+  );

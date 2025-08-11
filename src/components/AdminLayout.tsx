@@ -138,12 +138,12 @@ function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        {/* Plan Status */}
-        {!collapsed && (
+        {/* Plan Status - temporariamente desabilitado para estabilizar dashboard */}
+        {/* !collapsed && (
           <div className="px-4 pb-4">
             <PlanStatusBanner />
           </div>
-        )}
+        ) */}
 
         {/* Footer */}
         <div className="mt-auto">

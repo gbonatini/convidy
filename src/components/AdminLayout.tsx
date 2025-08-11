@@ -23,7 +23,8 @@ import {
   LogOut,
   Building,
   Send,
-  QrCode
+  QrCode,
+  ExternalLink
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
@@ -44,9 +45,32 @@ function AppSidebar() {
   const { profile, user } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const [companySlug, setCompanySlug] = React.useState<string | null>(null);
 
   const isActive = (path: string) => currentPath === path;
   const collapsed = state === 'collapsed';
+
+  // Buscar dados da empresa para o link público
+  React.useEffect(() => {
+    const fetchCompanySlug = async () => {
+      if (!profile?.company_id) return;
+      
+      try {
+        const { data, error } = await supabase
+          .from('companies')
+          .select('slug')
+          .eq('id', profile.company_id)
+          .single();
+        
+        if (error) throw error;
+        setCompanySlug(data?.slug || null);
+      } catch (error) {
+        console.error('Erro ao buscar slug da empresa:', error);
+      }
+    };
+
+    fetchCompanySlug();
+  }, [profile?.company_id]);
 
   const handleSignOut = async () => {
     try {
@@ -110,6 +134,30 @@ function AppSidebar() {
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
+
+        {/* Link Público */}
+        {companySlug && (
+          <div className="px-4 pb-4">
+            <Button 
+              variant="outline" 
+              size="default"
+              asChild
+              className="w-full justify-start"
+            >
+              <a 
+                href={`/${companySlug}`} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="flex items-center"
+              >
+                <ExternalLink className="h-4 w-4" />
+                {!collapsed && (
+                  <span className="ml-2 text-sm">Link Público (para confirmações)</span>
+                )}
+              </a>
+            </Button>
+          </div>
+        )}
 
         {/* Footer */}
         <div className="mt-auto p-4 border-t">

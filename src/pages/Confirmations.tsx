@@ -336,7 +336,7 @@ const Confirmations = () => {
             </p>
           </div>
           <div className="flex items-center space-x-2">
-            <Badge variant="secondary" className="text-sm">
+            <Badge variant="outline" className="text-sm">
               {registrations.length} confirmações
             </Badge>
             {eventFilter && (

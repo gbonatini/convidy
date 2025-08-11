@@ -438,8 +438,8 @@ const Confirmations = () => {
         ) : (
           <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredRegistrations.map((registration) => (
-              <Card key={registration.id} className="p-4 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary">
-                <div className="space-y-3">
+              <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
+                <CardContent className="p-4 space-y-3">
                   {/* Header com avatar e nome */}
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center text-white font-semibold text-sm">
@@ -504,7 +504,7 @@ const Confirmations = () => {
                       Excluir
                     </Button>
                   </div>
-                </div>
+                </CardContent>
               </Card>
             ))}
           </div>

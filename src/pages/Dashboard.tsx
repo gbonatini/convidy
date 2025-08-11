@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { Suspense, lazy, useState, useEffect } from 'react';
 import { Navigate, Link } from 'react-router-dom';
 import { useAuth } from '@/components/AuthProvider';
 import AdminLayout from '@/components/AdminLayout';
@@ -8,7 +8,7 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTour } from '@/hooks/useTour';
-import Joyride, { STATUS, EVENTS } from 'react-joyride';
+const Joyride = lazy(() => import('react-joyride')) as any;
 import { BehaviorAnalytics } from '@/components/BehaviorAnalytics';
 import EventFunnel from '@/components/EventFunnel';
 import EventProjections from '@/components/EventProjections';
@@ -63,6 +63,8 @@ const Dashboard = () => {
   });
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
+  const [joyrideEnabled, setJoyrideEnabled] = useState(false);
+  useEffect(() => setJoyrideEnabled(true), []);
   const tourSteps = [{
     target: '[data-tour="public-page"]',
     content: 'Esta é sua página pública! Compartilhe este link nas redes sociais ou nos convites para que as pessoas confirmem presença facilmente.',
@@ -93,11 +95,8 @@ const Dashboard = () => {
     placement: 'bottom' as const
   }];
   const handleJoyrideCallback = (data: any) => {
-    const {
-      status,
-      type
-    } = data;
-    if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
+    const { status } = data;
+    if (['finished', 'skipped'].includes(status)) {
       completeTour();
     }
   };
@@ -274,20 +273,34 @@ const Dashboard = () => {
 
   console.log('✅ Dashboard - Renderizando dashboard normalmente');
   return <AdminLayout>
-      {shouldShowTour && <Joyride steps={tourSteps} run={run} continuous showProgress showSkipButton callback={handleJoyrideCallback} styles={{
-      options: {
-        primaryColor: 'hsl(var(--primary))',
-        backgroundColor: 'hsl(var(--background))',
-        textColor: 'hsl(var(--foreground))',
-        arrowColor: 'hsl(var(--background))'
-      }
-    }} locale={{
-      back: 'Voltar',
-      close: 'Fechar',
-      last: 'Finalizar',
-      next: 'Próximo',
-      skip: 'Pular'
-    }} />}
+      {joyrideEnabled && shouldShowTour && (
+        <Suspense fallback={null}>
+          <Joyride 
+            steps={tourSteps} 
+            run={run} 
+            continuous 
+            showProgress 
+            showSkipButton 
+            callback={handleJoyrideCallback} 
+            styles={{
+              options: {
+                primaryColor: 'hsl(var(--primary))',
+                backgroundColor: 'hsl(var(--background))',
+                textColor: 'hsl(var(--foreground))',
+                arrowColor: 'hsl(var(--background))'
+              }
+            }} 
+            locale={{
+              back: 'Voltar',
+              close: 'Fechar',
+              last: 'Finalizar',
+              next: 'Próximo',
+              skip: 'Pular'
+            }} 
+          />
+        </Suspense>
+      )}
+      
       
       <div className="space-y-8">
         {/* Welcome Section */}

@@ -45,31 +45,32 @@ export const usePlanLimits = () => {
     try {
       console.log('🔍 Fetching plan data for company:', profile.company_id);
       
-      // Buscar dados da empresa e plano
+      // Buscar dados da empresa
       const { data: company, error: companyError } = await supabase
         .from('companies')
-        .select(`
-          plan_id,
-          system_plans!fk_companies_plan_id(
-            name,
-            slug,
-            max_events,
-            max_registrations_per_event,
-            max_total_registrations
-          )
-        `)
+        .select('plan_id')
         .eq('id', profile.company_id)
         .single();
 
       if (companyError) {
-        console.error('❌ Error fetching company plan:', companyError);
+        console.error('❌ Error fetching company:', companyError);
         throw companyError;
       }
 
-      console.log('📊 Company plan data fetched:', company);
+      console.log('📊 Company data fetched:', company);
 
-      const plan = (company as any).system_plans;
-      
+      // Buscar dados do plano
+      const { data: plan, error: planError } = await supabase
+        .from('system_plans')
+        .select('name, slug, max_events, max_registrations_per_event, max_total_registrations')
+        .eq('id', company.plan_id)
+        .single();
+
+      if (planError) {
+        console.error('❌ Error fetching plan:', planError);
+        throw planError;
+      }
+
       console.log('🎯 Plan details:', {
         name: plan.name,
         slug: plan.slug,

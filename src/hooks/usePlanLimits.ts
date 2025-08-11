@@ -37,7 +37,7 @@ export const usePlanLimits = () => {
     activeEvents: 0,
   });
   const [loading, setLoading] = useState(true);
-  const [planName, setPlanName] = useState<string>('free');
+  const [planName, setPlanName] = useState<string>('');
 
   const fetchPlanData = async () => {
     if (!profile?.company_id) return;

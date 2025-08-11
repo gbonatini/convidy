@@ -137,22 +137,22 @@ function AppSidebar() {
 
         {/* Link Público */}
         {companySlug && (
-          <div className="px-4 pb-4">
+          <div className="px-4 pb-2">
             <Button 
-              variant="outline" 
-              size="default"
+              variant="ghost" 
+              size="sm"
               asChild
-              className="w-full justify-start"
+              className="w-full justify-start text-sidebar-foreground hover:bg-sidebar-accent"
             >
               <a 
                 href={`/${companySlug}`} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="flex items-center"
+                className="flex items-center gap-2"
               >
                 <ExternalLink className="h-4 w-4" />
                 {!collapsed && (
-                  <span className="ml-2 text-sm">Link Público (para confirmações)</span>
+                  <span className="text-sm">Link Público</span>
                 )}
               </a>
             </Button>

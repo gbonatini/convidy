@@ -9,6 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Badge } from '@/components/ui/badge';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { getCheckinStatusBadge } from '@/lib/status';
 import CryptoJS from 'crypto-js';
 import { QrCodeIcon, ScanIcon, UserCheckIcon, UserIcon, TrendingUpIcon, ClockIcon } from 'lucide-react';
 import { QrReader } from 'react-qr-reader';
@@ -360,9 +361,9 @@ const CheckIn = () => {
             <CardTitle className="text-sm font-medium">Check-ins Realizados</CardTitle>
             <UserCheckIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-600">{stats.total_checkins}</div>
-          </CardContent>
+           <CardContent>
+             <div className="text-2xl font-bold text-success">{stats.total_checkins}</div>
+           </CardContent>
         </Card>
 
         <Card>
@@ -370,9 +371,9 @@ const CheckIn = () => {
             <CardTitle className="text-sm font-medium">Faltantes</CardTitle>
             <ClockIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-gray-600">{stats.pending_checkins}</div>
-          </CardContent>
+           <CardContent>
+             <div className="text-2xl font-bold text-muted-foreground">{stats.pending_checkins}</div>
+           </CardContent>
         </Card>
 
         <Card>
@@ -380,9 +381,9 @@ const CheckIn = () => {
             <CardTitle className="text-sm font-medium">% Presença</CardTitle>
             <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-purple-600">{stats.attendance_percentage}%</div>
-          </CardContent>
+           <CardContent>
+             <div className="text-2xl font-bold text-primary">{stats.attendance_percentage}%</div>
+           </CardContent>
         </Card>
       </div>
 
@@ -480,13 +481,9 @@ const CheckIn = () => {
                       'Evento não encontrado'
                     )}
                   </TableCell>
-                  <TableCell>
-                    <Badge 
-                      variant={registration.checked_in ? "success" : "warning"}
-                    >
-                      {registration.checked_in ? 'Check-in Realizado' : 'Pendente'}
-                    </Badge>
-                  </TableCell>
+                   <TableCell>
+                     {getCheckinStatusBadge(registration.checked_in)}
+                   </TableCell>
                   <TableCell>
                     {registration.checkin_time ? (
                       <div className="text-sm">

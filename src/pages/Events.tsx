@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import { EventForm } from '@/components/EventForm';
 import { EventFilters } from '@/components/EventFilters';
+import { getEventStatusBadge } from '@/lib/status';
 
 interface Event {
   id: string;
@@ -189,18 +190,7 @@ const Events = () => {
     return time.slice(0, 5);
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'active':
-        return 'bg-green-100 text-green-800 dark:bg-green-900 dark:text-green-300';
-      case 'inactive':
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-      case 'completed':
-        return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
-      default:
-    return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-  }
-};
+  // Status handling moved to @/lib/status
 
 const filteredEvents = events.filter(event => {
   if (statusFilter === 'all') return true;
@@ -326,14 +316,9 @@ const filteredEvents = events.filter(event => {
                   <div className="flex items-start justify-between">
                     <div className="space-y-1 flex-1">
                       <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
-                      <div className="flex items-center space-x-2">
-                        <Badge 
-                          variant={event.status === 'active' ? 'success' : 'warning'}
-                        >
-                          {event.status === 'active' ? 'Ativo' : 
-                           event.status === 'completed' ? 'Finalizado' : 'Inativo'}
-                        </Badge>
-                      </div>
+                       <div className="flex items-center space-x-2">
+                         {getEventStatusBadge(event.status)}
+                       </div>
                     </div>
                   </div>
                   

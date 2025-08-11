@@ -17,6 +17,7 @@ import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/AdminLayout";
 import MessageTemplateManager from "@/components/MessageTemplateManager";
 import MessageEditor from "@/components/MessageEditor";
+import { getInviteStatusBadge } from "@/lib/status";
 
 interface Invite {
   id: string;
@@ -504,16 +505,8 @@ export default function Invites() {
     }
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'pending':
-        return <Badge variant="secondary">Pendente</Badge>;
-      case 'sent':
-        return <Badge variant="default" className="bg-green-500">Enviado</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
-    }
-  };
+  // Import the standardized status function at the top
+  // Status handling moved to @/lib/status
 
   // Filter invites based on selected event
   const filteredInvites = filterEventId === "all" 
@@ -809,7 +802,7 @@ export default function Invites() {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>{getStatusBadge(invite.status)}</TableCell>
+                      <TableCell>{getInviteStatusBadge(invite.status)}</TableCell>
                       <TableCell>
                         <div className="flex space-x-2">
                           <Button

@@ -406,16 +406,16 @@ const Index = () => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             <Card className="border-0 shadow-lg bg-gradient-to-br from-blue-50 to-blue-100/50">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />)}
-                </div>
+                 <div className="flex items-center space-x-1 mb-4">
+                   {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-warning fill-current" />)}
+                 </div>
                 <p className="text-lg mb-4 italic">
                   "Nossos eventos corporativos eram um caos. Com o Convidy, triplicamos a presença e ainda economizamos 5 horas de trabalho por evento."
                 </p>
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-blue-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">MR</span>
-                  </div>
+                 <div className="flex items-center space-x-3">
+                   <div className="h-10 w-10 bg-primary rounded-full flex items-center justify-center">
+                     <span className="text-primary-foreground font-bold">MR</span>
+                   </div>
                   <div>
                     <div className="font-medium">Maria Rosa</div>
                     <div className="text-sm text-muted-foreground">Diretora de RH - TechCorp</div>
@@ -426,16 +426,16 @@ const Index = () => {
 
             <Card className="border-0 shadow-lg bg-gradient-to-br from-green-50 to-green-100/50">
               <CardContent className="p-6">
-                <div className="flex items-center space-x-1 mb-4">
-                  {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-yellow-500 fill-current" />)}
-                </div>
+                 <div className="flex items-center space-x-1 mb-4">
+                   {[...Array(5)].map((_, i) => <Star key={i} className="h-4 w-4 text-warning fill-current" />)}
+                 </div>
                 <p className="text-lg mb-4 italic">
                   "Meus clientes ficaram impressionados com a organização. O check-in por QR Code é profissional demais. Virou diferencial da agência."
                 </p>
-                <div className="flex items-center space-x-3">
-                  <div className="h-10 w-10 bg-green-500 rounded-full flex items-center justify-center">
-                    <span className="text-white font-bold">JS</span>
-                  </div>
+                 <div className="flex items-center space-x-3">
+                   <div className="h-10 w-10 bg-success rounded-full flex items-center justify-center">
+                     <span className="text-success-foreground font-bold">JS</span>
+                   </div>
                   <div>
                     <div className="font-medium">João Silva</div>
                     <div className="text-sm text-muted-foreground">CEO - InnovaRH Agência</div>

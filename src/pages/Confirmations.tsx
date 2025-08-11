@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
+import { getConfirmationStatusBadge, getCheckinStatusBadge } from '@/lib/status';
 import { 
   Users, 
   Search, 
@@ -510,25 +511,18 @@ const Confirmations = () => {
                     </div>
                     
                     <div className="space-y-4">
-                      {/* Status Badges */}
-                      <div className="space-y-2">
-                        <Badge 
-                          variant={registration.status === 'confirmed' ? 'success' : 'warning'}
-                          className="text-xs font-medium px-3 py-1"
-                        >
-                          {registration.status === 'confirmed' ? '✓ Confirmado' : '⏳ Pendente'}
-                        </Badge>
-                        {registration.checked_in && (
-                          <div className="flex flex-col gap-1">
-                            <Badge variant="info" className="text-xs font-medium px-3 py-1">
-                              ✓ Check-in Realizado
-                            </Badge>
-                            <p className="text-xs text-muted-foreground">
-                              em {formatCreatedAt(registration.checkin_time || '')}
-                            </p>
-                          </div>
-                        )}
-                      </div>
+                       {/* Status Badges */}
+                       <div className="space-y-2">
+                         {getConfirmationStatusBadge(registration.status)}
+                         {registration.checked_in && (
+                           <div className="flex flex-col gap-1">
+                             {getCheckinStatusBadge(registration.checked_in)}
+                             <p className="text-xs text-muted-foreground">
+                               em {formatCreatedAt(registration.checkin_time || '')}
+                             </p>
+                           </div>
+                         )}
+                       </div>
 
                       {/* Informações de tempo */}
                       <div className="p-3 bg-muted/30 rounded-lg">

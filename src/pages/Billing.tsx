@@ -10,6 +10,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
+import { PaymentHistory } from '@/components/PaymentHistory';
 import { Crown, Zap, Users, Calendar, ArrowLeft, CreditCard, AlertTriangle } from 'lucide-react';
 
 interface CompanyPlan {
@@ -282,27 +283,32 @@ const Billing = () => {
           </Card>
         </div>
 
-        {/* Recursos do Plano */}
-        {currentPlan && (
-          <Card>
-            <CardHeader>
-              <CardTitle>Recursos Inclusos</CardTitle>
-              <CardDescription>
-                O que está disponível no seu plano atual
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                {currentPlan.system_plans.features.map((feature, index) => (
-                  <div key={index} className="flex items-center space-x-2">
-                    <div className="h-2 w-2 bg-primary rounded-full"></div>
-                    <span className="text-sm">{feature}</span>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Recursos do Plano */}
+          {currentPlan && (
+            <Card>
+              <CardHeader>
+                <CardTitle>Recursos Inclusos</CardTitle>
+                <CardDescription>
+                  O que está disponível no seu plano atual
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 gap-3">
+                  {currentPlan.system_plans.features.map((feature, index) => (
+                    <div key={index} className="flex items-center space-x-2">
+                      <div className="h-2 w-2 bg-primary rounded-full"></div>
+                      <span className="text-sm">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {/* Histórico de Pagamentos */}
+          <PaymentHistory />
+        </div>
       </div>
     </AdminLayout>
   );

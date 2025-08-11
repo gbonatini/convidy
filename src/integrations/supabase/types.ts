@@ -23,8 +23,12 @@ export type Database = {
           email: string
           id: string
           logo_url: string | null
+          max_monthly_guests: number | null
           monthly_revenue: number | null
+          monthly_usage: Json | null
           name: string
+          next_payment_due: string | null
+          payment_status: string | null
           phone: string | null
           plan: string | null
           plan_expires_at: string | null
@@ -44,8 +48,12 @@ export type Database = {
           email: string
           id?: string
           logo_url?: string | null
+          max_monthly_guests?: number | null
           monthly_revenue?: number | null
+          monthly_usage?: Json | null
           name: string
+          next_payment_due?: string | null
+          payment_status?: string | null
           phone?: string | null
           plan?: string | null
           plan_expires_at?: string | null
@@ -65,8 +73,12 @@ export type Database = {
           email?: string
           id?: string
           logo_url?: string | null
+          max_monthly_guests?: number | null
           monthly_revenue?: number | null
+          monthly_usage?: Json | null
           name?: string
+          next_payment_due?: string | null
+          payment_status?: string | null
           phone?: string | null
           plan?: string | null
           plan_expires_at?: string | null
@@ -281,6 +293,66 @@ export type Database = {
             columns: ["company_id"]
             isOneToOne: false
             referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      payment_transactions: {
+        Row: {
+          amount: number
+          company_id: string
+          created_at: string
+          expires_at: string | null
+          id: string
+          paid_at: string | null
+          payment_method: string
+          payment_provider_data: Json | null
+          plan_id: string
+          status: string
+          transaction_id: string
+          updated_at: string
+        }
+        Insert: {
+          amount: number
+          company_id: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method: string
+          payment_provider_data?: Json | null
+          plan_id: string
+          status?: string
+          transaction_id: string
+          updated_at?: string
+        }
+        Update: {
+          amount?: number
+          company_id?: string
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          paid_at?: string | null
+          payment_method?: string
+          payment_provider_data?: Json | null
+          plan_id?: string
+          status?: string
+          transaction_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "payment_transactions_company_id_fkey"
+            columns: ["company_id"]
+            isOneToOne: false
+            referencedRelation: "companies"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "payment_transactions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "system_plans"
             referencedColumns: ["id"]
           },
         ]

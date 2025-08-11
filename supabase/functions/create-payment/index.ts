@@ -92,27 +92,49 @@ serve(async (req) => {
     const paymentData = await flowsResponse.json();
     console.log('FlowsPay response:', paymentData);
 
+    // Gerar ID de transação único  
+    const transactionId = `${profile.company_id}_${planId}_${Date.now()}`;
+    
     // Salvar transação no banco
-    const { data: transaction } = await supabase
+    const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
       .insert({
         company_id: profile.company_id,
         plan_id: planId,
-        flows_transaction_id: paymentData.id,
-        amount: plan.price,
+        transaction_id: transactionId,
         payment_method: paymentMethod,
-        status: 'waiting_payment',
-        payment_data: paymentData,
+        amount: plan.price,
+        status: 'pending',
+        payment_provider_data: paymentData,
         expires_at: flowsPayload.expires_at
       })
       .select()
       .single();
 
+    if (transactionError) {
+      console.error('Error saving transaction:', transactionError);
+      throw transactionError;
+    }
+
+    // Preparar resposta baseada no método de pagamento
+    let response;
+    if (paymentMethod === 'pix') {
+      response = {
+        transactionId: transaction.transaction_id,
+        qrCodeBase64: paymentData.pix?.qr_code_base64,
+        pixCopyPaste: paymentData.pix?.qr_code
+      };
+    } else {
+      response = {
+        transactionId: transaction.transaction_id,
+        checkoutUrl: paymentData.checkout_url
+      };
+    }
+
     return new Response(
       JSON.stringify({
         success: true,
-        transaction: transaction,
-        payment_data: paymentData
+        ...response
       }),
       {
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },

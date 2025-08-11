@@ -114,9 +114,16 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   const startPaymentPolling = (transactionId: string) => {
     const pollInterval = setInterval(async () => {
       try {
-        // Simular verificação de pagamento por enquanto
-        // TODO: Implementar tabela payment_transactions
-        setTimeout(() => {
+        const { data, error } = await supabase.functions.invoke('check-payment-status', {
+          body: { transactionId }
+        });
+
+        if (error) {
+          console.error('Erro ao verificar pagamento:', error);
+          return;
+        }
+
+        if (data.status === 'approved') {
           clearInterval(pollInterval);
           toast({
             title: "Pagamento aprovado!",
@@ -124,7 +131,7 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
           });
           onSuccess();
           onOpenChange(false);
-        }, 5000);
+        }
       } catch (error) {
         console.error('Erro ao verificar pagamento:', error);
       }

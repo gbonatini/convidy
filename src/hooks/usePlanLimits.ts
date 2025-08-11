@@ -43,6 +43,8 @@ export const usePlanLimits = () => {
     if (!profile?.company_id) return;
 
     try {
+      console.log('🔍 Fetching plan data for company:', profile.company_id);
+      
       // Buscar dados da empresa e plano
       const { data: company, error: companyError } = await supabase
         .from('companies')
@@ -59,9 +61,22 @@ export const usePlanLimits = () => {
         .eq('id', profile.company_id)
         .single();
 
-      if (companyError) throw companyError;
+      if (companyError) {
+        console.error('❌ Error fetching company plan:', companyError);
+        throw companyError;
+      }
+
+      console.log('📊 Company plan data fetched:', company);
 
       const plan = (company as any).system_plans;
+      
+      console.log('🎯 Plan details:', {
+        name: plan.name,
+        slug: plan.slug,
+        maxEvents: plan.max_events,
+        maxRegistrationsPerEvent: plan.max_registrations_per_event,
+        maxTotalRegistrations: plan.max_total_registrations
+      });
       
       setPlanLimits({
         maxEvents: plan.max_events,
@@ -99,8 +114,13 @@ export const usePlanLimits = () => {
         activeEvents,
       });
 
+      console.log('✅ Plan data loaded successfully:', {
+        planName: plan.name,
+        usage: { totalEvents, totalRegistrations, activeEvents }
+      });
+
     } catch (error) {
-      console.error('Erro ao buscar dados do plano:', error);
+      console.error('❌ Erro ao buscar dados do plano:', error);
     } finally {
       setLoading(false);
     }

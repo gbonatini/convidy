@@ -11,8 +11,16 @@ export const PlanStatusBanner: React.FC = () => {
     planLimits, 
     getUsagePercentage,
     getRemainingEvents,
-    getRemainingRegistrations 
+    getRemainingRegistrations,
+    loading
   } = usePlanLimits();
+
+  console.log('🎨 PlanStatusBanner render:', { 
+    planName, 
+    loading, 
+    planLimits,
+    usage 
+  });
 
   const getPlanIcon = () => {
     switch (planName.toLowerCase()) {

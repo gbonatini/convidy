@@ -85,7 +85,7 @@ const Index = () => {
       </header>
 
       {/* Hero Section */}
-      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden lg:py-[68px]">
+      <section className="py-20 bg-gradient-to-br from-primary/5 via-background to-secondary/5 relative overflow-hidden lg:py-0">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8 max-w-5xl mx-auto">
             {/* Segmentation Badge */}

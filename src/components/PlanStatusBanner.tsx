@@ -22,10 +22,25 @@ export const PlanStatusBanner: React.FC = () => {
     usage 
   });
 
+  // Loading state
+  if (loading) {
+    return (
+      <div className="bg-card border rounded-lg p-4 space-y-3 animate-pulse">
+        <div className="h-6 bg-muted rounded w-32"></div>
+        <div className="h-4 bg-muted rounded w-full"></div>
+        <div className="h-2 bg-muted rounded w-full"></div>
+      </div>
+    );
+  }
+
+  // Fallback se não tiver nome do plano
+  const displayPlanName = planName || 'Carregando...';
+
   const getPlanIcon = () => {
-    switch (planName.toLowerCase()) {
+    switch (displayPlanName.toLowerCase()) {
       case 'empresarial':
         return <Crown className="h-4 w-4" />;
+      case 'pro':
       case 'profissional':
         return <Zap className="h-4 w-4" />;
       default:
@@ -34,9 +49,10 @@ export const PlanStatusBanner: React.FC = () => {
   };
 
   const getPlanColor = () => {
-    switch (planName.toLowerCase()) {
+    switch (displayPlanName.toLowerCase()) {
       case 'empresarial':
         return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white';
+      case 'pro':
       case 'profissional':
         return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
       default:
@@ -53,7 +69,7 @@ export const PlanStatusBanner: React.FC = () => {
         <div className="flex items-center space-x-2">
           <Badge className={getPlanColor()}>
             {getPlanIcon()}
-            <span className="ml-1 capitalize">{planName}</span>
+            <span className="ml-1 capitalize">{displayPlanName}</span>
           </Badge>
         </div>
       </div>

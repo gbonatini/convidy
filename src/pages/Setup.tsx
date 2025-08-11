@@ -114,6 +114,15 @@ const Setup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    console.log('🚀 Setup - Iniciando criação da empresa:', {
+      formData: {
+        ...formData,
+        cnpj: formData.cnpj.replace(/\D/g, ''),
+      },
+      user: user?.id,
+      profile: profile?.id
+    });
+
     if (!formData.companyName || !formData.cnpj || !formData.planId) {
       toast({
         variant: "destructive",
@@ -122,6 +131,20 @@ const Setup = () => {
       });
       return;
     }
+
+    // Verificar se o plano selecionado existe
+    const selectedPlan = plans.find(p => p.id === formData.planId);
+    if (!selectedPlan) {
+      console.error('❌ Setup - Plano não encontrado:', formData.planId);
+      toast({
+        variant: "destructive",
+        title: "Plano Inválido",
+        description: "Por favor, selecione um plano válido.",
+      });
+      return;
+    }
+
+    console.log('✅ Setup - Plano selecionado:', selectedPlan);
 
     if (!validateCNPJ(formData.cnpj)) {
       toast({
@@ -144,24 +167,33 @@ const Setup = () => {
         .replace(/-+/g, '-') // Remove hífens duplicados
         .replace(/^-|-$/g, ''); // Remove hífens do início e fim
 
+      const companyData = {
+        name: formData.companyName,
+        cnpj: formData.cnpj.replace(/\D/g, ''),
+        description: formData.description,
+        email: formData.email || profile?.email,
+        phone: formData.phone,
+        address: formData.address,
+        plan_id: formData.planId,
+        slug: baseSlug || 'empresa',
+        status: 'active',
+      };
+
+      console.log('📝 Setup - Dados da empresa a serem criados:', companyData);
+
       // Criar empresa
       const { data: company, error: companyError } = await supabase
         .from('companies')
-        .insert([{
-          name: formData.companyName,
-          cnpj: formData.cnpj.replace(/\D/g, ''),
-          description: formData.description,
-          email: formData.email || profile?.email,
-          phone: formData.phone,
-          address: formData.address,
-          plan_id: formData.planId,
-          slug: baseSlug || 'empresa',
-          status: 'active',
-        }])
+        .insert([companyData])
         .select()
         .single();
 
-      if (companyError) throw companyError;
+      if (companyError) {
+        console.error('❌ Setup - Erro ao criar empresa:', companyError);
+        throw companyError;
+      }
+
+      console.log('✅ Setup - Empresa criada com sucesso:', company);
 
       // Atualizar profile com company_id
       const { error: profileError } = await supabase
@@ -169,19 +201,44 @@ const Setup = () => {
         .update({ company_id: company.id })
         .eq('user_id', user!.id);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error('❌ Setup - Erro ao atualizar profile:', profileError);
+        throw profileError;
+      }
+
+      console.log('✅ Setup - Profile atualizado com company_id:', company.id);
+
+      // Verificar se o profile foi atualizado corretamente
+      const { data: updatedProfile, error: checkError } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user!.id)
+        .single();
+
+      if (checkError) {
+        console.error('❌ Setup - Erro ao verificar profile:', checkError);
+      } else {
+        console.log('✅ Setup - Profile verificado:', updatedProfile);
+      }
 
       // Atualizar contexto
       await refreshProfile();
 
+      console.log('🎉 Setup - Processo completo! Redirecionando para dashboard...');
+
       toast({
         title: "Empresa configurada com sucesso!",
-        description: "Bem-vindo ao Convidy! Você pode começar a criar seus eventos.",
+        description: `Bem-vindo ao Convidy! Plano ${selectedPlan.name} ativado.`,
       });
 
       navigate('/dashboard');
     } catch (error: any) {
-      console.error('Erro ao configurar empresa:', error);
+      console.error('❌ Setup - Erro completo:', {
+        error,
+        code: error?.code,
+        message: error?.message,
+        details: error?.details
+      });
       
       if (error.code === '23505' && error.message.includes('cnpj')) {
         toast({
@@ -193,7 +250,7 @@ const Setup = () => {
         toast({
           variant: "destructive",
           title: "Erro ao configurar empresa",
-          description: "Tente novamente em alguns instantes.",
+          description: `Erro: ${error?.message || 'Tente novamente em alguns instantes.'}`,
         });
       }
     } finally {

@@ -309,7 +309,7 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
                         </Badge>
                       </div>
                     </div>
-                    <Badge variant="secondary">
+                    <Badge variant="outline">
                       {insight.data_points} dados
                     </Badge>
                   </div>

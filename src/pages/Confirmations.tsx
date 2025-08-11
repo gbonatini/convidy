@@ -436,122 +436,73 @@ const Confirmations = () => {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6">
+          <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredRegistrations.map((registration) => (
-              <Card key={registration.id} className="p-6 hover:shadow-lg transition-all duration-200 border-l-4 border-l-primary">
-                <div className="grid lg:grid-cols-3 gap-6">
-                  {/* Seção do Convidado */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="h-12 w-12 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center text-white font-semibold text-lg">
-                        {registration.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
-                      </div>
-                      <div>
-                        <h4 className="font-semibold text-primary text-sm uppercase tracking-wide">Convidado</h4>
-                      </div>
+              <Card key={registration.id} className="p-4 hover:shadow-md transition-all duration-200 border-l-4 border-l-primary">
+                <div className="space-y-3">
+                  {/* Header com avatar e nome */}
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-full bg-gradient-to-br from-primary to-primary-glow flex items-center justify-center text-white font-semibold text-sm">
+                      {registration.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()}
                     </div>
-                    <div className="space-y-3">
-                      <h3 className="font-bold text-xl text-foreground">{registration.name}</h3>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          <span className="text-sm text-muted-foreground">{registration.email}</span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <div className="w-2 h-2 bg-primary rounded-full"></div>
-                          <span className="text-sm text-muted-foreground">
-                            CPF: {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.$3-**')}
-                          </span>
-                        </div>
-                        {registration.phone && (
-                          <div className="flex items-center gap-2">
-                            <div className="w-2 h-2 bg-primary rounded-full"></div>
-                            <span className="text-sm text-muted-foreground">Tel: {registration.phone}</span>
-                          </div>
-                        )}
-                      </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-lg text-foreground truncate">{registration.name}</h3>
+                      <p className="text-sm text-muted-foreground truncate">{registration.email}</p>
                     </div>
                   </div>
 
-                  {/* Seção do Evento */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <Calendar className="h-6 w-6 text-primary" />
-                      <h4 className="font-semibold text-primary text-sm uppercase tracking-wide">Evento</h4>
+                  {/* Informações do evento */}
+                  <div className="space-y-2">
+                    <h4 className="font-semibold text-sm text-primary">{registration.event?.title || 'Evento não encontrado'}</h4>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <MapPin className="h-3 w-3 flex-shrink-0" />
+                      <span className="truncate">{registration.event?.location || 'Local não disponível'}</span>
                     </div>
-                    <div className="space-y-3">
-                      <h4 className="font-bold text-lg">{registration.event?.title || 'Evento não encontrado'}</h4>
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
-                          <MapPin className="h-4 w-4 text-primary flex-shrink-0" />
-                          <span className="text-sm font-medium">{registration.event?.location || 'Local não disponível'}</span>
-                        </div>
-                        <div className="flex items-center gap-3 p-3 bg-accent/50 rounded-lg">
-                          <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                          <div className="text-sm">
-                            <div className="font-medium">
-                              {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'}
-                            </div>
-                            <div className="text-muted-foreground">
-                              às {registration.event?.time ? formatTime(registration.event.time) : 'Horário não disponível'}
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3 flex-shrink-0" />
+                      <span>
+                        {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'} - {registration.event?.time ? formatTime(registration.event.time) : 'N/A'}
+                      </span>
                     </div>
                   </div>
 
-                  {/* Seção de Status e Ações */}
-                  <div className="space-y-4">
-                    <div className="flex items-center gap-3 mb-3">
-                      <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center">
-                        <div className="h-3 w-3 bg-primary rounded-full"></div>
-                      </div>
-                      <h4 className="font-semibold text-primary text-sm uppercase tracking-wide">Status & Ações</h4>
+                  {/* Status e informações adicionais */}
+                  <div className="space-y-2">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {getConfirmationStatusBadge(registration.status)}
+                      {registration.checked_in && getCheckinStatusBadge(registration.checked_in)}
                     </div>
                     
-                    <div className="space-y-4">
-                       {/* Status Badges */}
-                       <div className="space-y-2">
-                         {getConfirmationStatusBadge(registration.status)}
-                         {registration.checked_in && (
-                           <div className="flex flex-col gap-1">
-                             {getCheckinStatusBadge(registration.checked_in)}
-                             <p className="text-xs text-muted-foreground">
-                               em {formatCreatedAt(registration.checkin_time || '')}
-                             </p>
-                           </div>
-                         )}
-                       </div>
-
-                      {/* Informações de tempo */}
-                      <div className="p-3 bg-muted/30 rounded-lg">
-                        <p className="text-xs font-medium text-muted-foreground">Confirmado em</p>
-                        <p className="text-sm font-medium">{formatCreatedAt(registration.created_at)}</p>
-                      </div>
-
-                      {/* Botões de Ação */}
-                      <div className="flex flex-col gap-2 pt-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setSelectedRegistration(registration)}
-                          className="w-full justify-start"
-                        >
-                          <Edit className="h-4 w-4 mr-2" />
-                          Editar Informações
-                        </Button>
-                        <Button
-                          variant="destructive"
-                          size="sm"
-                          onClick={() => handleDeleteRegistration(registration.id)}
-                          className="w-full justify-start"
-                        >
-                          <Trash2 className="h-4 w-4 mr-2" />
-                          Excluir Confirmação
-                        </Button>
-                      </div>
+                    <div className="text-xs text-muted-foreground space-y-1">
+                      <div>CPF: {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.$3-**')}</div>
+                      {registration.phone && <div>Tel: {registration.phone}</div>}
+                      <div>Confirmado: {formatCreatedAt(registration.created_at)}</div>
+                      {registration.checked_in && registration.checkin_time && (
+                        <div>Check-in: {formatCreatedAt(registration.checkin_time)}</div>
+                      )}
                     </div>
+                  </div>
+
+                  {/* Botões de ação compactos */}
+                  <div className="flex gap-1 pt-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setSelectedRegistration(registration)}
+                      className="flex-1 text-xs"
+                    >
+                      <Edit className="h-3 w-3 mr-1" />
+                      Editar
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteRegistration(registration.id)}
+                      className="flex-1 text-xs"
+                    >
+                      <Trash2 className="h-3 w-3 mr-1" />
+                      Excluir
+                    </Button>
                   </div>
                 </div>
               </Card>

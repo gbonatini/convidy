@@ -9,6 +9,7 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTour } from '@/hooks/useTour';
 import Joyride, { STATUS, EVENTS } from 'react-joyride';
+import { BehaviorAnalytics } from '@/components/BehaviorAnalytics';
 import { 
   Loader2, 
   LogOut, 
@@ -373,6 +374,11 @@ const Dashboard = () => {
             </CardContent>
           </Card>
         </div>
+
+{/* Behavior Analytics - só mostra se tem eventos */}
+        {stats.totalEvents > 0 && profile?.company_id && (
+          <BehaviorAnalytics companyId={profile.company_id} />
+        )}
 
         {stats.totalEvents === 0 && (
           <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">

@@ -28,6 +28,7 @@ import {
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { ConfirmationFilters } from '@/components/ConfirmationFilters';
 
 interface Registration {
   id: string;
@@ -77,9 +78,35 @@ const Confirmations = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedRegistration, setSelectedRegistration] = useState<Registration | null>(null);
   const [editingRegistration, setEditingRegistration] = useState<Registration | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [checkinFilter, setCheckinFilter] = useState('all');
+  const [events, setEvents] = useState<any[]>([]);
 
   useEffect(() => {
     fetchCompanyAndRegistrations();
+  }, []);
+
+  // Real-time subscription for registrations
+  useEffect(() => {
+    const channel = supabase
+      .channel('confirmations-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'registrations'
+        },
+        () => {
+          console.log('Registration updated, refetching...');
+          fetchCompanyAndRegistrations();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
   const fetchCompanyAndRegistrations = async () => {
@@ -127,6 +154,8 @@ const Confirmations = () => {
       console.log('Eventos da empresa:', { events, eventsError });
 
       if (eventsError) throw eventsError;
+
+      setEvents(events || []);
 
       if (!events || events.length === 0) {
         console.log('Nenhum evento encontrado para esta empresa');
@@ -212,11 +241,22 @@ const Confirmations = () => {
     }
   };
 
-  const filteredRegistrations = registrations.filter(reg =>
-    reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    (reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase()))
-  );
+  const filteredRegistrations = registrations.filter(reg => {
+    // Filtro de texto
+    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      reg.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    // Filtro de status
+    const matchesStatus = statusFilter === 'all' || reg.status === statusFilter;
+
+    // Filtro de check-in
+    const matchesCheckin = checkinFilter === 'all' || 
+      (checkinFilter === 'checked_in' && reg.checked_in) ||
+      (checkinFilter === 'pending' && !reg.checked_in);
+
+    return matchesSearch && matchesStatus && matchesCheckin;
+  });
 
   const formatDate = (dateString: string) => {
     return format(new Date(dateString + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR });
@@ -361,18 +401,27 @@ const Confirmations = () => {
           </Card>
         </div>
 
-        {/* Busca */}
-        <div className="flex items-center space-x-2">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
-            <Input
-              placeholder="Buscar por nome, email ou evento..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10"
-            />
-          </div>
-        </div>
+        {/* Filtros */}
+        <ConfirmationFilters
+          eventFilter={eventFilter || 'all'}
+          statusFilter={statusFilter}
+          checkinFilter={checkinFilter}
+          searchTerm={searchTerm}
+          onEventFilterChange={(eventId) => {
+            // Atualizar URL se necessário
+            if (eventId === 'all') {
+              window.history.pushState({}, '', '/confirmations');
+            } else {
+              window.history.pushState({}, '', `/confirmations?event=${eventId}`);
+            }
+            fetchCompanyAndRegistrations();
+          }}
+          onStatusFilterChange={setStatusFilter}
+          onCheckinFilterChange={setCheckinFilter}
+          onSearchTermChange={setSearchTerm}
+          events={events}
+          registrations={registrations}
+        />
 
         {/* Lista de Confirmações */}
         {filteredRegistrations.length === 0 ? (

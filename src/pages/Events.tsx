@@ -22,6 +22,7 @@ import {
   Settings
 } from 'lucide-react';
 import { EventForm } from '@/components/EventForm';
+import { EventFilters } from '@/components/EventFilters';
 
 interface Event {
   id: string;
@@ -50,6 +51,7 @@ const Events = () => {
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<Event | null>(null);
+  const [statusFilter, setStatusFilter] = useState('all');
 
   // Redirecionar se não autenticado
   if (!loading && !user) {
@@ -66,6 +68,32 @@ const Events = () => {
       fetchEvents();
     }
   }, [profile]);
+
+  // Real-time subscription for events
+  useEffect(() => {
+    if (!profile?.company_id) return;
+
+    const channel = supabase
+      .channel('events-realtime')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'events',
+          filter: `company_id=eq.${profile.company_id}`
+        },
+        () => {
+          console.log('Event updated, refetching...');
+          fetchEvents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [profile?.company_id]);
 
   const fetchEvents = async () => {
     if (!profile?.company_id) return;
@@ -170,9 +198,14 @@ const Events = () => {
       case 'completed':
         return 'bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-300';
       default:
-        return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
-    }
-  };
+    return 'bg-gray-100 text-gray-800 dark:bg-gray-900 dark:text-gray-300';
+  }
+};
+
+const filteredEvents = events.filter(event => {
+  if (statusFilter === 'all') return true;
+  return event.status === statusFilter;
+});
 
   if (loading || loadingEvents) {
     return (
@@ -217,6 +250,16 @@ const Events = () => {
             </DialogContent>
           </Dialog>
         </div>
+
+        {/* Filtros */}
+        {events.length > 0 && (
+          <EventFilters
+            statusFilter={statusFilter}
+            onStatusFilterChange={setStatusFilter}
+            events={events}
+          />
+        )}
+
         {events.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent className="space-y-4">
@@ -249,9 +292,24 @@ const Events = () => {
               </Dialog>
             </CardContent>
           </Card>
+        ) : filteredEvents.length === 0 ? (
+          <Card className="text-center py-12">
+            <CardContent className="space-y-4">
+              <Calendar className="h-12 w-12 mx-auto text-muted-foreground" />
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Nenhum evento encontrado</h3>
+                <p className="text-muted-foreground">
+                  Nenhum evento corresponde aos filtros selecionados.
+                </p>
+              </div>
+              <Button variant="outline" onClick={() => setStatusFilter('all')}>
+                Limpar Filtros
+              </Button>
+            </CardContent>
+          </Card>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {events.map((event) => (
+            {filteredEvents.map((event) => (
               <Card key={event.id} className="border-0 shadow-lg hover:shadow-xl transition-shadow overflow-hidden">
                 {/* Imagem do evento */}
                 {event.image_url && (

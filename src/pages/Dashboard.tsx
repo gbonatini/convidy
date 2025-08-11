@@ -403,3 +403,6 @@ const Dashboard = () => {
       </ErrorBoundary>
     </AdminLayout>
   );
+};
+
+export default Dashboard;

@@ -8,7 +8,8 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTour } from '@/hooks/useTour';
-const Joyride = lazy(() => import('react-joyride')) as any;
+// Joyride desabilitado temporariamente devido a erro de hooks (#310)
+// const Joyride = lazy(() => import('react-joyride')) as any;
 import { BehaviorAnalytics } from '@/components/BehaviorAnalytics';
 import EventFunnel from '@/components/EventFunnel';
 import EventProjections from '@/components/EventProjections';
@@ -273,33 +274,7 @@ const Dashboard = () => {
 
   console.log('✅ Dashboard - Renderizando dashboard normalmente');
   return <AdminLayout>
-      {joyrideEnabled && shouldShowTour && (
-        <Suspense fallback={null}>
-          <Joyride 
-            steps={tourSteps} 
-            run={run} 
-            continuous 
-            showProgress 
-            showSkipButton 
-            callback={handleJoyrideCallback} 
-            styles={{
-              options: {
-                primaryColor: 'hsl(var(--primary))',
-                backgroundColor: 'hsl(var(--background))',
-                textColor: 'hsl(var(--foreground))',
-                arrowColor: 'hsl(var(--background))'
-              }
-            }} 
-            locale={{
-              back: 'Voltar',
-              close: 'Fechar',
-              last: 'Finalizar',
-              next: 'Próximo',
-              skip: 'Pular'
-            }} 
-          />
-        </Suspense>
-      )}
+      {/* Joyride desabilitado temporariamente */}
       
       
       <div className="space-y-8">

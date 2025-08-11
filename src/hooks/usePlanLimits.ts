@@ -40,13 +40,16 @@ export const usePlanLimits = () => {
   const [planName, setPlanName] = useState<string>('');
 
   const fetchPlanData = async () => {
-    if (!profile?.company_id) return;
+    if (!profile?.company_id) {
+      console.log('❌ No company_id in profile:', profile);
+      return;
+    }
 
     try {
       console.log('🔍 Fetching plan data for company:', profile.company_id);
       
-      // Buscar dados da empresa
-      const { data: company, error: companyError } = await supabase
+      // Buscar apenas o plan_id da empresa
+      const { data: companyData, error: companyError } = await supabase
         .from('companies')
         .select('plan_id')
         .eq('id', profile.company_id)
@@ -54,37 +57,42 @@ export const usePlanLimits = () => {
 
       if (companyError) {
         console.error('❌ Error fetching company:', companyError);
-        throw companyError;
+        return;
       }
 
-      console.log('📊 Company data fetched:', company);
+      if (!companyData?.plan_id) {
+        console.error('❌ No plan_id found for company');
+        return;
+      }
 
-      // Buscar dados do plano
-      const { data: plan, error: planError } = await supabase
+      console.log('📊 Company data fetched:', companyData);
+
+      // Buscar dados do plano separadamente
+      const { data: planData, error: planError } = await supabase
         .from('system_plans')
         .select('name, slug, max_events, max_registrations_per_event, max_total_registrations')
-        .eq('id', company.plan_id)
+        .eq('id', companyData.plan_id)
         .single();
 
       if (planError) {
         console.error('❌ Error fetching plan:', planError);
-        throw planError;
+        return;
       }
 
       console.log('🎯 Plan details:', {
-        name: plan.name,
-        slug: plan.slug,
-        maxEvents: plan.max_events,
-        maxRegistrationsPerEvent: plan.max_registrations_per_event,
-        maxTotalRegistrations: plan.max_total_registrations
+        name: planData.name,
+        slug: planData.slug,
+        maxEvents: planData.max_events,
+        maxRegistrationsPerEvent: planData.max_registrations_per_event,
+        maxTotalRegistrations: planData.max_total_registrations
       });
       
       setPlanLimits({
-        maxEvents: plan.max_events,
-        maxRegistrationsPerEvent: plan.max_registrations_per_event,
-        maxTotalRegistrations: plan.max_total_registrations,
+        maxEvents: planData.max_events,
+        maxRegistrationsPerEvent: planData.max_registrations_per_event,
+        maxTotalRegistrations: planData.max_total_registrations,
       });
-      setPlanName(plan.name);
+      setPlanName(planData.name);
 
       // Buscar uso atual
       const { data: events, error: eventsError } = await supabase
@@ -116,7 +124,7 @@ export const usePlanLimits = () => {
       });
 
       console.log('✅ Plan data loaded successfully:', {
-        planName: plan.name,
+        planName: planData.name,
         usage: { totalEvents, totalRegistrations, activeEvents }
       });
 

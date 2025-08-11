@@ -37,16 +37,16 @@ export const EventFilters: React.FC<EventFiltersProps> = ({
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="all">
-            Todos os Status {showFilterCount && <Badge variant="secondary" className="ml-2">{statusCounts.all}</Badge>}
+            Todos os Status {showFilterCount && <Badge variant="outline" className="ml-2">{statusCounts.all}</Badge>}
           </SelectItem>
           <SelectItem value="active">
             Ativos {showFilterCount && <Badge variant="success" className="ml-2">{statusCounts.active}</Badge>}
           </SelectItem>
           <SelectItem value="inactive">
-            Inativos {showFilterCount && <Badge variant="warning" className="ml-2">{statusCounts.inactive}</Badge>}
+            Inativos {showFilterCount && <Badge variant="outline" className="ml-2">{statusCounts.inactive}</Badge>}
           </SelectItem>
           <SelectItem value="completed">
-            Finalizados {showFilterCount && <Badge variant="secondary" className="ml-2">{statusCounts.completed}</Badge>}
+            Finalizados {showFilterCount && <Badge variant="info" className="ml-2">{statusCounts.completed}</Badge>}
           </SelectItem>
         </SelectContent>
       </Select>

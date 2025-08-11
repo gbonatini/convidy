@@ -85,7 +85,7 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
-                Todos <Badge variant="secondary" className="ml-2">{statusCounts.all}</Badge>
+                Todos <Badge variant="outline" className="ml-2">{statusCounts.all}</Badge>
               </SelectItem>
               <SelectItem value="confirmed">
                 Confirmados <Badge variant="success" className="ml-2">{statusCounts.confirmed}</Badge>
@@ -103,13 +103,13 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">
-                Todos <Badge variant="secondary" className="ml-2">{checkinCounts.all}</Badge>
+                Todos <Badge variant="outline" className="ml-2">{checkinCounts.all}</Badge>
               </SelectItem>
               <SelectItem value="checked_in">
                 Já fizeram <Badge variant="success" className="ml-2">{checkinCounts.checked_in}</Badge>
               </SelectItem>
               <SelectItem value="pending">
-                Pendentes <Badge variant="warning" className="ml-2">{checkinCounts.pending}</Badge>
+                Pendentes <Badge variant="outline" className="ml-2">{checkinCounts.pending}</Badge>
               </SelectItem>
             </SelectContent>
           </Select>

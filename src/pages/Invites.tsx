@@ -15,6 +15,8 @@ import { useToast } from "@/hooks/use-toast";
 import { Plus, MessageCircle, Edit, Trash2, Loader2, Send, Clock, CheckCircle } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/AdminLayout";
+import MessageTemplateManager from "@/components/MessageTemplateManager";
+import MessageEditor from "@/components/MessageEditor";
 
 interface Invite {
   id: string;
@@ -25,6 +27,7 @@ interface Invite {
   status: string;
   created_at: string;
   event_id: string;
+  message_sent?: string;
   events: {
     title: string;
     date: string;
@@ -36,6 +39,15 @@ interface Event {
   title: string;
   date: string;
   status: string;
+  location?: string;
+}
+
+interface MessageTemplate {
+  id: string;
+  name: string;
+  content: string;
+  is_default: boolean;
+  variables: string[];
 }
 
 export default function Invites() {
@@ -61,6 +73,18 @@ export default function Invites() {
     email: ""
   });
 
+  // Message customization states
+  const [selectedTemplate, setSelectedTemplate] = useState<MessageTemplate | null>(null);
+  const [customMessage, setCustomMessage] = useState("");
+  const [companies, setCompanies] = useState<any>(null);
+
+  // Update custom message when template changes
+  useEffect(() => {
+    if (selectedTemplate && !customMessage) {
+      setCustomMessage(selectedTemplate.content);
+    }
+  }, [selectedTemplate]);
+
   useEffect(() => {
     if (!user) {
       navigate("/auth");
@@ -72,6 +96,7 @@ export default function Invites() {
     }
     fetchInvites();
     fetchEvents();
+    fetchCompany();
   }, [user, profile, navigate]);
 
   const fetchInvites = async () => {
@@ -108,7 +133,7 @@ export default function Invites() {
       // Fetch all events (both active and inactive) for better user experience
       const { data, error } = await supabase
         .from("events")
-        .select("id, title, date, status")
+        .select("id, title, date, status, location")
         .eq("company_id", profile.company_id)
         .in("status", ["active", "inactive"]) // Include both statuses
         .order("date", { ascending: false });
@@ -122,6 +147,23 @@ export default function Invites() {
         description: "Erro ao carregar eventos",
         variant: "destructive",
       });
+    }
+  };
+
+  const fetchCompany = async () => {
+    if (!profile?.company_id) return;
+
+    try {
+      const { data, error } = await supabase
+        .from("companies")
+        .select("name, slug")
+        .eq("id", profile.company_id)
+        .single();
+
+      if (error) throw error;
+      setCompanies(data);
+    } catch (error) {
+      console.error("Error fetching company:", error);
     }
   };
 
@@ -194,7 +236,8 @@ export default function Invites() {
           cpf: cpf.replace(/\D/g, ''),
           whatsapp: whatsapp.replace(/\D/g, ''),
           email: email || null,
-          status: 'pending'
+          status: 'pending',
+          message_sent: customMessage || null
         });
       }
 
@@ -211,6 +254,7 @@ export default function Invites() {
 
       setBulkData("");
       setSelectedEventId("");
+      setCustomMessage("");
       setIsDialogOpen(false);
       fetchInvites();
     } catch (error) {
@@ -264,7 +308,8 @@ export default function Invites() {
           cpf: manualForm.cpf.replace(/\D/g, ''),
           whatsapp: manualForm.whatsapp.replace(/\D/g, ''),
           email: manualForm.email || null,
-          status: 'pending'
+          status: 'pending',
+          message_sent: customMessage || null
         });
 
       if (error) throw error;
@@ -276,6 +321,7 @@ export default function Invites() {
 
       setManualForm({ full_name: "", cpf: "", whatsapp: "", email: "" });
       setSelectedEventId("");
+      setCustomMessage("");
       setIsDialogOpen(false);
       fetchInvites();
     } catch (error) {
@@ -290,28 +336,55 @@ export default function Invites() {
     }
   };
 
-  const handleSendWhatsApp = async (invite: Invite) => {
-    const event = invite.events;
+  const processMessage = (template: string, invite: Invite, event: Event) => {
     const eventDate = new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR');
-    const whatsappNumber = invite.whatsapp.replace(/\D/g, '');
+    const hour = new Date().getHours();
+    const greeting = hour >= 6 && hour < 12 ? "Bom dia" : hour >= 12 && hour < 18 ? "Boa tarde" : "Boa noite";
     
-    // Fetch company to get slug
     let eventLink = `${window.location.origin}/convite/${invite.id}`;
-    try {
-      const { data: company } = await supabase
-        .from("companies")
-        .select("slug")
-        .eq("id", profile!.company_id)
-        .single();
-      
-      if (company?.slug) {
-        eventLink = `${window.location.origin}/${company.slug}`;
-      }
-    } catch (error) {
-      console.log("Could not fetch company slug, using fallback");
+    if (companies?.slug) {
+      eventLink = `${window.location.origin}/${companies.slug}`;
     }
     
-    const message = `Olá ${invite.full_name}, você está convidado para o evento ${event.title} no dia ${eventDate}. Para confirmar presença, acesse: ${eventLink}`;
+    const variables = {
+      nome: invite.full_name,
+      evento: event.title,
+      data: eventDate,
+      local: event.location || "A definir",
+      link: eventLink,
+      empresa: companies?.name || "Nossa empresa",
+      saudacao: greeting
+    };
+
+    let processedMessage = template;
+    Object.entries(variables).forEach(([key, value]) => {
+      const regex = new RegExp(`\\{${key}\\}`, 'g');
+      processedMessage = processedMessage.replace(regex, value);
+    });
+
+    return processedMessage;
+  };
+
+  const handleSendWhatsApp = async (invite: Invite) => {
+    const event = events.find(e => e.id === invite.event_id);
+    if (!event) return;
+
+    const whatsappNumber = invite.whatsapp.replace(/\D/g, '');
+    
+    // Use saved message or default
+    let message = invite.message_sent;
+    if (!message) {
+      // Fallback to simple message if no template
+      const eventDate = new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR');
+      let eventLink = `${window.location.origin}/convite/${invite.id}`;
+      if (companies?.slug) {
+        eventLink = `${window.location.origin}/${companies.slug}`;
+      }
+      message = `Olá ${invite.full_name}, você está convidado para o evento ${event.title} no dia ${eventDate}. Para confirmar presença, acesse: ${eventLink}`;
+    } else {
+      // Process the saved template
+      message = processMessage(message, invite, event);
+    }
     
     const whatsappUrl = `https://wa.me/55${whatsappNumber}?text=${encodeURIComponent(message)}`;
     
@@ -515,6 +588,31 @@ export default function Invites() {
                          ))}
                      </SelectContent>
                   </Select>
+                 </div>
+
+                {/* Message Templates and Editor */}
+                <div className="space-y-4">
+                  <MessageTemplateManager 
+                    onSelectTemplate={setSelectedTemplate}
+                    selectedTemplate={selectedTemplate}
+                  />
+                  
+                  {selectedTemplate && (
+                    <MessageEditor
+                      content={customMessage || selectedTemplate.content}
+                      onChange={setCustomMessage}
+                      previewData={{
+                        nome: manualForm.full_name || "João Silva",
+                        evento: events.find(e => e.id === selectedEventId)?.title || "Evento de Exemplo",
+                        data: events.find(e => e.id === selectedEventId)?.date 
+                          ? new Date(events.find(e => e.id === selectedEventId)!.date + 'T00:00:00').toLocaleDateString('pt-BR')
+                          : "01/01/2024",
+                        local: events.find(e => e.id === selectedEventId)?.location || "Local do evento",
+                        link: `${window.location.origin}/convite/exemplo`,
+                        empresa: companies?.name || "Nossa Empresa"
+                      }}
+                    />
+                  )}
                 </div>
 
                 <Tabs defaultValue="bulk" className="w-full">

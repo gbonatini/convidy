@@ -163,6 +163,7 @@ export type Database = {
           event_id: string
           full_name: string
           id: string
+          message_sent: string | null
           status: string
           updated_at: string
           whatsapp: string
@@ -175,6 +176,7 @@ export type Database = {
           event_id: string
           full_name: string
           id?: string
+          message_sent?: string | null
           status?: string
           updated_at?: string
           whatsapp: string
@@ -187,6 +189,7 @@ export type Database = {
           event_id?: string
           full_name?: string
           id?: string
+          message_sent?: string | null
           status?: string
           updated_at?: string
           whatsapp?: string
@@ -207,6 +210,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      message_templates: {
+        Row: {
+          company_id: string
+          content: string
+          created_at: string | null
+          id: string
+          is_default: boolean | null
+          name: string
+          updated_at: string | null
+          variables: string[] | null
+        }
+        Insert: {
+          company_id: string
+          content: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name: string
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Update: {
+          company_id?: string
+          content?: string
+          created_at?: string | null
+          id?: string
+          is_default?: boolean | null
+          name?: string
+          updated_at?: string | null
+          variables?: string[] | null
+        }
+        Relationships: []
       }
       notification_settings: {
         Row: {

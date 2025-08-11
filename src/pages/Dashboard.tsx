@@ -10,37 +10,33 @@ import { useToast } from '@/hooks/use-toast';
 import { useTour } from '@/hooks/useTour';
 import Joyride, { STATUS, EVENTS } from 'react-joyride';
 import { BehaviorAnalytics } from '@/components/BehaviorAnalytics';
-import { 
-  Loader2, 
-  LogOut, 
-  Users, 
-  Calendar, 
-  BarChart3, 
-  Settings,
-  Plus,
-  TrendingUp,
-  CheckCircle,
-  Clock,
-  Building
-} from 'lucide-react';
-
+import { Loader2, LogOut, Users, Calendar, BarChart3, Settings, Plus, TrendingUp, CheckCircle, Clock, Building } from 'lucide-react';
 interface DashboardStats {
   totalEvents: number;
   totalRegistrations: number;
   totalCheckins: number;
   attendanceRate: number;
 }
-
 interface Company {
   id: string;
   slug: string;
   name: string;
 }
-
 const Dashboard = () => {
-  const { user, profile, loading } = useAuth();
-  const { toast } = useToast();
-  const { shouldShowTour, run, setRun, completeTour } = useTour();
+  const {
+    user,
+    profile,
+    loading
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
+  const {
+    shouldShowTour,
+    run,
+    setRun,
+    completeTour
+  } = useTour();
   const [stats, setStats] = useState<DashboardStats>({
     totalEvents: 0,
     totalRegistrations: 0,
@@ -49,151 +45,128 @@ const Dashboard = () => {
   });
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
-
-  const tourSteps = [
-    {
-      target: '[data-tour="public-page"]',
-      content: 'Esta é sua página pública! Compartilhe este link nas redes sociais ou nos convites para que as pessoas confirmem presença facilmente.',
-      placement: 'bottom' as const,
-    },
-    {
-      target: '[data-tour="sidebar-events"]',
-      content: 'Aqui você gerencia todos os seus eventos: criar, editar, visualizar confirmações e muito mais.',
-      placement: 'right' as const,
-    },
-    {
-      target: '[data-tour="sidebar-invites"]',
-      content: 'Nesta seção você pode enviar convites por WhatsApp e acompanhar o status de cada convite.',
-      placement: 'right' as const,
-    },
-    {
-      target: '[data-tour="sidebar-confirmations"]',
-      content: 'Veja todas as confirmações de presença em tempo real e gerencie a lista de participantes.',
-      placement: 'right' as const,
-    },
-    {
-      target: '[data-tour="sidebar-checkin"]',
-      content: 'No dia do evento, use esta ferramenta para fazer check-in com QR Code e acompanhar chegadas em tempo real.',
-      placement: 'right' as const,
-    },
-    {
-      target: '[data-tour="sidebar-settings"]',
-      content: 'Configure sua empresa, personalize as páginas públicas e ajuste preferências do sistema.',
-      placement: 'right' as const,
-    },
-    {
-      target: '[data-tour="stats-cards"]',
-      content: 'Estes cards mostram as principais métricas dos seus eventos: total de eventos, confirmações, check-ins e taxa de presença.',
-      placement: 'bottom' as const,
-    },
-  ];
-
+  const tourSteps = [{
+    target: '[data-tour="public-page"]',
+    content: 'Esta é sua página pública! Compartilhe este link nas redes sociais ou nos convites para que as pessoas confirmem presença facilmente.',
+    placement: 'bottom' as const
+  }, {
+    target: '[data-tour="sidebar-events"]',
+    content: 'Aqui você gerencia todos os seus eventos: criar, editar, visualizar confirmações e muito mais.',
+    placement: 'right' as const
+  }, {
+    target: '[data-tour="sidebar-invites"]',
+    content: 'Nesta seção você pode enviar convites por WhatsApp e acompanhar o status de cada convite.',
+    placement: 'right' as const
+  }, {
+    target: '[data-tour="sidebar-confirmations"]',
+    content: 'Veja todas as confirmações de presença em tempo real e gerencie a lista de participantes.',
+    placement: 'right' as const
+  }, {
+    target: '[data-tour="sidebar-checkin"]',
+    content: 'No dia do evento, use esta ferramenta para fazer check-in com QR Code e acompanhar chegadas em tempo real.',
+    placement: 'right' as const
+  }, {
+    target: '[data-tour="sidebar-settings"]',
+    content: 'Configure sua empresa, personalize as páginas públicas e ajuste preferências do sistema.',
+    placement: 'right' as const
+  }, {
+    target: '[data-tour="stats-cards"]',
+    content: 'Estes cards mostram as principais métricas dos seus eventos: total de eventos, confirmações, check-ins e taxa de presença.',
+    placement: 'bottom' as const
+  }];
   const handleJoyrideCallback = (data: any) => {
-    const { status, type } = data;
-    
+    const {
+      status,
+      type
+    } = data;
     if ([STATUS.FINISHED, STATUS.SKIPPED].includes(status)) {
       completeTour();
     }
   };
-
   const fetchDashboardStats = async () => {
     if (!profile?.company_id) return;
-
     try {
       // Buscar eventos da empresa
-      const { data: events, error: eventsError } = await supabase
-        .from('events')
-        .select('id')
-        .eq('company_id', profile.company_id);
-
+      const {
+        data: events,
+        error: eventsError
+      } = await supabase.from('events').select('id').eq('company_id', profile.company_id);
       if (eventsError) throw eventsError;
-
       if (!events || events.length === 0) {
         setStats({
           totalEvents: 0,
           totalRegistrations: 0,
           totalCheckins: 0,
-          attendanceRate: 0,
+          attendanceRate: 0
         });
         setLoadingStats(false);
         return;
       }
-
       const eventIds = events.map(e => e.id);
 
       // Buscar registrations
-      const { data: registrations, error: registrationsError } = await supabase
-        .from('registrations')
-        .select('checked_in')
-        .in('event_id', eventIds);
-
+      const {
+        data: registrations,
+        error: registrationsError
+      } = await supabase.from('registrations').select('checked_in').in('event_id', eventIds);
       if (registrationsError) throw registrationsError;
-
       const totalRegistrations = registrations?.length || 0;
       const totalCheckins = registrations?.filter(r => r.checked_in).length || 0;
-      const attendanceRate = totalRegistrations > 0 ? Math.round((totalCheckins / totalRegistrations) * 100) : 0;
-
+      const attendanceRate = totalRegistrations > 0 ? Math.round(totalCheckins / totalRegistrations * 100) : 0;
       setStats({
         totalEvents: events.length,
         totalRegistrations: totalRegistrations,
         totalCheckins: totalCheckins,
-        attendanceRate: attendanceRate,
+        attendanceRate: attendanceRate
       });
     } catch (error) {
       console.error('Erro ao carregar estatísticas:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível carregar as estatísticas do dashboard.",
+        description: "Não foi possível carregar as estatísticas do dashboard."
       });
     } finally {
       setLoadingStats(false);
     }
   };
-
   const handleSignOut = async () => {
     try {
       localStorage.clear();
       sessionStorage.clear();
-      
       try {
-        await supabase.auth.signOut({ scope: 'global' });
+        await supabase.auth.signOut({
+          scope: 'global'
+        });
       } catch (err) {
         console.warn('Erro no sign out global:', err);
       }
-      
       toast({
         title: "Logout realizado com sucesso!",
-        description: "Você foi desconectado da plataforma.",
+        description: "Você foi desconectado da plataforma."
       });
-      
       window.location.href = '/auth';
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Erro no logout",
-        description: "Tente novamente em alguns instantes.",
+        description: "Tente novamente em alguns instantes."
       });
     }
   };
-
   const fetchCompanyData = async () => {
     if (!profile?.company_id) return;
-    
     try {
-      const { data, error } = await supabase
-        .from('companies')
-        .select('id, slug, name')
-        .eq('id', profile.company_id)
-        .single();
-
+      const {
+        data,
+        error
+      } = await supabase.from('companies').select('id, slug, name').eq('id', profile.company_id).single();
       if (error) throw error;
       setCompany(data);
     } catch (error) {
       console.error('Erro ao carregar dados da empresa:', error);
     }
   };
-
   useEffect(() => {
     if (profile?.company_id) {
       fetchDashboardStats();
@@ -210,45 +183,29 @@ const Dashboard = () => {
   if (!loading && profile && !profile.company_id) {
     return <Navigate to="/setup" replace />;
   }
-
   if (loading || loadingStats) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
+    return <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Carregando dashboard...</p>
         </div>
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <AdminLayout>
-      {shouldShowTour && (
-        <Joyride
-          steps={tourSteps}
-          run={run}
-          continuous
-          showProgress
-          showSkipButton
-          callback={handleJoyrideCallback}
-          styles={{
-            options: {
-              primaryColor: 'hsl(var(--primary))',
-              backgroundColor: 'hsl(var(--background))',
-              textColor: 'hsl(var(--foreground))',
-              arrowColor: 'hsl(var(--background))',
-            }
-          }}
-          locale={{
-            back: 'Voltar',
-            close: 'Fechar',
-            last: 'Finalizar',
-            next: 'Próximo',
-            skip: 'Pular',
-          }}
-        />
-      )}
+  return <AdminLayout>
+      {shouldShowTour && <Joyride steps={tourSteps} run={run} continuous showProgress showSkipButton callback={handleJoyrideCallback} styles={{
+      options: {
+        primaryColor: 'hsl(var(--primary))',
+        backgroundColor: 'hsl(var(--background))',
+        textColor: 'hsl(var(--foreground))',
+        arrowColor: 'hsl(var(--background))'
+      }
+    }} locale={{
+      back: 'Voltar',
+      close: 'Fechar',
+      last: 'Finalizar',
+      next: 'Próximo',
+      skip: 'Pular'
+    }} />}
       
       <div className="space-y-8">
         {/* Welcome Section */}
@@ -261,16 +218,14 @@ const Dashboard = () => {
           </div>
           
           {/* Company Public Page Link */}
-          {company?.slug && (
-            <div data-tour="public-page">
+          {company?.slug && <div data-tour="public-page">
               <a href={`/${company.slug}`} target="_blank" rel="noopener noreferrer">
                 <Button variant="outline" size="sm">
                   <Building className="h-4 w-4 mr-2" />
                   Ver Página Pública
                 </Button>
               </a>
-            </div>
-          )}
+            </div>}
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="stats-cards">
@@ -319,69 +274,12 @@ const Dashboard = () => {
           </Card>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Plus className="h-5 w-5" />
-                <span>Criar Evento</span>
-              </CardTitle>
-              <CardDescription>
-                Organize um novo evento e comece a receber confirmações
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full" onClick={() => window.location.href = '/events'}>
-                <Calendar className="mr-2 h-4 w-4" />
-                Gerenciar Eventos
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <BarChart3 className="h-5 w-5" />
-                <span>Relatórios</span>
-              </CardTitle>
-              <CardDescription>
-                Analise o desempenho dos seus eventos com dados detalhados
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full">
-                <BarChart3 className="mr-2 h-4 w-4" />
-                Ver Relatórios
-              </Button>
-            </CardContent>
-          </Card>
-          
-          <Card className="border-0 shadow-lg">
-            <CardHeader>
-              <CardTitle className="flex items-center space-x-2">
-                <Settings className="h-5 w-5" />
-                <span>Configurações</span>
-              </CardTitle>
-              <CardDescription>
-                Configure sua empresa e personalize suas páginas públicas
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" className="w-full">
-                <Settings className="mr-2 h-4 w-4" />
-                Configurar
-              </Button>
-            </CardContent>
-          </Card>
-        </div>
+        
 
-{/* Behavior Analytics - só mostra se tem eventos */}
-        {stats.totalEvents > 0 && profile?.company_id && (
-          <BehaviorAnalytics companyId={profile.company_id} />
-        )}
+      {/* Behavior Analytics - só mostra se tem eventos */}
+        {stats.totalEvents > 0 && profile?.company_id && <BehaviorAnalytics companyId={profile.company_id} />}
 
-        {stats.totalEvents === 0 && (
-          <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+        {stats.totalEvents === 0 && <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
             <CardHeader>
               <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center space-x-2">
                 <Clock className="h-5 w-5" />
@@ -397,11 +295,8 @@ const Dashboard = () => {
                 Criar Primeiro Evento
               </Button>
             </CardContent>
-          </Card>
-        )}
+          </Card>}
       </div>
-    </AdminLayout>
-  );
+    </AdminLayout>;
 };
-
 export default Dashboard;

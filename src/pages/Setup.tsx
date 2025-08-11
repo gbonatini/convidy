@@ -94,7 +94,6 @@ const Setup = () => {
   };
 
   const handleSelectChange = (value: string) => {
-    console.log('Plan selected:', value);
     setFormData({
       ...formData,
       planId: value,
@@ -135,13 +134,6 @@ const Setup = () => {
 
     setIsLoading(true);
 
-    // Debug: verificar dados do formulário
-    console.log('Form data before creation:', {
-      planId: formData.planId,
-      companyName: formData.companyName,
-      cnpj: formData.cnpj
-    });
-
     try {
       // Gerar slug único para a empresa
       const baseSlug = formData.companyName.toLowerCase()
@@ -153,28 +145,21 @@ const Setup = () => {
         .replace(/^-|-$/g, ''); // Remove hífens do início e fim
 
       // Criar empresa
-      const companyData = {
-        name: formData.companyName,
-        cnpj: formData.cnpj.replace(/\D/g, ''),
-        description: formData.description,
-        email: formData.email || profile?.email,
-        phone: formData.phone,
-        address: formData.address,
-        plan_id: formData.planId,
-        slug: baseSlug || 'empresa',
-        status: 'active',
-      };
-
-      console.log('Company data to insert:', companyData);
-
       const { data: company, error: companyError } = await supabase
         .from('companies')
-        .insert([companyData])
+        .insert([{
+          name: formData.companyName,
+          cnpj: formData.cnpj.replace(/\D/g, ''),
+          description: formData.description,
+          email: formData.email || profile?.email,
+          phone: formData.phone,
+          address: formData.address,
+          plan_id: formData.planId,
+          slug: baseSlug || 'empresa',
+          status: 'active',
+        }])
         .select()
         .single();
-
-      console.log('Company created:', company);
-      console.log('Company error:', companyError);
 
       if (companyError) throw companyError;
 
@@ -380,10 +365,7 @@ const Setup = () => {
                       ? 'ring-2 ring-primary border-primary' 
                       : 'hover:shadow-lg'
                   }`}
-                  onClick={() => {
-                    console.log('Card clicked, plan ID:', plan.id);
-                    handleSelectChange(plan.id);
-                  }}
+                  onClick={() => handleSelectChange(plan.id)}
                 >
                   <CardHeader className="pb-4">
                     <div className="flex items-center justify-between">

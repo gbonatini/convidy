@@ -31,24 +31,33 @@ export const PaymentHistory: React.FC = () => {
     if (!profile?.company_id) return;
 
     try {
-      const { data, error } = await supabase
+      // Buscar transações separadamente
+      const { data: transactionsData, error: transactionsError } = await supabase
         .from('payment_transactions')
-        .select(`
-          id,
-          transaction_id,
-          payment_method,
-          amount,
-          status,
-          created_at,
-          paid_at,
-          system_plans(name, slug)
-        `)
+        .select('id, transaction_id, payment_method, amount, status, created_at, paid_at, plan_id')
         .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false })
         .limit(10);
 
-      if (error) throw error;
-      setTransactions(data as PaymentTransaction[] || []);
+      if (transactionsError) throw transactionsError;
+
+      // Para cada transação, buscar o plano
+      const transactionsWithPlans = await Promise.all(
+        (transactionsData || []).map(async (transaction) => {
+          const { data: planData, error: planError } = await supabase
+            .from('system_plans')
+            .select('name, slug')
+            .eq('id', transaction.plan_id)
+            .single();
+
+          return {
+            ...transaction,
+            system_plans: planData || { name: 'Plano desconhecido', slug: 'unknown' }
+          };
+        })
+      );
+
+      setTransactions(transactionsWithPlans as PaymentTransaction[] || []);
     } catch (error) {
       console.error('Erro ao carregar histórico:', error);
       toast({

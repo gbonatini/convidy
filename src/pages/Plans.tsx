@@ -72,18 +72,31 @@ const Plans = () => {
     if (!profile?.company_id) return;
 
     try {
-      const { data, error } = await supabase
+      // Buscar dados da empresa
+      const { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .select(`
-          plan_id,
-          plan_expires_at,
-          system_plans(name, slug)
-        `)
+        .select('plan_id, plan_expires_at')
         .eq('id', profile.company_id)
         .single();
 
-      if (error) throw error;
-      setCurrentPlan(data as any);
+      if (companyError) throw companyError;
+
+      // Buscar dados do plano
+      const { data: planData, error: planError } = await supabase
+        .from('system_plans')
+        .select('name, slug')
+        .eq('id', companyData.plan_id)
+        .single();
+
+      if (planError) throw planError;
+
+      const combinedData = {
+        plan_id: companyData.plan_id,
+        plan_expires_at: companyData.plan_expires_at,
+        system_plans: planData
+      };
+
+      setCurrentPlan(combinedData as any);
     } catch (error) {
       console.error('Erro ao carregar plano atual:', error);
     }

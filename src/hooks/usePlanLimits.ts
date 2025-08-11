@@ -50,7 +50,7 @@ export const usePlanLimits = () => {
         .from('companies')
         .select(`
           plan_id,
-          system_plans!companies_plan_id_fkey(
+          system_plans!fk_companies_plan_id(
             name,
             slug,
             max_events,

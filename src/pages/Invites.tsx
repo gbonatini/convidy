@@ -35,6 +35,7 @@ interface Event {
   id: string;
   title: string;
   date: string;
+  status: string;
 }
 
 export default function Invites() {
@@ -104,18 +105,23 @@ export default function Invites() {
     if (!profile?.company_id) return;
 
     try {
-      // Fetch all events (not just future ones) for filtering
+      // Fetch all events (both active and inactive) for better user experience
       const { data, error } = await supabase
         .from("events")
-        .select("id, title, date")
+        .select("id, title, date, status")
         .eq("company_id", profile.company_id)
-        .eq("status", "active")
+        .in("status", ["active", "inactive"]) // Include both statuses
         .order("date", { ascending: false });
 
       if (error) throw error;
       setEvents(data || []);
     } catch (error) {
       console.error("Error fetching events:", error);
+      toast({
+        title: "Erro",
+        description: "Erro ao carregar eventos",
+        variant: "destructive",
+      });
     }
   };
 
@@ -498,15 +504,16 @@ export default function Invites() {
                     <SelectTrigger>
                       <SelectValue placeholder="Selecione um evento" />
                     </SelectTrigger>
-                    <SelectContent>
-                      {events
-                        .filter(event => new Date(event.date) >= new Date())
-                        .map((event) => (
-                          <SelectItem key={event.id} value={event.id}>
-                             {event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
+                     <SelectContent>
+                       {events
+                         .filter(event => event.status === 'active' && new Date(event.date) >= new Date())
+                         .map((event) => (
+                           <SelectItem key={event.id} value={event.id}>
+                              {event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}
+                              <Badge variant="default" className="ml-2">Ativo</Badge>
+                           </SelectItem>
+                         ))}
+                     </SelectContent>
                   </Select>
                 </div>
 
@@ -593,14 +600,19 @@ export default function Invites() {
               <SelectTrigger className="w-full max-w-md">
                 <SelectValue placeholder="Todos os eventos" />
               </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os eventos</SelectItem>
-                {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.title}
-                  </SelectItem>
-                ))}
-              </SelectContent>
+               <SelectContent>
+                 <SelectItem value="all">Todos os eventos</SelectItem>
+                 {events.map((event) => (
+                   <SelectItem key={event.id} value={event.id}>
+                     <div className="flex items-center justify-between w-full">
+                       <span>{event.title}</span>
+                       <Badge variant={event.status === 'active' ? 'default' : 'secondary'} className="ml-2">
+                         {event.status === 'active' ? 'Ativo' : 'Inativo'}
+                       </Badge>
+                     </div>
+                   </SelectItem>
+                 ))}
+               </SelectContent>
             </Select>
           </div>
           {selectedEvent && (
@@ -755,13 +767,18 @@ export default function Invites() {
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione um evento" />
                   </SelectTrigger>
-                  <SelectContent>
-                    {events.map((event) => (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
+                   <SelectContent>
+                     {events.map((event) => (
+                       <SelectItem key={event.id} value={event.id}>
+                         <div className="flex items-center justify-between w-full">
+                           <span>{event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}</span>
+                           <Badge variant={event.status === 'active' ? 'default' : 'secondary'} className="ml-2">
+                             {event.status === 'active' ? 'Ativo' : 'Inativo'}
+                           </Badge>
+                         </div>
+                       </SelectItem>
+                     ))}
+                   </SelectContent>
                 </Select>
               </div>
 

@@ -40,21 +40,13 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
     behaviorPredictions: 0
   });
 
-  // Verificar se o plano permite analytics comportamental
-  if (planName.toLowerCase() !== 'empresarial') {
-    return (
-      <LimitWarning
-        type="features"
-        title="Analytics Comportamental - Plano Empresarial"
-        description="Os relatórios de análise comportamental estão disponíveis apenas no plano Empresarial. Faça upgrade para obter insights avançados sobre seus participantes."
-        planName={planName}
-      />
-    );
-  }
+  // Verificar se o plano permite analytics comportamental (NÃO retornar antes dos hooks)
+  const isEnterprise = planName?.toLowerCase() === 'empresarial';
 
   useEffect(() => {
+    if (!isEnterprise) return;
     generateBehaviorInsights();
-  }, [companyId]);
+  }, [companyId, isEnterprise]);
 
   const generateBehaviorInsights = async () => {
     try {
@@ -223,6 +215,17 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
       default: return <Brain className="h-5 w-5" />;
     }
   };
+
+  if (!isEnterprise) {
+    return (
+      <LimitWarning
+        type="features"
+        title="Analytics Comportamental - Plano Empresarial"
+        description="Os relatórios de análise comportamental estão disponíveis apenas no plano Empresarial. Faça upgrade para obter insights avançados sobre seus participantes."
+        planName={planName}
+      />
+    );
+  }
 
   if (loading) {
     return (

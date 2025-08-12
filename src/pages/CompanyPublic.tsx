@@ -192,30 +192,15 @@ const CompanyPublic = () => {
 
       console.log('Tentando inserir registro:', insertData);
 
-      const { data, error } = await supabase
+      const { error } = await supabase
         .from('registrations')
-        .insert([insertData])
-        .select();
+        .insert([insertData]);
 
-      console.log('Resultado da inserção:', { data, error });
-      console.log('Erro completo:', error);
+      console.log('Inserção concluída. Sem retorno de dados devido às políticas RLS.', { error });
 
       if (error) {
         console.error('Erro na inserção:', error);
         throw error;
-      }
-
-      console.log('Registro inserido com sucesso!', data);
-      
-      if (!data || data.length === 0) {
-        console.error('Nenhum dado retornado da inserção');
-        toast({
-          variant: "destructive",
-          title: "Erro interno",
-          description: "Registro salvo mas dados não retornados. Recarregue a página.",
-        });
-        setIsSubmitting(false);
-        return;
       }
 
       // Efeito de confetti para celebrar!
@@ -236,55 +221,35 @@ const CompanyPublic = () => {
       console.log('Limpando formulário...');
       setFormData({ name: '', document: '', phone: '', email: '' });
 
-      // Como o QR code agora é gerado pelo trigger automaticamente no INSERT,
-      // podemos usar os dados retornados diretamente
-      const registrationData = data[0];
-      console.log('Dados do registro:', registrationData);
+      // Buscar o registro via função segura (sem SELECT público)
+      const fetchQr = async () => {
+        const { data: regRow, error: regErr } = await (supabase as any).rpc('get_registration_public', {
+          event_uuid: selectedEvent.id,
+          document_text: formData.document,
+          phone_text: formData.phone,
+        });
+        return { regRow, regErr };
+      };
 
-      if (registrationData.qr_code) {
-        console.log('QR Code já disponível imediatamente!');
-        setRegistrationData(registrationData);
-        setShowQRCode(true);
+      const { regRow, regErr } = await fetchQr();
+      if (regErr || !regRow) {
+        console.log('QR Code não disponível imediatamente, tentando novamente...', regErr);
+        await new Promise((r) => setTimeout(r, 400));
+        const { regRow: regRow2, regErr: regErr2 } = await fetchQr();
+        if (regErr2 || !regRow2) {
+          console.error('Erro ao obter QR Code após retry:', regErr2);
+          toast({
+            variant: "destructive",
+            title: "Erro ao gerar QR Code",
+            description: "Registro salvo, mas houve problema ao gerar QR Code.",
+          });
+        } else {
+          setRegistrationData(regRow2);
+          setShowQRCode(true);
+        }
       } else {
-        console.log('QR Code não disponível ainda, aguardando...');
-        // Aguardar um momento caso o trigger demore um pouco
-        setTimeout(async () => {
-          console.log('Buscando dados atualizados...');
-          try {
-            const { data: updatedData, error: fetchError } = await supabase
-              .from('registrations')
-              .select('*')
-              .eq('id', registrationData.id)
-              .single();
-            
-            console.log('Resultado da busca:', { updatedData, fetchError });
-            
-            if (fetchError) {
-              console.error('Erro ao buscar dados:', fetchError);
-              toast({
-                variant: "destructive",
-                title: "Erro ao gerar QR Code",
-                description: "Registro salvo, mas houve problema ao gerar QR Code.",
-              });
-              return;
-            }
-            
-            if (updatedData?.qr_code) {
-              console.log('QR Code encontrado!');
-              setRegistrationData(updatedData);
-              setShowQRCode(true);
-            } else {
-              console.error('QR Code ainda não disponível');
-              toast({
-                variant: "destructive",
-                title: "QR Code não gerado",
-                description: "Registro salvo, mas QR Code não foi gerado. Entre em contato com o suporte.",
-              });
-            }
-          } catch (error) {
-            console.error('Erro na busca dos dados:', error);
-          }
-        }, 500); // Tempo reduzido já que o trigger funciona imediatamente
+        setRegistrationData(regRow);
+        setShowQRCode(true);
       }
 
     } catch (error: any) {

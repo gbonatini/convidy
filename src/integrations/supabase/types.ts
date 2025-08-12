@@ -713,6 +713,28 @@ export type Database = {
           | { event_uuid: string; document_text: string }
         Returns: string
       }
+      get_company_public: {
+        Args: { company_slug: string }
+        Returns: {
+          id: string
+          name: string
+          slug: string
+          description: string
+          logo_url: string
+          primary_color: string
+          secondary_color: string
+        }[]
+      }
+      get_registration_public: {
+        Args: { event_uuid: string; document_text: string; phone_text: string }
+        Returns: {
+          id: string
+          event_id: string
+          name: string
+          qr_code: string
+          created_at: string
+        }[]
+      }
       is_super_admin: {
         Args: { user_email: string }
         Returns: boolean

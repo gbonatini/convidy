@@ -1,19 +1,1 @@
 project_id = "aadqzfzzwivkmoppvsgi"
-
-[auth]
-enabled = true
-
-[auth.external.google]
-enabled = false
-
-[auth.external.github]
-enabled = false
-
-[functions.create-payment]
-verify_jwt = true
-
-[functions.flows-webhook]
-verify_jwt = false
-
-[functions.check-expired-plans]
-verify_jwt = false

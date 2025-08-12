@@ -53,6 +53,15 @@ interface Event {
 
 const CompanyPublic = () => {
   const { slug } = useParams();
+  const normalizeSlug = (s: string) => s
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/[\u2010-\u2015\u2212]/g, '-') // normaliza traços unicode para hífen
+    .replace(/[^a-z0-9-]/g, '-') // remove outros caracteres
+    .replace(/-+/g, '-') // colapsa múltiplos hifens
+    .replace(/^-|-$/g, ''); // remove hifens nas pontas
+  const safeSlug = slug ? normalizeSlug(decodeURIComponent(slug)) : '';
   const [company, setCompany] = useState<Company | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,18 +78,18 @@ const CompanyPublic = () => {
   const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (slug) {
+    if (safeSlug) {
       fetchCompanyAndEvents();
     }
-  }, [slug]);
+  }, [safeSlug]);
 
   const fetchCompanyAndEvents = async () => {
     try {
-      console.log('Slug capturado:', slug);
+      console.log('Slug capturado (raw -> normalizado):', slug, '->', safeSlug);
       
       // Buscar empresa pelo slug via função segura (apenas campos públicos)
       const { data: companyRows, error: companyError } = await (supabase as any)
-        .rpc('get_company_public', { company_slug: slug });
+        .rpc('get_company_public', { company_slug: safeSlug });
 
       const companyData = Array.isArray(companyRows) ? companyRows[0] : companyRows;
 

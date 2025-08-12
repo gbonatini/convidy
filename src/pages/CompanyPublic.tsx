@@ -549,7 +549,7 @@ const CompanyPublic = () => {
 
       {/* QR Code Modal */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-        <DialogContent className="w-[92vw] sm:max-w-md">
+        <DialogContent className="w-[90vw] sm:max-w-sm">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <QrCode className="h-6 w-6 text-green-600" />
@@ -577,10 +577,10 @@ const CompanyPublic = () => {
 
               <div className="text-center space-y-4">
                 {/* QR Code */}
-                <div ref={qrRef} className="bg-white p-6 rounded-lg border-2 border-gray-200 inline-block shadow-sm">
+                <div ref={qrRef} className="bg-white p-4 rounded-lg border-2 border-gray-200 inline-block shadow-sm">
                   <QRCodeSVG 
                     value={registrationData.qr_code}
-                    size={200}
+                    size={180}
                     level="M"
                     includeMargin={true}
                   />

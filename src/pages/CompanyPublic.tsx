@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
@@ -62,6 +62,7 @@ const CompanyPublic = () => {
     .replace(/-+/g, '-') // colapsa múltiplos hifens
     .replace(/^-|-$/g, ''); // remove hifens nas pontas
   const safeSlug = slug ? normalizeSlug(decodeURIComponent(slug)) : '';
+  const navigate = useNavigate();
   const [company, setCompany] = useState<Company | null>(null);
   const [events, setEvents] = useState<Event[]>([]);
   const [loading, setLoading] = useState(true);
@@ -77,6 +78,13 @@ const CompanyPublic = () => {
   const [showQRCode, setShowQRCode] = useState(false);
   const qrRef = useRef<HTMLDivElement>(null);
 
+  // Redireciona para a versão normalizada da URL (evita 404 por traço/unicode)
+  useEffect(() => {
+    if (slug && safeSlug && slug !== safeSlug) {
+      navigate('/' + safeSlug, { replace: true });
+    }
+  }, [slug, safeSlug, navigate]);
+
   useEffect(() => {
     if (safeSlug) {
       fetchCompanyAndEvents();
@@ -88,10 +96,22 @@ const CompanyPublic = () => {
       console.log('Slug capturado (raw -> normalizado):', slug, '->', safeSlug);
       
       // Buscar empresa pelo slug via função segura (apenas campos públicos)
-      const { data: companyRows, error: companyError } = await (supabase as any)
-        .rpc('get_company_public', { company_slug: safeSlug });
+      let companyData: any = null;
+      let companyError: any = null;
 
-      const companyData = Array.isArray(companyRows) ? companyRows[0] : companyRows;
+      const { data: companyRows, error: err1 } = await (supabase as any)
+        .rpc('get_company_public', { company_slug: safeSlug });
+      companyError = err1;
+      companyData = Array.isArray(companyRows) ? companyRows[0] : companyRows;
+
+      // Fallback: tentar com o slug original caso a normalização difira
+      if (!companyData && slug && slug !== safeSlug) {
+        const { data: altRows, error: err2 } = await (supabase as any)
+          .rpc('get_company_public', { company_slug: slug });
+        if (!companyError) companyError = err2;
+        const altData = Array.isArray(altRows) ? altRows[0] : altRows;
+        if (altData) companyData = altData;
+      }
 
       console.log('Resultado da busca da empresa (pública):', { companyData, companyError });
 

@@ -278,11 +278,11 @@ const CompanyPublic = () => {
             description: "Registro salvo, mas houve problema ao gerar QR Code.",
           });
         } else {
-          setRegistrationData(regRow2);
+          setRegistrationData(Array.isArray(regRow2) ? regRow2[0] : regRow2);
           setShowQRCode(true);
         }
       } else {
-        setRegistrationData(regRow);
+        setRegistrationData(Array.isArray(regRow) ? regRow[0] : regRow);
         setShowQRCode(true);
       }
 
@@ -549,7 +549,7 @@ const CompanyPublic = () => {
 
       {/* QR Code Modal */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-        <DialogContent className="w-[90vw] sm:max-w-sm">
+        <DialogContent className="w-[86vw] sm:max-w-xs">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <QrCode className="h-6 w-6 text-green-600" />
@@ -563,147 +563,23 @@ const CompanyPublic = () => {
           {registrationData && (
             <div className="space-y-6">
               {/* Instruções importantes */}
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 space-y-2">
-                <h4 className="font-semibold text-blue-800 flex items-center gap-2">
-                  📋 Instruções Importantes
-                </h4>
-                <ul className="text-sm text-blue-700 space-y-1 list-disc pl-4">
-                  <li><strong>Imprima</strong> este QR Code ou salve no seu celular</li>
-                  <li><strong>Apresente na entrada</strong> do evento para check-in rápido</li>
-                  <li><strong>Chegue com antecedência</strong> para evitar filas</li>
-                  <li><strong>Traga um documento</strong> com foto para confirmação</li>
-                </ul>
-              </div>
 
               <div className="text-center space-y-4">
                 {/* QR Code */}
-                <div ref={qrRef} className="bg-white p-4 rounded-lg border-2 border-gray-200 inline-block shadow-sm">
+                <div ref={qrRef} className="bg-white p-3 rounded-lg border inline-block">
                   <QRCodeSVG 
                     value={registrationData.qr_code}
-                    size={180}
+                    size={160}
                     level="M"
                     includeMargin={true}
                   />
                 </div>
                 
-                {/* Registration Info */}
-                <div className="text-sm space-y-3 text-left bg-gray-50 p-4 rounded-lg border">
-                  <h4 className="font-semibold text-gray-800 text-center border-b pb-2">
-                    📄 Dados da Sua Confirmação
-                  </h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    <p><strong>👤 Nome:</strong> {registrationData.name}</p>
-                    <p><strong>🎉 Evento:</strong> {events.find(e => e.id === registrationData.event_id)?.title || 'Evento'}</p>
-                    <p><strong>📅 Data:</strong> {events.find(e => e.id === registrationData.event_id) && formatDate(events.find(e => e.id === registrationData.event_id)!.date)}</p>
-                    <p><strong>🕐 Horário:</strong> {events.find(e => e.id === registrationData.event_id) && formatTime(events.find(e => e.id === registrationData.event_id)!.time)}</p>
-                    <p><strong>📍 Local:</strong> {events.find(e => e.id === registrationData.event_id)?.location || 'Local do evento'}</p>
-                  </div>
-                </div>
               </div>
               
-              {/* Action Buttons */}
-              <div className="space-y-3">
-                <Button 
-                  onClick={() => {
-                    const svg = qrRef.current?.querySelector('svg');
-                    if (svg) {
-                      const svgData = new XMLSerializer().serializeToString(svg);
-                      const canvas = document.createElement('canvas');
-                      const ctx = canvas.getContext('2d');
-                      const img = new Image();
-                      const scale = 3;
-                      img.onload = () => {
-                        canvas.width = img.width * scale;
-                        canvas.height = img.height * scale;
-                        if (ctx) {
-                          ctx.fillStyle = '#ffffff';
-                          ctx.fillRect(0, 0, canvas.width, canvas.height);
-                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                        }
-                        const link = document.createElement('a');
-                        link.download = `qr-code-${registrationData.name.replace(/\s+/g, '-')}.png`;
-                        link.href = canvas.toDataURL('image/png');
-                        link.click();
-                      };
-                      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
-                    }
-                  }}
-                  className="w-full bg-green-600 hover:bg-green-700"
-                  size="lg"
-                >
-                  <Download className="mr-2 h-4 w-4" />
-                  📱 Baixar QR Code (Recomendado)
-                </Button>
-
-                <Button 
-                  onClick={() => {
-                    // Print QR Code
-                    const printWindow = window.open('', '_blank');
-                    if (printWindow && registrationData) {
-                      const event = events.find(e => e.id === registrationData.event_id);
-                      const qrSvg = qrRef.current?.querySelector('svg')?.outerHTML || '';
-                      
-                      printWindow.document.write(`
-                        <html>
-                          <head>
-                            <title>QR Code - ${registrationData.name}</title>
-                            <style>
-                              body { font-family: Arial, sans-serif; text-align: center; padding: 20px; }
-                              .qr-container { margin: 20px 0; }
-                              .info { background: #f5f5f5; padding: 15px; margin: 20px 0; border-radius: 8px; }
-                              .instructions { background: #e3f2fd; padding: 15px; margin: 20px 0; border-radius: 8px; text-align: left; }
-                            </style>
-                          </head>
-                          <body>
-                            <h1>🎟️ Ingresso Digital</h1>
-                            <div class="info">
-                              <h3>📄 Dados da Confirmação</h3>
-                              <p><strong>Nome:</strong> ${registrationData.name}</p>
-                              <p><strong>Evento:</strong> ${event?.title || 'Evento'}</p>
-                              <p><strong>Data:</strong> ${event ? formatDate(event.date) : ''}</p>
-                              <p><strong>Horário:</strong> ${event ? formatTime(event.time) : ''}</p>
-                              <p><strong>Local:</strong> ${event?.location || 'Local do evento'}</p>
-                            </div>
-                            <div class="qr-container">
-                              ${qrSvg}
-                            </div>
-                            <div class="instructions">
-                              <h4>📋 Instruções para o dia do evento:</h4>
-                              <ul>
-                                <li>Apresente este QR Code na entrada do evento</li>
-                                <li>Tenha um documento com foto em mãos</li>
-                                <li>Chegue com antecedência para evitar filas</li>
-                              </ul>
-                            </div>
-                            <p><small>Powered by Convidy</small></p>
-                          </body>
-                        </html>
-                      `);
-                      printWindow.document.close();
-                      printWindow.print();
-                    }
-                  }}
-                  variant="outline"
-                  className="w-full"
-                  size="lg"
-                >
-                  🖨️ Imprimir QR Code
-                </Button>
-                
-                <Button 
-                  onClick={() => setShowQRCode(false)}
-                  variant="secondary"
-                  className="w-full"
-                >
-                  Fechar
-                </Button>
-              </div>
-
-              {/* Final message */}
-              <div className="text-center p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700">
-                  ✅ <strong>Pronto!</strong> Sua confirmação foi salva. Nos vemos no evento! 🎉
-                </p>
+              <p className="text-sm text-muted-foreground">Guarde este QR para apresentar no check-in.</p>
+              <div className="pt-2">
+                <Button onClick={() => setShowQRCode(false)} className="w-full" size="sm">Fechar</Button>
               </div>
             </div>
           )}

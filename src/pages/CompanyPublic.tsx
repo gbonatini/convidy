@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +66,7 @@ const CompanyPublic = () => {
   });
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [showQRCode, setShowQRCode] = useState(false);
+  const qrRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (slug) {
@@ -515,7 +516,7 @@ const CompanyPublic = () => {
 
       {/* QR Code Modal */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-        <DialogContent className="max-w-lg">
+        <DialogContent className="w-[92vw] sm:max-w-md">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-xl">
               <QrCode className="h-6 w-6 text-green-600" />
@@ -543,10 +544,10 @@ const CompanyPublic = () => {
 
               <div className="text-center space-y-4">
                 {/* QR Code */}
-                <div className="bg-white p-6 rounded-lg border-2 border-gray-200 inline-block shadow-sm">
+                <div ref={qrRef} className="bg-white p-6 rounded-lg border-2 border-gray-200 inline-block shadow-sm">
                   <QRCodeSVG 
-                    value={registrationData.qr_code} 
-                    size={220}
+                    value={registrationData.qr_code}
+                    size={200}
                     level="M"
                     includeMargin={true}
                   />
@@ -571,23 +572,27 @@ const CompanyPublic = () => {
               <div className="space-y-3">
                 <Button 
                   onClick={() => {
-                    // Download QR Code as image
-                    const svg = document.querySelector('svg');
+                    const svg = qrRef.current?.querySelector('svg');
                     if (svg) {
                       const svgData = new XMLSerializer().serializeToString(svg);
                       const canvas = document.createElement('canvas');
                       const ctx = canvas.getContext('2d');
                       const img = new Image();
+                      const scale = 3;
                       img.onload = () => {
-                        canvas.width = img.width;
-                        canvas.height = img.height;
-                        ctx?.drawImage(img, 0, 0);
+                        canvas.width = img.width * scale;
+                        canvas.height = img.height * scale;
+                        if (ctx) {
+                          ctx.fillStyle = '#ffffff';
+                          ctx.fillRect(0, 0, canvas.width, canvas.height);
+                          ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                        }
                         const link = document.createElement('a');
                         link.download = `qr-code-${registrationData.name.replace(/\s+/g, '-')}.png`;
-                        link.href = canvas.toDataURL();
+                        link.href = canvas.toDataURL('image/png');
                         link.click();
                       };
-                      img.src = 'data:image/svg+xml;base64,' + btoa(svgData);
+                      img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
                     }
                   }}
                   className="w-full bg-green-600 hover:bg-green-700"
@@ -603,7 +608,7 @@ const CompanyPublic = () => {
                     const printWindow = window.open('', '_blank');
                     if (printWindow && registrationData) {
                       const event = events.find(e => e.id === registrationData.event_id);
-                      const qrSvg = document.querySelector('svg')?.outerHTML || '';
+                      const qrSvg = qrRef.current?.querySelector('svg')?.outerHTML || '';
                       
                       printWindow.document.write(`
                         <html>

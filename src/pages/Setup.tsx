@@ -181,16 +181,28 @@ const Setup = () => {
 
       console.log('📝 Setup - Dados da empresa a serem criados:', companyData);
 
-      // Criar empresa
-      const { data: company, error: companyError } = await supabase
+      const { error: companyError } = await supabase
         .from('companies')
-        .insert([companyData])
-        .select()
-        .single();
+        .insert([companyData]);
 
       if (companyError) {
         console.error('❌ Setup - Erro ao criar empresa:', companyError);
         throw companyError;
+      }
+
+      // Buscar empresa recém-criada via função pública (evita SELECT bloqueado por RLS)
+      const { data: companyRpc, error: rpcError } = await (supabase as any)
+        .rpc('get_company_public', { company_slug: companyData.slug });
+
+      if (rpcError) {
+        console.error('❌ Setup - Erro ao buscar empresa via RPC:', rpcError);
+        throw rpcError;
+      }
+
+      const company = Array.isArray(companyRpc) ? companyRpc[0] : companyRpc;
+
+      if (!company?.id) {
+        throw new Error('Empresa criada, mas não foi possível recuperar o ID.');
       }
 
       console.log('✅ Setup - Empresa criada com sucesso:', company);

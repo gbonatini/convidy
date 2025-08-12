@@ -122,18 +122,22 @@ const CompanyPublic = () => {
       
       setCompany(companyData as Company);
 
-      // Buscar eventos da empresa
-      const { data: eventsData, error: eventsError } = await supabase
-        .from('events')
-        .select('*')
-        .eq('company_id', companyData.id)
-        .eq('status', 'active')
-        .gte('date', new Date().toISOString().split('T')[0])
-        .order('date');
+      // Buscar eventos da empresa (tratar erros separadamente para não confundir com empresa inexistente)
+      try {
+        const { data: eventsData, error: eventsError } = await supabase
+          .from('events')
+          .select('*')
+          .eq('company_id', companyData.id)
+          .eq('status', 'active')
+          .gte('date', new Date().toISOString().split('T')[0])
+          .order('date');
 
-      if (eventsError) throw eventsError;
-      
-      setEvents(eventsData || []);
+        if (eventsError) throw eventsError;
+        setEvents(eventsData || []);
+      } catch (evErr) {
+        console.warn('Falha ao carregar eventos, exibindo página da empresa mesmo assim.', evErr);
+        setEvents([]);
+      }
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast({

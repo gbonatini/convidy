@@ -237,38 +237,26 @@ const CheckIn = () => {
   };
 
   const processCheckIn = async (document_hash: string, event_id?: string) => {
+    console.log('[CheckIn] processCheckIn called with:', { document_hash, event_id });
+    // 1) Buscar o registro usando RPC segura no banco (RLS garantida por company do usuário)
     try {
-      // Find registration by document hash - need to decode QR code and compare document hash
-      let query = supabase
-        .from('registrations')
-        .select('*');
+      let registration: any = null;
 
       if (event_id) {
-        query = query.eq('event_id', event_id);
-      }
-
-      const { data: registrations, error: findError } = await query;
-
-      if (findError || !registrations) {
-        toast.error('Erro ao buscar registrations');
-        return;
-      }
-
-      // Find the registration that matches the document hash
-      let registration = null;
-      for (const reg of registrations) {
-        if (reg.qr_code) {
-          try {
-            const decodedQR = JSON.parse(atob(reg.qr_code));
-            if (decodedQR.document_hash === document_hash) {
-              registration = reg;
-              break;
-            }
-          } catch (e) {
-            // Skip invalid QR codes
-            continue;
-          }
-        }
+        const { data, error } = await (supabase as any).rpc('find_registration_by_hash', {
+          event_uuid: event_id,
+          doc_hash: document_hash,
+        });
+        console.log('[CheckIn] RPC find_registration_by_hash ->', { data, error });
+        if (error) throw error;
+        registration = Array.isArray(data) ? data[0] : data;
+      } else {
+        const { data, error } = await (supabase as any).rpc('find_registration_by_hash_company', {
+          doc_hash: document_hash,
+        });
+        console.log('[CheckIn] RPC find_registration_by_hash_company ->', { data, error });
+        if (error) throw error;
+        registration = Array.isArray(data) ? data[0] : data;
       }
 
       if (!registration) {
@@ -281,12 +269,12 @@ const CheckIn = () => {
         return;
       }
 
-      // Update registration with check-in
+      // 2) Atualizar para checked_in = true
       const { error: updateError } = await supabase
         .from('registrations')
         .update({
           checked_in: true,
-          checkin_time: new Date().toISOString()
+          checkin_time: new Date().toISOString(),
         })
         .eq('id', registration.id);
 
@@ -294,8 +282,11 @@ const CheckIn = () => {
 
       toast.success(`Check-in realizado para ${registration.name}!`);
       setShowScanner(false);
+
+      // Opcional: atualizar a listagem imediatamente
+      fetchRegistrations();
     } catch (error) {
-      console.error('Error processing check-in:', error);
+      console.error('Error processing check-in via RPC:', error);
       toast.error('Erro ao realizar check-in');
     }
   };

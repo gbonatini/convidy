@@ -707,6 +707,36 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      find_registration_by_hash: {
+        Args: { event_uuid: string; doc_hash: string }
+        Returns: {
+          id: string
+          event_id: string
+          name: string
+          email: string
+          phone: string
+          status: string
+          qr_code: string
+          checked_in: boolean
+          checkin_time: string
+          created_at: string
+        }[]
+      }
+      find_registration_by_hash_company: {
+        Args: { doc_hash: string }
+        Returns: {
+          id: string
+          event_id: string
+          name: string
+          email: string
+          phone: string
+          status: string
+          qr_code: string
+          checked_in: boolean
+          checkin_time: string
+          created_at: string
+        }[]
+      }
       generate_qr_data: {
         Args:
           | { event_uuid: string; document_text: string }

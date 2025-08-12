@@ -171,7 +171,6 @@ const CompanyPublic = () => {
     return cleanCPF.length === 11;
   };
 
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -549,38 +548,29 @@ const CompanyPublic = () => {
 
       {/* QR Code Modal */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-        <DialogContent className="w-[86vw] sm:max-w-xs">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2 text-xl">
-              <QrCode className="h-6 w-6 text-green-600" />
-              ✅ Confirmação Realizada!
+        <DialogContent className="w-[88vw] sm:max-w-[280px] p-4">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="flex items-center gap-2 text-base">
+              <QrCode className="h-5 w-5 text-green-600" />
+              QR Code de Check-in
             </DialogTitle>
-            <DialogDescription className="text-base">
-              Sua presença foi confirmada com sucesso! Use este QR Code no dia do evento.
-            </DialogDescription>
           </DialogHeader>
           
           {registrationData && (
-            <div className="space-y-6">
-              {/* Instruções importantes */}
-
-              <div className="text-center space-y-4">
-                {/* QR Code */}
-                <div ref={qrRef} className="bg-white p-3 rounded-lg border inline-block">
+            <div className="space-y-4">
+              <div className="text-center">
+                <div ref={qrRef} className="bg-white p-2 rounded-md border inline-block">
                   <QRCodeSVG 
                     value={registrationData.qr_code}
-                    size={160}
+                    size={140}
                     level="M"
                     includeMargin={true}
                   />
                 </div>
-                
               </div>
-              
-              <p className="text-sm text-muted-foreground">Guarde este QR para apresentar no check-in.</p>
-              <div className="pt-2">
-                <Button onClick={() => setShowQRCode(false)} className="w-full" size="sm">Fechar</Button>
-              </div>
+              <Button onClick={() => setShowQRCode(false)} className="w-full" size="sm">
+                Fechar
+              </Button>
             </div>
           )}
         </DialogContent>

@@ -29,13 +29,11 @@ import { ptBR } from 'date-fns/locale';
 interface Company {
   id: string;
   name: string;
-  description: string;
-  email: string;
-  phone: string;
-  address: string;
-  primary_color: string;
-  secondary_color: string;
-  logo_url: string;
+  description?: string;
+  primary_color?: string;
+  secondary_color?: string;
+  logo_url?: string;
+  slug: string;
 }
 
 interface Event {
@@ -79,22 +77,20 @@ const CompanyPublic = () => {
     try {
       console.log('Slug capturado:', slug);
       
-      // Buscar empresa pelo slug
-      const { data: companyData, error: companyError } = await supabase
-        .from('companies')
-        .select('*')
-        .eq('slug', slug)
-        .eq('status', 'active')
-        .maybeSingle();
+      // Buscar empresa pelo slug via função segura (apenas campos públicos)
+      const { data: companyRows, error: companyError } = await (supabase as any)
+        .rpc('get_company_public', { company_slug: slug });
 
-      console.log('Resultado da busca da empresa:', { companyData, companyError });
+      const companyData = Array.isArray(companyRows) ? companyRows[0] : companyRows;
+
+      console.log('Resultado da busca da empresa (pública):', { companyData, companyError });
 
       if (companyError) throw companyError;
       if (!companyData) {
         throw new Error('Empresa não encontrada');
       }
       
-      setCompany(companyData);
+      setCompany(companyData as Company);
 
       // Buscar eventos da empresa
       const { data: eventsData, error: eventsError } = await supabase

@@ -191,13 +191,34 @@ const CheckIn = () => {
     if (!result) return;
 
     try {
-      // Decode base64 QR data
-      const decodedData = JSON.parse(atob(result.text));
-      const { event_id, document_hash } = decodedData;
+      const raw: string = result.text || '';
 
+      const tryParse = (s: string) => {
+        try { return JSON.parse(s); } catch { return null; }
+      };
+      const b64decode = (s: string) => {
+        // Support URL-safe base64 as well
+        const normalized = s.replace(/[-_]/g, (c) => (c === '-' ? '+' : '/'));
+        return atob(normalized);
+      };
+
+      // Handle possible data URL (e.g., data:application/json;base64,....)
+      const payload = raw.startsWith('data:') && raw.includes(',') ? raw.split(',').pop() as string : raw;
+
+      let decoded: any = null;
+      // Try base64 JSON first
+      try { decoded = tryParse(b64decode(payload)); } catch { /* ignore */ }
+      // Fallback: plain JSON in QR
+      if (!decoded) decoded = tryParse(payload);
+
+      if (!decoded || !decoded.document_hash) {
+        throw new Error('QR payload inválido');
+      }
+
+      const { event_id, document_hash } = decoded;
       await processCheckIn(document_hash, event_id);
     } catch (error) {
-      console.error('Error processing QR code:', error);
+      console.error('Error processing QR code:', error, result?.text);
       toast.error('QR Code inválido');
     }
   };

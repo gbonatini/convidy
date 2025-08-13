@@ -192,6 +192,7 @@ const CheckIn = () => {
 
     try {
       const raw: string = result.text || '';
+      console.log('[QR SCAN] ===== INÍCIO SCAN =====');
       console.log('[QR SCAN] Raw QR data:', raw);
 
       const tryParse = (s: string) => {
@@ -230,21 +231,31 @@ const CheckIn = () => {
 
       // Suporte para formato simples (document ou cpf direto) e formato com hash
       let document_to_search: string;
+      let isDirectDocument = false;
+      
       if (decoded.document_hash) {
         // Formato antigo com hash - usar hash MD5
         document_to_search = decoded.document_hash;
+        isDirectDocument = false;
         console.log('[QR SCAN] Using hash format:', document_to_search);
       } else {
         // Formato novo simples - usar documento direto para busca
         document_to_search = decoded.document || decoded.cpf;
+        isDirectDocument = true;
         console.log('[QR SCAN] Using direct document format:', document_to_search);
       }
 
       const { event_id } = decoded;
       console.log('[QR SCAN] Event ID:', event_id);
-      console.log('[QR SCAN] Calling processCheckIn with:', { document_to_search, event_id, isDirectDocument: !decoded.document_hash });
+      console.log('[QR SCAN] ===== CHAMANDO processCheckIn =====');
+      console.log('[QR SCAN] Parâmetros:', { 
+        document_to_search, 
+        event_id, 
+        isDirectDocument,
+        decoded_full: decoded 
+      });
       
-      await processCheckIn(document_to_search, event_id, !decoded.document_hash);
+      await processCheckIn(document_to_search, event_id, isDirectDocument);
     } catch (error) {
       console.error('[QR SCAN] Error processing QR code:', error);
       toast.error('QR Code inválido ou erro ao processar');

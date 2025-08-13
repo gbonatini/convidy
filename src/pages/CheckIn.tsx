@@ -216,17 +216,17 @@ const CheckIn = () => {
       }
 
       // Suporte para formato simples (document ou cpf direto) e formato com hash
-      let document_hash: string;
+      let document_to_search: string;
       if (decoded.document_hash) {
-        document_hash = decoded.document_hash;
+        // Formato antigo com hash - usar hash MD5
+        document_to_search = decoded.document_hash;
       } else {
-        // Formato simples - usar documento direto e gerar hash
-        const document = decoded.document || decoded.cpf;
-        document_hash = CryptoJS.MD5(document).toString();
+        // Formato novo simples - usar documento direto para busca
+        document_to_search = decoded.document || decoded.cpf;
       }
 
       const { event_id } = decoded;
-      await processCheckIn(document_hash, event_id);
+      await processCheckIn(document_to_search, event_id, !decoded.document_hash);
     } catch (error) {
       console.error('Error processing QR code:', error, result?.text);
       toast.error('QR Code inválido');
@@ -243,31 +243,76 @@ const CheckIn = () => {
     const normalizedDocument = manualDocument.replace(/\D/g, '');
     const document_hash = CryptoJS.MD5(normalizedDocument).toString();
 
-    await processCheckIn(document_hash);
+    await processCheckIn(document_hash, undefined, false);
     setManualDocument('');
   };
 
-  const processCheckIn = async (document_hash: string, event_id?: string) => {
-    console.log('[CheckIn] processCheckIn called with:', { document_hash, event_id });
-    // 1) Buscar o registro usando RPC segura no banco (RLS garantida por company do usuário)
+  const processCheckIn = async (document_identifier: string, event_id?: string, isDirectDocument = false) => {
+    console.log('[CheckIn] processCheckIn called with:', { document_identifier, event_id, isDirectDocument });
+    
     try {
       let registration: any = null;
 
-      if (event_id) {
-        const { data, error } = await (supabase as any).rpc('find_registration_by_hash', {
-          event_uuid: event_id,
-          doc_hash: document_hash,
-        });
-        console.log('[CheckIn] RPC find_registration_by_hash ->', { data, error });
-        if (error) throw error;
-        registration = Array.isArray(data) ? data[0] : data;
+      if (isDirectDocument) {
+        // Para formato novo - buscar diretamente pelo documento
+        console.log('[CheckIn] Buscando por documento direto:', document_identifier);
+        if (event_id) {
+          const { data, error } = await supabase
+            .from('registrations')
+            .select(`
+              id, event_id, name, email, phone, status, qr_code, 
+              checked_in, checkin_time, created_at
+            `)
+            .eq('event_id', event_id)
+            .eq('document', document_identifier)
+            .single();
+          
+          console.log('[CheckIn] Busca direta por documento ->', { data, error });
+          if (error && error.code !== 'PGRST116') throw error;
+          registration = data;
+        } else {
+          // Buscar por empresa toda
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('company_id')
+            .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
+            .single();
+          
+          if (profileData?.company_id) {
+            const { data, error } = await supabase
+              .from('registrations')
+              .select(`
+                id, event_id, name, email, phone, status, qr_code, 
+                checked_in, checkin_time, created_at,
+                events!inner(company_id)
+              `)
+              .eq('document', document_identifier)
+              .eq('events.company_id', profileData.company_id)
+              .single();
+            
+            console.log('[CheckIn] Busca direta por documento (empresa) ->', { data, error });
+            if (error && error.code !== 'PGRST116') throw error;
+            registration = data;
+          }
+        }
       } else {
-        const { data, error } = await (supabase as any).rpc('find_registration_by_hash_company', {
-          doc_hash: document_hash,
-        });
-        console.log('[CheckIn] RPC find_registration_by_hash_company ->', { data, error });
-        if (error) throw error;
-        registration = Array.isArray(data) ? data[0] : data;
+        // Para formato antigo - usar RPC com hash
+        if (event_id) {
+          const { data, error } = await (supabase as any).rpc('find_registration_by_hash', {
+            event_uuid: event_id,
+            doc_hash: document_identifier,
+          });
+          console.log('[CheckIn] RPC find_registration_by_hash ->', { data, error });
+          if (error) throw error;
+          registration = Array.isArray(data) ? data[0] : data;
+        } else {
+          const { data, error } = await (supabase as any).rpc('find_registration_by_hash_company', {
+            doc_hash: document_identifier,
+          });
+          console.log('[CheckIn] RPC find_registration_by_hash_company ->', { data, error });
+          if (error) throw error;
+          registration = Array.isArray(data) ? data[0] : data;
+        }
       }
 
       if (!registration) {
@@ -297,7 +342,7 @@ const CheckIn = () => {
       // Opcional: atualizar a listagem imediatamente
       fetchRegistrations();
     } catch (error) {
-      console.error('Error processing check-in via RPC:', error);
+      console.error('Error processing check-in:', error);
       toast.error('Erro ao realizar check-in');
     }
   };

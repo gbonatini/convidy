@@ -743,6 +743,10 @@ export type Database = {
           | { event_uuid: string; document_text: string }
         Returns: string
       }
+      generate_qr_data_simple: {
+        Args: { event_uuid: string; document_text: string }
+        Returns: string
+      }
       get_company_public: {
         Args: { company_slug: string }
         Returns: {

@@ -229,8 +229,9 @@ const CheckIn = () => {
       return;
     }
 
-    // Usar MD5 para corresponder ao hash usado no banco
-    const document_hash = CryptoJS.MD5(manualDocument.replace(/\D/g, '')).toString();
+    // Normalizar documento removendo pontuação e traços, depois usar MD5
+    const normalizedDocument = manualDocument.replace(/\D/g, '');
+    const document_hash = CryptoJS.MD5(normalizedDocument).toString();
 
     await processCheckIn(document_hash);
     setManualDocument('');

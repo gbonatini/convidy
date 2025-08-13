@@ -192,6 +192,7 @@ const CheckIn = () => {
 
     try {
       const raw: string = result.text || '';
+      console.log('[QR SCAN] Raw QR data:', raw);
 
       const tryParse = (s: string) => {
         try { return JSON.parse(s); } catch { return null; }
@@ -204,32 +205,49 @@ const CheckIn = () => {
 
       // Handle possible data URL (e.g., data:application/json;base64,....)
       const payload = raw.startsWith('data:') && raw.includes(',') ? raw.split(',').pop() as string : raw;
+      console.log('[QR SCAN] Payload extracted:', payload);
 
       let decoded: any = null;
       // Try base64 JSON first
-      try { decoded = tryParse(b64decode(payload)); } catch { /* ignore */ }
+      try { 
+        decoded = tryParse(b64decode(payload)); 
+        console.log('[QR SCAN] Decoded from base64:', decoded);
+      } catch { 
+        console.log('[QR SCAN] Failed to decode as base64');
+      }
       // Fallback: plain JSON in QR
-      if (!decoded) decoded = tryParse(payload);
+      if (!decoded) {
+        decoded = tryParse(payload);
+        console.log('[QR SCAN] Decoded as plain JSON:', decoded);
+      }
 
       if (!decoded || (!decoded.document_hash && !decoded.document && !decoded.cpf)) {
+        console.error('[QR SCAN] Invalid QR payload:', decoded);
         throw new Error('QR payload inválido');
       }
+
+      console.log('[QR SCAN] Final decoded data:', decoded);
 
       // Suporte para formato simples (document ou cpf direto) e formato com hash
       let document_to_search: string;
       if (decoded.document_hash) {
         // Formato antigo com hash - usar hash MD5
         document_to_search = decoded.document_hash;
+        console.log('[QR SCAN] Using hash format:', document_to_search);
       } else {
         // Formato novo simples - usar documento direto para busca
         document_to_search = decoded.document || decoded.cpf;
+        console.log('[QR SCAN] Using direct document format:', document_to_search);
       }
 
       const { event_id } = decoded;
+      console.log('[QR SCAN] Event ID:', event_id);
+      console.log('[QR SCAN] Calling processCheckIn with:', { document_to_search, event_id, isDirectDocument: !decoded.document_hash });
+      
       await processCheckIn(document_to_search, event_id, !decoded.document_hash);
     } catch (error) {
-      console.error('Error processing QR code:', error, result?.text);
-      toast.error('QR Code inválido');
+      console.error('[QR SCAN] Error processing QR code:', error);
+      toast.error('QR Code inválido ou erro ao processar');
     }
   };
 
@@ -248,29 +266,32 @@ const CheckIn = () => {
   };
 
   const processCheckIn = async (document_identifier: string, event_id?: string, isDirectDocument = false) => {
-    console.log('[CheckIn] processCheckIn called with:', { document_identifier, event_id, isDirectDocument });
+    console.log('[PROCESS CHECKIN] ===== INÍCIO =====');
+    console.log('[PROCESS CHECKIN] Parâmetros recebidos:', { document_identifier, event_id, isDirectDocument });
     
     try {
       let registration: any = null;
 
       if (isDirectDocument) {
         // Para formato novo - buscar diretamente pelo documento
-        console.log('[CheckIn] Buscando por documento direto:', document_identifier);
+        console.log('[PROCESS CHECKIN] Buscando por documento direto:', document_identifier);
         if (event_id) {
+          console.log('[PROCESS CHECKIN] Fazendo busca com event_id:', event_id);
           const { data, error } = await supabase
             .from('registrations')
             .select(`
               id, event_id, name, email, phone, status, qr_code, 
-              checked_in, checkin_time, created_at
+              checked_in, checkin_time, created_at, document
             `)
             .eq('event_id', event_id)
             .eq('document', document_identifier)
             .single();
           
-          console.log('[CheckIn] Busca direta por documento ->', { data, error });
+          console.log('[PROCESS CHECKIN] Resultado da busca direta:', { data, error });
           if (error && error.code !== 'PGRST116') throw error;
           registration = data;
         } else {
+          console.log('[PROCESS CHECKIN] Buscando por empresa (sem event_id específico)');
           // Buscar por empresa toda
           const { data: profileData } = await supabase
             .from('profiles')
@@ -278,19 +299,21 @@ const CheckIn = () => {
             .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
             .single();
           
+          console.log('[PROCESS CHECKIN] Company ID do usuário:', profileData?.company_id);
+          
           if (profileData?.company_id) {
             const { data, error } = await supabase
               .from('registrations')
               .select(`
                 id, event_id, name, email, phone, status, qr_code, 
-                checked_in, checkin_time, created_at,
+                checked_in, checkin_time, created_at, document,
                 events!inner(company_id)
               `)
               .eq('document', document_identifier)
               .eq('events.company_id', profileData.company_id)
               .single();
             
-            console.log('[CheckIn] Busca direta por documento (empresa) ->', { data, error });
+            console.log('[PROCESS CHECKIN] Resultado da busca por empresa:', { data, error });
             if (error && error.code !== 'PGRST116') throw error;
             registration = data;
           }
@@ -315,15 +338,25 @@ const CheckIn = () => {
         }
       }
 
+      console.log('[PROCESS CHECKIN] Registration encontrado:', registration);
+
       if (!registration) {
+        console.log('[PROCESS CHECKIN] ERRO: Nenhum registro encontrado!');
         toast.error('Convidado não encontrado');
         return;
       }
 
       if (registration.checked_in) {
+        console.log('[PROCESS CHECKIN] AVISO: Check-in já realizado para:', registration.name);
         toast.warning('Check-in já realizado anteriormente');
         return;
       }
+
+      console.log('[PROCESS CHECKIN] Realizando check-in para:', {
+        id: registration.id,
+        name: registration.name,
+        document: registration.document
+      });
 
       // 2) Atualizar para checked_in = true
       const { error: updateError } = await supabase
@@ -334,15 +367,21 @@ const CheckIn = () => {
         })
         .eq('id', registration.id);
 
-      if (updateError) throw updateError;
+      if (updateError) {
+        console.error('[PROCESS CHECKIN] Erro no update:', updateError);
+        throw updateError;
+      }
 
+      console.log('[PROCESS CHECKIN] ===== SUCESSO =====');
+      console.log('[PROCESS CHECKIN] Check-in realizado para:', registration.name);
       toast.success(`Check-in realizado para ${registration.name}!`);
       setShowScanner(false);
 
       // Opcional: atualizar a listagem imediatamente
       fetchRegistrations();
     } catch (error) {
-      console.error('Error processing check-in:', error);
+      console.error('[PROCESS CHECKIN] ===== ERRO =====');
+      console.error('[PROCESS CHECKIN] Error details:', error);
       toast.error('Erro ao realizar check-in');
     }
   };

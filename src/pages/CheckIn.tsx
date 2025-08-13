@@ -280,6 +280,9 @@ const CheckIn = () => {
     console.log('[PROCESS CHECKIN] ===== INÍCIO =====');
     console.log('[PROCESS CHECKIN] Parâmetros recebidos:', { document_identifier, event_id, isDirectDocument });
     
+    // DEBUG ALERT
+    alert(`DEBUG: Iniciando check-in\nDocumento: ${document_identifier}\nEvento: ${event_id}\nDireto: ${isDirectDocument}`);
+    
     try {
       let registration: any = null;
 
@@ -352,6 +355,13 @@ const CheckIn = () => {
       }
 
       console.log('[PROCESS CHECKIN] Registration encontrado:', registration);
+      
+      // DEBUG ALERT
+      if (registration) {
+        alert(`DEBUG: Registro encontrado\nNome: ${registration.name}\nDocumento: ${registration.document}\nChecked-in: ${registration.checked_in}`);
+      } else {
+        alert('DEBUG: Nenhum registro encontrado!');
+      }
 
       if (!registration) {
         console.log('[PROCESS CHECKIN] ERRO: Nenhum registro encontrado!');
@@ -368,6 +378,10 @@ const CheckIn = () => {
           checked_in: registration.checked_in,
           checkin_time: registration.checkin_time
         });
+        
+        // DEBUG ALERT
+        alert(`ERRO: Check-in já realizado!\nNome: ${registration.name}\nDocumento: ${registration.document}\nChecked-in: ${registration.checked_in}\nHorário: ${registration.checkin_time}`);
+        
         toast.warning(`Check-in já realizado anteriormente para ${registration.name}`);
         return;
       }

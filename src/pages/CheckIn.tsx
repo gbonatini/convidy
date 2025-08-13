@@ -285,11 +285,12 @@ const CheckIn = () => {
             `)
             .eq('event_id', event_id)
             .eq('document', document_identifier)
-            .single();
+            .order('created_at', { ascending: false })
+            .limit(1);
           
           console.log('[PROCESS CHECKIN] Resultado da busca direta:', { data, error });
-          if (error && error.code !== 'PGRST116') throw error;
-          registration = data;
+          if (error) throw error;
+          registration = data && data.length > 0 ? data[0] : null;
         } else {
           console.log('[PROCESS CHECKIN] Buscando por empresa (sem event_id específico)');
           // Buscar por empresa toda
@@ -311,11 +312,12 @@ const CheckIn = () => {
               `)
               .eq('document', document_identifier)
               .eq('events.company_id', profileData.company_id)
-              .single();
+              .order('created_at', { ascending: false })
+              .limit(1);
             
             console.log('[PROCESS CHECKIN] Resultado da busca por empresa:', { data, error });
-            if (error && error.code !== 'PGRST116') throw error;
-            registration = data;
+            if (error) throw error;
+            registration = data && data.length > 0 ? data[0] : null;
           }
         }
       } else {

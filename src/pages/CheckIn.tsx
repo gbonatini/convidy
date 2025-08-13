@@ -360,8 +360,15 @@ const CheckIn = () => {
       }
 
       if (registration.checked_in) {
-        console.log('[PROCESS CHECKIN] AVISO: Check-in já realizado para:', registration.name);
-        toast.warning('Check-in já realizado anteriormente');
+        console.log('[PROCESS CHECKIN] AVISO: Check-in já realizado!');
+        console.log('[PROCESS CHECKIN] Dados do registro encontrado:', {
+          id: registration.id,
+          name: registration.name,
+          document: registration.document,
+          checked_in: registration.checked_in,
+          checkin_time: registration.checkin_time
+        });
+        toast.warning(`Check-in já realizado anteriormente para ${registration.name}`);
         return;
       }
 

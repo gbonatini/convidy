@@ -280,15 +280,14 @@ const CheckIn = () => {
     console.log('[PROCESS CHECKIN] ===== INÍCIO =====');
     console.log('[PROCESS CHECKIN] Parâmetros recebidos:', { document_identifier, event_id, isDirectDocument });
     
-    // DEBUG ALERT
-    alert(`DEBUG: Iniciando check-in\nDocumento: ${document_identifier}\nEvento: ${event_id}\nDireto: ${isDirectDocument}`);
-    
     try {
       let registration: any = null;
 
       if (isDirectDocument) {
-        // Para formato novo - buscar diretamente pelo documento
-        console.log('[PROCESS CHECKIN] Buscando por documento direto:', document_identifier);
+        // Para formato novo - buscar diretamente pelo documento limpo
+        const cleanDocument = document_identifier.replace(/\D/g, '');
+        console.log('[PROCESS CHECKIN] Buscando por documento direto:', cleanDocument);
+        
         if (event_id) {
           console.log('[PROCESS CHECKIN] Fazendo busca com event_id:', event_id);
           const { data, error } = await supabase
@@ -298,13 +297,12 @@ const CheckIn = () => {
               checked_in, checkin_time, created_at, document
             `)
             .eq('event_id', event_id)
-            .eq('document', document_identifier)
-            .order('created_at', { ascending: false })
-            .limit(1);
+            .eq('document', cleanDocument)
+            .single();
           
           console.log('[PROCESS CHECKIN] Resultado da busca direta:', { data, error });
-          if (error) throw error;
-          registration = data && data.length > 0 ? data[0] : null;
+          if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
+          registration = data;
         } else {
           console.log('[PROCESS CHECKIN] Buscando por empresa (sem event_id específico)');
           // Buscar por empresa toda
@@ -324,14 +322,15 @@ const CheckIn = () => {
                 checked_in, checkin_time, created_at, document,
                 events!inner(company_id)
               `)
-              .eq('document', document_identifier)
+              .eq('document', cleanDocument)
               .eq('events.company_id', profileData.company_id)
               .order('created_at', { ascending: false })
-              .limit(1);
+              .limit(1)
+              .single();
             
             console.log('[PROCESS CHECKIN] Resultado da busca por empresa:', { data, error });
-            if (error) throw error;
-            registration = data && data.length > 0 ? data[0] : null;
+            if (error && error.code !== 'PGRST116') throw error;
+            registration = data;
           }
         }
       } else {
@@ -355,13 +354,6 @@ const CheckIn = () => {
       }
 
       console.log('[PROCESS CHECKIN] Registration encontrado:', registration);
-      
-      // DEBUG ALERT
-      if (registration) {
-        alert(`DEBUG: Registro encontrado\nNome: ${registration.name}\nDocumento: ${registration.document}\nChecked-in: ${registration.checked_in}`);
-      } else {
-        alert('DEBUG: Nenhum registro encontrado!');
-      }
 
       if (!registration) {
         console.log('[PROCESS CHECKIN] ERRO: Nenhum registro encontrado!');
@@ -369,18 +361,30 @@ const CheckIn = () => {
         return;
       }
 
+      // Validação adicional: verificar se o documento do registro corresponde ao esperado
+      if (isDirectDocument) {
+        const expectedDocument = document_identifier.replace(/\D/g, '');
+        const foundDocument = registration.document?.replace(/\D/g, '');
+        
+        if (expectedDocument !== foundDocument) {
+          console.log('[PROCESS CHECKIN] ERRO: Documento não confere!', {
+            expected: expectedDocument,
+            found: foundDocument
+          });
+          toast.error('Erro: documento não confere');
+          return;
+        }
+      }
+
       if (registration.checked_in) {
         console.log('[PROCESS CHECKIN] AVISO: Check-in já realizado!');
-        console.log('[PROCESS CHECKIN] Dados do registro encontrado:', {
+        console.log('[PROCESS CHECKIN] Dados do registro:', {
           id: registration.id,
           name: registration.name,
           document: registration.document,
           checked_in: registration.checked_in,
           checkin_time: registration.checkin_time
         });
-        
-        // DEBUG ALERT
-        alert(`ERRO: Check-in já realizado!\nNome: ${registration.name}\nDocumento: ${registration.document}\nChecked-in: ${registration.checked_in}\nHorário: ${registration.checkin_time}`);
         
         toast.warning(`Check-in já realizado anteriormente para ${registration.name}`);
         return;

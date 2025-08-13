@@ -211,11 +211,21 @@ const CheckIn = () => {
       // Fallback: plain JSON in QR
       if (!decoded) decoded = tryParse(payload);
 
-      if (!decoded || !decoded.document_hash) {
+      if (!decoded || (!decoded.document_hash && !decoded.document && !decoded.cpf)) {
         throw new Error('QR payload inválido');
       }
 
-      const { event_id, document_hash } = decoded;
+      // Suporte para formato simples (document ou cpf direto) e formato com hash
+      let document_hash: string;
+      if (decoded.document_hash) {
+        document_hash = decoded.document_hash;
+      } else {
+        // Formato simples - usar documento direto e gerar hash
+        const document = decoded.document || decoded.cpf;
+        document_hash = CryptoJS.MD5(document).toString();
+      }
+
+      const { event_id } = decoded;
       await processCheckIn(document_hash, event_id);
     } catch (error) {
       console.error('Error processing QR code:', error, result?.text);

@@ -551,27 +551,35 @@ const CompanyPublic = () => {
 
       {/* QR Code Modal */}
       <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
-        <DialogContent className="w-[88vw] sm:max-w-[280px] p-4">
-          <DialogHeader className="pb-2">
-            <DialogTitle className="flex items-center gap-2 text-base">
-              <QrCode className="h-5 w-5 text-green-600" />
-              QR Code de Check-in
+        <DialogContent className="w-[90vw] sm:max-w-[400px] p-6">
+          <DialogHeader className="text-center space-y-3">
+            <DialogTitle className="flex items-center justify-center gap-2 text-lg">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              Confirmação Realizada!
             </DialogTitle>
+            <p className="text-sm text-muted-foreground">
+              Sua presença foi confirmada com sucesso. Use o QR Code abaixo para o check-in no evento.
+            </p>
           </DialogHeader>
           
           {registrationData && (
-            <div className="space-y-4">
+            <div className="space-y-6">
               <div className="text-center">
-                <div ref={qrRef} className="bg-white p-2 rounded-md border inline-block">
+                <div ref={qrRef} className="bg-white p-4 rounded-lg border-2 inline-block shadow-sm">
                   <QRCodeSVG 
                     value={registrationData.qr_code}
-                    size={140}
+                    size={160}
                     level="M"
                     includeMargin={true}
                   />
                 </div>
               </div>
-              <Button onClick={() => setShowQRCode(false)} className="w-full" size="sm">
+              
+              <div className="text-center text-xs text-muted-foreground">
+                Salve ou imprima este QR Code para apresentar no evento
+              </div>
+              
+              <Button onClick={() => setShowQRCode(false)} className="w-full">
                 Fechar
               </Button>
             </div>

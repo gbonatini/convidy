@@ -510,27 +510,7 @@ const Index = () => {
               </div>
 
               {/* Check-in Stats */}
-              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border">
-                <h5 className="font-semibold mb-4 text-center">Resultados reais com QR Code:</h5>
-                <div className="grid grid-cols-2 gap-4 text-center">
-                  <div>
-                    <div className="text-2xl font-bold text-blue-600">3seg</div>
-                    <div className="text-xs text-muted-foreground">tempo médio de check-in</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-green-600">0%</div>
-                    <div className="text-xs text-muted-foreground">filas na entrada</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-purple-600">95%</div>
-                    <div className="text-xs text-muted-foreground">satisfação na entrada</div>
-                  </div>
-                  <div>
-                    <div className="text-2xl font-bold text-orange-600">100%</div>
-                    <div className="text-xs text-muted-foreground">dados precisos</div>
-                  </div>
-                </div>
-              </div>
+              
 
               {/* Mock Check-in Interface */}
               <div className="bg-white rounded-lg border shadow-sm p-6">

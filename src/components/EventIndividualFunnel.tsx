@@ -327,7 +327,7 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                     {event.capacity > 0 && (event.confirmations / event.capacity) * 100 >= 90 && (
                       <div className="absolute top-0 right-2 transform -translate-y-1">
                         <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
-                          Quase Lotado!
+                          {(event.confirmations / event.capacity) * 100 >= 100 ? 'Lotado!' : 'Quase Lotado!'}
                         </div>
                       </div>
                     )}

@@ -11,32 +11,38 @@ interface EventProjectionsProps {
     totalCheckins: number;
     attendanceRate: number;
     averageOccupancy: number;
-    projectedRevenue: number;
+    totalInvites?: number;
   };
 }
 
 const EventProjections: React.FC<EventProjectionsProps> = ({ stats }) => {
-  // Calcular projeções baseadas em dados históricos
+  // Calcular projeções baseadas em dados reais
   const calculateProjections = () => {
-    const baseOccupancy = stats.averageOccupancy || 70;
-    const baseAttendance = stats.attendanceRate || 80;
+    const baseOccupancy = stats.averageOccupancy || 0;
+    const baseAttendance = stats.attendanceRate || 0;
+    const conversionRate = stats.totalInvites && stats.totalInvites > 0 
+      ? (stats.totalRegistrations / stats.totalInvites) * 100 
+      : 0;
     
     return {
-      expectedOccupancy: Math.min(baseOccupancy * 1.1, 100),
-      checkinGoal: Math.min(baseAttendance * 1.05, 95),
-      revenueProjection: stats.projectedRevenue * 1.15,
-      atRiskEvents: Math.max(Math.floor(stats.totalEvents * 0.1), 0),
+      expectedOccupancy: Math.min(baseOccupancy + 5, 100), // Projeção otimista
+      checkinGoal: Math.min(baseAttendance + 10, 95), // Meta de melhoria
+      conversionEfficiency: Math.round(conversionRate), // Taxa de conversão de convites
+      atRiskEvents: stats.totalEvents > 0 && baseOccupancy < 50 ? 1 : 0,
     };
   };
 
   const projections = calculateProjections();
 
   const getPerformanceScore = () => {
-    const occupancyScore = (stats.averageOccupancy / 100) * 40;
-    const attendanceScore = (stats.attendanceRate / 100) * 40;
-    const eventScore = Math.min((stats.totalEvents / 10) * 20, 20);
+    // Score baseado em dados reais
+    const occupancyScore = Math.min((stats.averageOccupancy / 80) * 30, 30); // 30% do score
+    const attendanceScore = Math.min((stats.attendanceRate / 85) * 30, 30); // 30% do score
+    const engagementScore = stats.totalRegistrations > 0 
+      ? Math.min((stats.totalCheckins / stats.totalRegistrations) * 25, 25) : 0; // 25% do score
+    const activityScore = Math.min(stats.totalEvents * 3, 15); // 15% do score - máximo 5 eventos
     
-    return Math.round(occupancyScore + attendanceScore + eventScore);
+    return Math.round(occupancyScore + attendanceScore + engagementScore + activityScore);
   };
 
   const performanceScore = getPerformanceScore();
@@ -128,13 +134,16 @@ const EventProjections: React.FC<EventProjectionsProps> = ({ stats }) => {
 
             <div className="flex items-center justify-between">
               <div className="space-y-1">
-                <div className="text-sm font-medium">Receita Projetada</div>
+                <div className="text-sm font-medium">Eficiência de Conversão</div>
                 <div className="text-xs text-muted-foreground">
-                  Próximo trimestre
+                  Convites para confirmações
                 </div>
               </div>
-              <div className="text-lg font-bold">
-                R$ {projections.revenueProjection.toLocaleString('pt-BR')}
+              <div className="flex items-center space-x-2">
+                <span className="text-lg font-bold">
+                  {projections.conversionEfficiency}%
+                </span>
+                <TrendingUp className="h-4 w-4 text-success" />
               </div>
             </div>
           </div>

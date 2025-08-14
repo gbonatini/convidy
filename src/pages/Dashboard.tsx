@@ -387,7 +387,7 @@ const Dashboard = () => {
               totalCheckins: stats.totalCheckins,
               attendanceRate: stats.attendanceRate,
               averageOccupancy: stats.averageOccupancy,
-              projectedRevenue: stats.projectedRevenue
+              totalInvites: stats.totalInvites
             }} />
             
             <EventIndicators stats={{

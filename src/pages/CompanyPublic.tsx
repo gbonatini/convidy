@@ -95,7 +95,24 @@ const CompanyPublic = () => {
   useEffect(() => {
     if (registrationData && barcodeRef.current && showBarcode) {
       try {
-        JsBarcode(barcodeRef.current, registrationData.qr_code, {
+        console.log('Dados da inscrição para barcode:', registrationData);
+        console.log('qr_code value:', registrationData.qr_code);
+        
+        let barcodeValue = registrationData.qr_code;
+        
+        // Se o qr_code ainda for o formato JSON antigo (base64), gerar novo código simples
+        if (barcodeValue && (barcodeValue.startsWith('eyJ') || barcodeValue.includes('{'))) {
+          console.log('Detectado formato antigo, gerando novo código de barras...');
+          // Gerar código simples: CPF + primeiros 8 chars do event_id
+          const cleanDocument = formData.document.replace(/[^0-9]/g, '');
+          const eventIdShort = registrationData.event_id.replace(/-/g, '').substring(0, 8);
+          barcodeValue = cleanDocument + eventIdShort;
+          console.log('Novo código gerado:', barcodeValue);
+        }
+        
+        console.log('Gerando barcode com valor:', barcodeValue);
+        
+        JsBarcode(barcodeRef.current, barcodeValue, {
           format: "CODE128",
           width: 2,
           height: 60,
@@ -103,6 +120,8 @@ const CompanyPublic = () => {
           fontSize: 12,
           margin: 10
         });
+        
+        console.log('Barcode gerado com sucesso!');
       } catch (error) {
         console.error('Erro ao gerar código de barras:', error);
       }

@@ -392,6 +392,174 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Confirmation & Check-in Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-blue-50">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <Badge variant="outline" className="bg-green-100 text-green-700 border-green-300">
+              Confirmação & Check-in Automático
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Confirmação simples, check-in instantâneo
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Seus convidados confirmam com 1 clique e fazem check-in com código de barras em segundos. 
+              Zero filas, zero stress, experiência premium.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            {/* Confirmation Process */}
+            <div className="space-y-8">
+              <div className="text-center lg:text-left">
+                <h3 className="text-2xl font-bold mb-4">Confirmação sem complicação</h3>
+                <p className="text-muted-foreground">
+                  Link direto no WhatsApp, um clique e pronto. Você acompanha tudo em tempo real.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-green-600">1</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Recebe no WhatsApp</h4>
+                    <p className="text-sm text-muted-foreground">Convite personalizado com todos os detalhes do evento</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-green-600">2</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Confirma com 1 clique</h4>
+                    <p className="text-sm text-muted-foreground">Botão direto "Vou participar" - sem cadastros, sem formulários</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="h-8 w-8 rounded-full bg-green-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-green-600">3</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Recebe código de barras</h4>
+                    <p className="text-sm text-muted-foreground">QR Code pessoal para check-in rápido no dia do evento</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mock Confirmation Interface */}
+              <div className="bg-white rounded-lg border shadow-sm p-6">
+                <div className="flex items-center space-x-3 mb-4">
+                  <div className="h-10 w-10 rounded-full bg-green-100 flex items-center justify-center">
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h5 className="font-medium">Confirmação Recebida!</h5>
+                    <p className="text-sm text-muted-foreground">Workshop Marketing Digital - 15/08</p>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded p-4 text-center">
+                  <QrCode className="h-12 w-12 mx-auto mb-2 text-gray-600" />
+                  <p className="text-xs text-muted-foreground">Seu código de barras para check-in</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Check-in Process */}
+            <div className="space-y-8">
+              <div className="text-center lg:text-left">
+                <h3 className="text-2xl font-bold mb-4">Check-in em 3 segundos</h3>
+                <p className="text-muted-foreground">
+                  Chegou no evento? Mostra o código, passa na catraca e pronto. Sem filas, sem cadastros.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex items-start space-x-4">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-blue-600">1</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Mostra o código no celular</h4>
+                    <p className="text-sm text-muted-foreground">QR Code que chegou pelo WhatsApp já está pronto</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-blue-600">2</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Scanner lê instantaneamente</h4>
+                    <p className="text-sm text-muted-foreground">Qualquer celular vira leitor, sem equipamentos caros</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start space-x-4">
+                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
+                    <span className="text-sm font-bold text-blue-600">3</span>
+                  </div>
+                  <div>
+                    <h4 className="font-semibold">Entrada liberada automaticamente</h4>
+                    <p className="text-sm text-muted-foreground">Dados atualizados em tempo real no seu painel</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Check-in Stats */}
+              <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 border">
+                <h5 className="font-semibold mb-4 text-center">Resultados reais com QR Code:</h5>
+                <div className="grid grid-cols-2 gap-4 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">3seg</div>
+                    <div className="text-xs text-muted-foreground">tempo médio de check-in</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">0%</div>
+                    <div className="text-xs text-muted-foreground">filas na entrada</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-600">95%</div>
+                    <div className="text-xs text-muted-foreground">satisfação na entrada</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-orange-600">100%</div>
+                    <div className="text-xs text-muted-foreground">dados precisos</div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Mock Check-in Interface */}
+              <div className="bg-white rounded-lg border shadow-sm p-6">
+                <div className="text-center space-y-4">
+                  <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto">
+                    <UserCheck className="h-8 w-8 text-green-600" />
+                  </div>
+                  <div>
+                    <h5 className="font-medium text-green-600">Check-in Realizado!</h5>
+                    <p className="text-sm text-muted-foreground">João Silva - 14:23</p>
+                    <p className="text-xs text-muted-foreground">Mesa 15 • Networking VIP</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="text-center mt-12">
+            <Link to="/auth">
+              <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-lg px-8">
+                <QrCode className="mr-2 h-5 w-5" />
+                Quero check-in sem filas no meu evento
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Invites Feature Section */}
       <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-100">
         <div className="container mx-auto px-4">

@@ -792,6 +792,29 @@ export type Database = {
           secondary_color: string
         }[]
       }
+      get_invite_public: {
+        Args: { invite_uuid: string }
+        Returns: {
+          id: string
+          company_id: string
+          event_id: string
+          full_name: string
+          cpf: string
+          whatsapp: string
+          email: string
+          status: string
+          created_at: string
+          updated_at: string
+          message_sent: string
+          event_title: string
+          event_date: string
+          event_time: string
+          event_location: string
+          event_address: string
+          event_capacity: number
+          event_status: string
+        }[]
+      }
       get_registration_public: {
         Args: { event_uuid: string; document_text: string; phone_text: string }
         Returns: {

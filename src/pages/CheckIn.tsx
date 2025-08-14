@@ -308,50 +308,71 @@ export default function CheckIn() {
         throw new Error('CPF deve ter 11 dígitos');
       }
 
-      // Usar função do banco para buscar por CPF
-      const { data: result, error } = await (supabase as any).rpc('checkin_by_cpf', {
-        cpf_input: cleanCpf,
-        company_id_input: userCompanyId,
-        event_id_input: selectedEventId === 'all' ? null : selectedEventId
-      });
+      // Primeiro buscar o registro manualmente
+      let query = supabase
+        .from('registrations')
+        .select(`
+          id,
+          name,
+          document,
+          checked_in,
+          checkin_time,
+          events (
+            id,
+            title,
+            company_id
+          )
+        `)
+        .eq('document', cleanCpf)
+        .eq('events.company_id', userCompanyId);
 
-      console.log('[CHECK-IN] Resultado da busca:', result, error);
+      // Se um evento específico foi selecionado
+      if (selectedEventId && selectedEventId !== 'all') {
+        query = query.eq('event_id', selectedEventId);
+      }
 
-      if (error) {
-        console.error('[CHECK-IN] Erro RPC:', error);
+      const { data: registrations, error: searchError } = await query;
+
+      console.log('[CHECK-IN] Busca por CPF:', registrations, searchError);
+
+      if (searchError) {
+        console.error('[CHECK-IN] Erro na busca:', searchError);
         throw new Error('Erro ao buscar registro');
       }
 
-      if (!result || result.length === 0) {
-        throw new Error('Pessoa não encontrada ou não inscrita nos eventos ativos');
+      if (!registrations || registrations.length === 0) {
+        throw new Error('Pessoa não encontrada ou não inscrita nos eventos');
       }
 
-      const reg = result[0];
-      console.log('[CHECK-IN] Registro encontrado:', reg);
+      // Pegar o primeiro registro encontrado
+      const registration = registrations[0];
+      
+      console.log('[CHECK-IN] Registro encontrado:', registration);
 
-      if (reg.already_checked_in) {
-        toast.error(`${reg.participant_name} já fez check-in em ${reg.event_title}`);
+      if (registration.checked_in) {
+        toast.error(`${registration.name} já fez check-in`);
         return;
       }
 
       // Realizar check-in
-      const { data: checkinResult, error: checkinError } = await (supabase as any).rpc('perform_checkin', {
-        registration_id_input: reg.registration_id,
-        company_id_input: userCompanyId
-      });
+      const { data: updatedRegistration, error: checkinError } = await supabase
+        .from('registrations')
+        .update({
+          checked_in: true,
+          checkin_time: new Date().toISOString()
+        })
+        .eq('id', registration.id)
+        .select()
+        .single();
 
-      console.log('[CHECK-IN] Resultado check-in:', checkinResult, checkinError);
+      console.log('[CHECK-IN] Resultado do update:', updatedRegistration, checkinError);
 
       if (checkinError) {
         console.error('[CHECK-IN] Erro ao realizar check-in:', checkinError);
         throw new Error('Erro ao realizar check-in');
       }
 
-      if (!checkinResult) {
-        throw new Error('Check-in não foi possível');
-      }
-
-      toast.success(`✅ Check-in realizado: ${reg.participant_name} - ${reg.event_title}`);
+      toast.success(`✅ Check-in realizado: ${registration.name}`);
       setCpfInput('');
       
       // Atualizar dados

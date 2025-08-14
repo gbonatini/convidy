@@ -208,42 +208,55 @@ export default function CheckIn() {
     setManualCpf('');
   };
 
-  // Processar check-in (FUNÇÃO PRINCIPAL SIMPLIFICADA)
+  // Processar check-in (CORRIGIDO)
   const processCheckIn = async (cpf: string) => {
     console.log('[CHECK-IN] Iniciando para CPF:', cpf);
 
     try {
       // Limpar CPF
       const cleanCpf = cpf.replace(/\D/g, '');
+      console.log('[CHECK-IN] CPF limpo:', cleanCpf);
       
-      // Buscar registro pelo CPF
+      // Obter dados do usuário autenticado e sua empresa
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) {
+        toast.error('Usuário não autenticado');
+        return;
+      }
+
+      const { data: profile } = await supabase.from('profiles')
+        .select('company_id')
+        .eq('user_id', user.user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        toast.error('Perfil não encontrado');
+        return;
+      }
+
+      console.log('[CHECK-IN] Company ID do usuário:', profile.company_id);
+
+      // Buscar registro pelo CPF na empresa do usuário
       let query = supabase
         .from('registrations')
         .select(`
           id, name, document, checked_in, checkin_time, event_id,
           events!inner(title, company_id)
         `)
-        .eq('document', cleanCpf);
+        .eq('document', cleanCpf)
+        .eq('events.company_id', profile.company_id);
 
       // Se tem evento selecionado, filtrar por ele
       if (selectedEventId) {
         query = query.eq('event_id', selectedEventId);
-      }
-
-      // Verificar se o usuário tem acesso (mesmo company_id)
-      const { data: user } = await supabase.auth.getUser();
-      const { data: profile } = await supabase.from('profiles')
-        .select('company_id')
-        .eq('user_id', user.user?.id)
-        .single();
-
-      if (profile?.company_id) {
-        query = query.eq('events.company_id', profile.company_id);
+        console.log('[CHECK-IN] Filtrando por evento:', selectedEventId);
       }
 
       const { data, error } = await query
         .order('created_at', { ascending: false })
         .limit(1);
+
+      console.log('[CHECK-IN] Resultado da busca:', { data, error });
 
       if (error) {
         console.error('[CHECK-IN] Erro na busca:', error);
@@ -252,8 +265,8 @@ export default function CheckIn() {
       }
 
       if (!data || data.length === 0) {
-        console.log('[CHECK-IN] Nenhum registro encontrado');
-        toast.error('CPF não encontrado nos registros');
+        console.log('[CHECK-IN] Nenhum registro encontrado para CPF:', cleanCpf);
+        toast.error('CPF não encontrado nos registros desta empresa');
         return;
       }
 
@@ -262,8 +275,8 @@ export default function CheckIn() {
 
       // Verificar se já fez check-in
       if (registration.checked_in) {
-        console.log('[CHECK-IN] Já foi feito check-in');
-        toast.warning(`Check-in já realizado para ${registration.name}`);
+        console.log('[CHECK-IN] Check-in já realizado anteriormente');
+        toast.warning(`Check-in já realizado para ${registration.name} em ${new Date(registration.checkin_time).toLocaleString('pt-BR')}`);
         return;
       }
 
@@ -284,7 +297,7 @@ export default function CheckIn() {
       }
 
       console.log('[CHECK-IN] Sucesso!');
-      toast.success(`Check-in realizado para ${registration.name}!`);
+      toast.success(`✅ Check-in realizado para ${registration.name}!`);
       
       // Fechar scanner e recarregar dados
       setShowScanner(false);

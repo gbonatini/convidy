@@ -12,12 +12,13 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useToast } from "@/hooks/use-toast";
-import { Plus, MessageCircle, Edit, Trash2, Loader2, Send, Clock, CheckCircle } from "lucide-react";
+import { Plus, MessageCircle, Edit, Trash2, Loader2, Send, Clock, CheckCircle, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AdminLayout from "@/components/AdminLayout";
 import MessageTemplateManager from "@/components/MessageTemplateManager";
 import MessageEditor from "@/components/MessageEditor";
 import { getInviteStatusBadge } from "@/lib/status";
+import { exportInvites } from "@/lib/export";
 
 interface Invite {
   id: string;
@@ -545,19 +546,29 @@ export default function Invites() {
     <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex justify-between items-center">
-          <div>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
             <h1 className="text-3xl font-bold">Convites</h1>
-            <p className="text-muted-foreground">Gerencie os convites para seus eventos</p>
+            <p className="text-muted-foreground">
+              Gerencie convites para eventos
+            </p>
           </div>
-          
-          <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-            <DialogTrigger asChild>
-              <Button>
-                <Plus className="h-4 w-4 mr-2" />
-                Convidar
-              </Button>
-            </DialogTrigger>
+          <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => exportInvites(filteredInvites, filterEventId !== "all" ? filterEventId : undefined)}
+              className="flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Exportar Excel</span>
+            </Button>
+            <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+              <DialogTrigger asChild>
+                <Button>
+                  <Plus className="h-4 w-4 mr-2" />
+                  Novo Convite
+                </Button>
+              </DialogTrigger>
                   <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
                 <DialogHeader>
                   <DialogTitle>Novo Convite</DialogTitle>
@@ -684,6 +695,7 @@ export default function Invites() {
                 </div>
             </DialogContent>
           </Dialog>
+          </div>
         </div>
 
         {/* Filtro por Evento */}

@@ -10,10 +10,11 @@ import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { getConfirmationStatusBadge, getCheckinStatusBadge } from '@/lib/status';
-import { Users, Search, Calendar, MapPin, Edit, Trash2, UserCheck, Clock, Mail, Phone, FileText, Send, CheckCircle, UserX, TrendingUp } from 'lucide-react';
+import { Users, Search, Calendar, MapPin, Edit, Trash2, UserCheck, Clock, Mail, Phone, FileText, Send, CheckCircle, UserX, TrendingUp, Download } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ConfirmationFilters } from '@/components/ConfirmationFilters';
+import { exportConfirmations } from '@/lib/export';
 interface Registration {
   id: string;
   name: string;
@@ -290,6 +291,14 @@ const Confirmations = () => {
             </p>
           </div>
           <div className="flex items-center space-x-2">
+            <Button
+              variant="outline"
+              onClick={() => exportConfirmations(filteredRegistrations, eventFilter || undefined)}
+              className="flex items-center space-x-2"
+            >
+              <Download className="h-4 w-4" />
+              <span>Exportar Excel</span>
+            </Button>
             <Badge variant="outline" className="text-sm">
               {registrations.length} confirmações
             </Badge>

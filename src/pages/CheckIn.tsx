@@ -24,11 +24,13 @@ import {
   ScanLine,
   Calendar,
   MapPin,
-  TrendingUp
+  TrendingUp,
+  Download
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { BrowserMultiFormatReader } from '@zxing/library';
+import { exportCheckIns } from '@/lib/export';
 
 interface Event {
   id: string;
@@ -481,6 +483,14 @@ export default function CheckIn() {
               Gerencie check-ins dos participantes dos seus eventos
             </p>
           </div>
+          <Button
+            variant="outline"
+            onClick={() => exportCheckIns(filteredRegistrations, selectedEventId !== "all" ? selectedEventId : undefined)}
+            className="flex items-center space-x-2"
+          >
+            <Download className="h-4 w-4" />
+            <span>Exportar Excel</span>
+          </Button>
         </div>
 
         {/* Estatísticas */}

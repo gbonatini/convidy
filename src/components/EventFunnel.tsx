@@ -55,7 +55,7 @@ const EventFunnel: React.FC<EventFunnelProps> = ({ stats }) => {
   };
 
   return (
-    <Card className="border-0 shadow-lg">
+    <Card>
       <CardHeader>
         <CardTitle className="flex items-center space-x-2">
           <span>Funil de Eventos</span>

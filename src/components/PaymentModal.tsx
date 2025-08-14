@@ -99,24 +99,12 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
         window.open(data.checkoutUrl, '_blank');
       }
 
-    } catch (error: any) {
+    } catch (error) {
       console.error('Erro ao criar pagamento:', error);
-      
-      let errorMessage = "Não foi possível processar o pagamento. Tente novamente.";
-      
-      // Tratar erros específicos
-      if (error?.message?.includes('API key')) {
-        errorMessage = "Erro de configuração do sistema de pagamento. Entre em contato com o suporte.";
-      } else if (error?.message?.includes('network') || error?.message?.includes('fetch')) {
-        errorMessage = "Erro de conexão. Verifique sua internet e tente novamente.";
-      } else if (error?.message) {
-        errorMessage = `Erro: ${error.message}`;
-      }
-      
       toast({
         variant: "destructive",
         title: "Erro no pagamento",
-        description: errorMessage,
+        description: "Não foi possível processar o pagamento. Tente novamente.",
       });
     } finally {
       setLoading(false);

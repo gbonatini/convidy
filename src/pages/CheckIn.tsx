@@ -1,20 +1,18 @@
-import React, { useState, useEffect } from 'react';
-import { Navigate } from 'react-router-dom';
-import { useAuth } from '@/components/AuthProvider';
-import AdminLayout from '@/components/AdminLayout';
+import { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
-import { getCheckinStatusBadge } from '@/lib/status';
-import CryptoJS from 'crypto-js';
-import { QrCodeIcon, ScanIcon, UserCheckIcon, UserIcon, TrendingUpIcon, ClockIcon } from 'lucide-react';
-import { QrReader } from 'react-qr-reader';
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Badge } from '@/components/ui/badge';
+import { QrReader } from 'react-qr-reader';
+import { QrCode, Users, CheckCircle, Clock, Percent } from 'lucide-react';
+import { supabase } from '@/integrations/supabase/client';
+import { toast } from 'sonner';
+import AdminLayout from '@/components/AdminLayout';
 
 interface Event {
   id: string;
@@ -25,563 +23,488 @@ interface Event {
 
 interface Registration {
   id: string;
+  event_id: string;
   name: string;
   email: string;
+  phone: string;
   document: string;
-  qr_code: string;
   checked_in: boolean;
   checkin_time: string | null;
-  event_id: string;
-  events?: Event;
+  events: {
+    title: string;
+    date: string;
+    time: string;
+  };
 }
 
 interface CheckInStats {
-  total_confirmations: number;
-  total_checkins: number;
-  pending_checkins: number;
-  attendance_percentage: number;
+  total: number;
+  checkedIn: number;
+  pending: number;
+  percentage: number;
 }
 
-const CheckIn = () => {
-  const { user, profile, loading: authLoading } = useAuth();
+export default function CheckIn() {
+  const navigate = useNavigate();
   const [events, setEvents] = useState<Event[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>('all');
   const [registrations, setRegistrations] = useState<Registration[]>([]);
-  const [stats, setStats] = useState<CheckInStats>({
-    total_confirmations: 0,
-    total_checkins: 0,
-    pending_checkins: 0,
-    attendance_percentage: 0
-  });
-  const [loading, setLoading] = useState(false);
+  const [selectedEventId, setSelectedEventId] = useState<string>('');
+  const [stats, setStats] = useState<CheckInStats>({ total: 0, checkedIn: 0, pending: 0, percentage: 0 });
+  const [loading, setLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
-  const [manualDocument, setManualDocument] = useState('');
+  const [manualCpf, setManualCpf] = useState('');
 
-  // Fetch events and registrations on component mount
+  // Verificar autenticação
   useEffect(() => {
-    fetchData();
-  }, []);
+    const checkAuth = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        navigate('/auth');
+        return;
+      }
 
-  // Update stats when registrations change
-  useEffect(() => {
-    calculateStats();
-  }, [registrations, selectedEventId]);
+      const { data: profile } = await supabase.from('profiles')
+        .select('company_id')
+        .eq('user_id', user.id)
+        .single();
 
-  // Set up real-time subscription for registrations
-  useEffect(() => {
-    const channel = supabase
-      .channel('registrations-checkin')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'registrations'
-        },
-        () => {
-          console.log('Registration updated, refetching data...');
-          fetchRegistrations();
-        }
-      )
-      .subscribe();
+      if (!profile?.company_id) {
+        navigate('/setup');
+        return;
+      }
 
-    return () => {
-      supabase.removeChannel(channel);
+      loadData();
     };
-  }, [selectedEventId]);
 
-  const fetchData = async () => {
-    setLoading(true);
+    checkAuth();
+  }, [navigate]);
+
+  // Carregar dados
+  const loadData = async () => {
     try {
-      await Promise.all([fetchEvents(), fetchRegistrations()]);
+      setLoading(true);
+      await Promise.all([loadEvents(), loadRegistrations()]);
     } catch (error) {
-      console.error('Error fetching data:', error);
+      console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
   };
 
-  const fetchEvents = async () => {
-    try {
-      // Get user's company
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
+  // Carregar eventos
+  const loadEvents = async () => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return;
 
-      if (!profile?.company_id) return;
+    const { data: profile } = await supabase.from('profiles')
+      .select('company_id')
+      .eq('user_id', user.user.id)
+      .single();
 
-      const { data, error } = await supabase
-        .from('events')
-        .select('id, title, date, time')
-        .eq('company_id', profile.company_id)
-        .eq('status', 'active')
-        .order('date', { ascending: true });
+    if (!profile?.company_id) return;
 
-      if (error) throw error;
-      setEvents(data || []);
-    } catch (error) {
-      console.error('Error fetching events:', error);
-    }
-  };
+    const { data, error } = await supabase
+      .from('events')
+      .select('id, title, date, time')
+      .eq('company_id', profile.company_id)
+      .eq('status', 'active')
+      .order('date', { ascending: true });
 
-  const fetchRegistrations = async () => {
-    try {
-      // Get user's company
-      const { data: profile } = await supabase
-        .from('profiles')
-        .select('company_id')
-        .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
-        .single();
-
-      if (!profile?.company_id) return;
-
-      let query = supabase
-        .from('registrations')
-        .select(`
-          id,
-          name,
-          email,
-          document,
-          qr_code,
-          checked_in,
-          checkin_time,
-          event_id,
-          events!inner(id, title, date, time, company_id)
-        `)
-        .eq('events.company_id', profile.company_id)
-        .order('created_at', { ascending: false });
-
-      if (selectedEventId !== 'all') {
-        query = query.eq('event_id', selectedEventId);
-      }
-
-      const { data, error } = await query;
-
-      if (error) throw error;
-      setRegistrations(data || []);
-    } catch (error) {
-      console.error('Error fetching registrations:', error);
-    }
-  };
-
-  const calculateStats = () => {
-    const filteredRegs = selectedEventId === 'all' 
-      ? registrations 
-      : registrations.filter(reg => reg.event_id === selectedEventId);
-
-    const total_confirmations = filteredRegs.length;
-    const total_checkins = filteredRegs.filter(reg => reg.checked_in).length;
-    const pending_checkins = total_confirmations - total_checkins;
-    const attendance_percentage = total_confirmations > 0 
-      ? Math.round((total_checkins / total_confirmations) * 100) 
-      : 0;
-
-    setStats({
-      total_confirmations,
-      total_checkins,
-      pending_checkins,
-      attendance_percentage
-    });
-  };
-
-  const handleQRCodeScan = async (result: any) => {
-    if (!result) return;
-
-    try {
-      const raw: string = result.text || '';
-      console.log('[QR SCAN] ===== INÍCIO SCAN =====');
-      console.log('[QR SCAN] Raw QR data:', raw);
-
-      const tryParse = (s: string) => {
-        try { return JSON.parse(s); } catch { return null; }
-      };
-      const b64decode = (s: string) => {
-        // Support URL-safe base64 as well
-        const normalized = s.replace(/[-_]/g, (c) => (c === '-' ? '+' : '/'));
-        return atob(normalized);
-      };
-
-      // Handle possible data URL (e.g., data:application/json;base64,....)
-      const payload = raw.startsWith('data:') && raw.includes(',') ? raw.split(',').pop() as string : raw;
-      console.log('[QR SCAN] Payload extracted:', payload);
-
-      let decoded: any = null;
-      // Try base64 JSON first
-      try { 
-        decoded = tryParse(b64decode(payload)); 
-        console.log('[QR SCAN] Decoded from base64:', decoded);
-      } catch { 
-        console.log('[QR SCAN] Failed to decode as base64');
-      }
-      // Fallback: plain JSON in QR
-      if (!decoded) {
-        decoded = tryParse(payload);
-        console.log('[QR SCAN] Decoded as plain JSON:', decoded);
-      }
-
-      if (!decoded || (!decoded.document_hash && !decoded.document && !decoded.cpf)) {
-        console.error('[QR SCAN] Invalid QR payload:', decoded);
-        throw new Error('QR payload inválido');
-      }
-
-      console.log('[QR SCAN] Final decoded data:', decoded);
-
-      // Suporte para formato simples (document ou cpf direto) e formato com hash
-      let document_to_search: string;
-      let isDirectDocument = false;
-      
-      if (decoded.document_hash) {
-        // Formato antigo com hash - usar hash MD5
-        document_to_search = decoded.document_hash;
-        isDirectDocument = false;
-        console.log('[QR SCAN] Using hash format:', document_to_search);
-      } else {
-        // Formato novo simples - usar documento direto para busca
-        document_to_search = decoded.document || decoded.cpf;
-        isDirectDocument = true;
-        console.log('[QR SCAN] Using direct document format:', document_to_search);
-      }
-
-      const { event_id } = decoded;
-      console.log('[QR SCAN] Event ID:', event_id);
-      console.log('[QR SCAN] ===== CHAMANDO processCheckIn =====');
-      console.log('[QR SCAN] Parâmetros:', { 
-        document_to_search, 
-        event_id, 
-        isDirectDocument,
-        decoded_full: decoded 
-      });
-      
-      await processCheckIn(document_to_search, event_id, isDirectDocument);
-    } catch (error) {
-      console.error('[QR SCAN] Error processing QR code:', error);
-      toast.error('QR Code inválido ou erro ao processar');
-    }
-  };
-
-  const handleManualCheckIn = async () => {
-    if (!manualDocument.trim()) {
-      toast.error('Digite o CPF/documento');
+    if (error) {
+      console.error('Erro ao carregar eventos:', error);
       return;
     }
 
-    // Normalizar documento removendo pontuação e traços, depois usar MD5
-    const normalizedDocument = manualDocument.replace(/\D/g, '');
-    const document_hash = CryptoJS.MD5(normalizedDocument).toString();
-
-    await processCheckIn(document_hash, undefined, false);
-    setManualDocument('');
+    setEvents(data || []);
   };
 
-  const processCheckIn = async (document_identifier: string, event_id?: string, isDirectDocument = false) => {
-    console.log('[DEBUG] ===== CHECK-IN INICIADO =====');
-    console.log('[DEBUG] Documento:', document_identifier);
-    console.log('[DEBUG] Event ID:', event_id); 
-    console.log('[DEBUG] É documento direto:', isDirectDocument);
-    
+  // Carregar registros
+  const loadRegistrations = async (eventId?: string) => {
+    const { data: user } = await supabase.auth.getUser();
+    if (!user.user) return;
+
+    const { data: profile } = await supabase.from('profiles')
+      .select('company_id')
+      .eq('user_id', user.user.id)
+      .single();
+
+    if (!profile?.company_id) return;
+
+    let query = supabase
+      .from('registrations')
+      .select(`
+        id, event_id, name, email, phone, document,
+        checked_in, checkin_time,
+        events!inner(title, date, time, company_id)
+      `)
+      .eq('events.company_id', profile.company_id);
+
+    if (eventId) {
+      query = query.eq('event_id', eventId);
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Erro ao carregar registros:', error);
+      return;
+    }
+
+    setRegistrations(data || []);
+    calculateStats(data || []);
+  };
+
+  // Calcular estatísticas
+  const calculateStats = (regs: Registration[]) => {
+    const total = regs.length;
+    const checkedIn = regs.filter(r => r.checked_in).length;
+    const pending = total - checkedIn;
+    const percentage = total > 0 ? Math.round((checkedIn / total) * 100) : 0;
+
+    setStats({ total, checkedIn, pending, percentage });
+  };
+
+  // Processar QR Code escaneado
+  const handleQRScan = async (result: any) => {
+    if (!result) return;
+
     try {
-      // TESTE: Buscar o registro específico que sabemos que existe
-      if (isDirectDocument && document_identifier.includes('70596206054')) {
-        console.log('[DEBUG] TESTE ESPECÍFICO para CPF 70596206054');
-        
-        const { data, error } = await supabase
-          .from('registrations')
-          .select('id, name, document, checked_in, checkin_time')
-          .eq('document', '70596206054')
-          .eq('event_id', '21a91a16-99da-4dbc-9aa0-7f1f10ef98a6')
-          .single();
-          
-        console.log('[DEBUG] Resultado da busca específica:', { data, error });
-        
-        if (error) {
-          console.error('[DEBUG] Erro na busca:', error);
-          toast.error('Erro na busca: ' + error.message);
-          return;
-        }
-        
-        if (!data) {
-          console.log('[DEBUG] Nenhum registro encontrado');
-          toast.error('Registro não encontrado');
-          return;
-        }
-        
-        console.log('[DEBUG] Status atual do registro:', {
-          name: data.name,
-          checked_in: data.checked_in,
-          checkin_time: data.checkin_time
-        });
-        
-        if (data.checked_in === true) {
-          console.log('[DEBUG] Check-in já foi realizado');
-          toast.warning(`Check-in já realizado para ${data.name}`);
-          return;
-        }
-        
-        console.log('[DEBUG] Realizando check-in...');
-        const { error: updateError } = await supabase
-          .from('registrations')
-          .update({ 
-            checked_in: true, 
-            checkin_time: new Date().toISOString() 
-          })
-          .eq('id', data.id);
-          
-        if (updateError) {
-          console.error('[DEBUG] Erro no update:', updateError);
-          toast.error('Erro ao atualizar: ' + updateError.message);
-          return;
-        }
-        
-        console.log('[DEBUG] Check-in realizado com sucesso!');
-        toast.success(`Check-in realizado para ${data.name}!`);
-        fetchRegistrations();
+      console.log('[QR SCAN] Resultado:', result.text);
+      
+      // Decodificar QR Code
+      const decoded = JSON.parse(atob(result.text));
+      console.log('[QR SCAN] Decodificado:', decoded);
+
+      if (decoded.cpf || decoded.document) {
+        const cpf = decoded.cpf || decoded.document;
+        await processCheckIn(cpf);
+      } else {
+        toast.error('QR Code inválido');
+      }
+    } catch (error) {
+      console.error('[QR SCAN] Erro:', error);
+      toast.error('QR Code inválido');
+    }
+  };
+
+  // Check-in manual por CPF
+  const handleManualCheckIn = async () => {
+    if (!manualCpf.trim()) {
+      toast.error('Digite o CPF');
+      return;
+    }
+
+    const cleanCpf = manualCpf.replace(/\D/g, '');
+    if (cleanCpf.length !== 11) {
+      toast.error('CPF deve ter 11 dígitos');
+      return;
+    }
+
+    await processCheckIn(cleanCpf);
+    setManualCpf('');
+  };
+
+  // Processar check-in (FUNÇÃO PRINCIPAL SIMPLIFICADA)
+  const processCheckIn = async (cpf: string) => {
+    console.log('[CHECK-IN] Iniciando para CPF:', cpf);
+
+    try {
+      // Limpar CPF
+      const cleanCpf = cpf.replace(/\D/g, '');
+      
+      // Buscar registro pelo CPF
+      let query = supabase
+        .from('registrations')
+        .select(`
+          id, name, document, checked_in, checkin_time, event_id,
+          events!inner(title, company_id)
+        `)
+        .eq('document', cleanCpf);
+
+      // Se tem evento selecionado, filtrar por ele
+      if (selectedEventId) {
+        query = query.eq('event_id', selectedEventId);
+      }
+
+      // Verificar se o usuário tem acesso (mesmo company_id)
+      const { data: user } = await supabase.auth.getUser();
+      const { data: profile } = await supabase.from('profiles')
+        .select('company_id')
+        .eq('user_id', user.user?.id)
+        .single();
+
+      if (profile?.company_id) {
+        query = query.eq('events.company_id', profile.company_id);
+      }
+
+      const { data, error } = await query
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+      if (error) {
+        console.error('[CHECK-IN] Erro na busca:', error);
+        toast.error('Erro ao buscar registro');
         return;
       }
+
+      if (!data || data.length === 0) {
+        console.log('[CHECK-IN] Nenhum registro encontrado');
+        toast.error('CPF não encontrado nos registros');
+        return;
+      }
+
+      const registration = data[0];
+      console.log('[CHECK-IN] Registro encontrado:', registration);
+
+      // Verificar se já fez check-in
+      if (registration.checked_in) {
+        console.log('[CHECK-IN] Já foi feito check-in');
+        toast.warning(`Check-in já realizado para ${registration.name}`);
+        return;
+      }
+
+      // Realizar check-in
+      console.log('[CHECK-IN] Realizando check-in...');
+      const { error: updateError } = await supabase
+        .from('registrations')
+        .update({
+          checked_in: true,
+          checkin_time: new Date().toISOString()
+        })
+        .eq('id', registration.id);
+
+      if (updateError) {
+        console.error('[CHECK-IN] Erro no update:', updateError);
+        toast.error('Erro ao realizar check-in');
+        return;
+      }
+
+      console.log('[CHECK-IN] Sucesso!');
+      toast.success(`Check-in realizado para ${registration.name}!`);
       
-      // Código original para outros casos...
-      toast.error('Funcionalidade em manutenção. Use o teste específico.');
-      
+      // Fechar scanner e recarregar dados
+      setShowScanner(false);
+      loadRegistrations(selectedEventId || undefined);
+
     } catch (error) {
-      console.error('[DEBUG] Erro geral:', error);
+      console.error('[CHECK-IN] Erro geral:', error);
       toast.error('Erro no processo de check-in');
     }
-    
-    console.log('[DEBUG] ===== CHECK-IN FINALIZADO =====');
   };
 
-  // Mask and format functions
-  const maskDocument = (document: string) => {
-    if (!document) return '';
-    // Mask CPF: 123.456.789-XX
-    const cleaned = document.replace(/\D/g, '');
+  // Máscara para CPF
+  const maskCpf = (cpf: string) => {
+    if (!cpf) return '';
+    const cleaned = cpf.replace(/\D/g, '');
     if (cleaned.length === 11) {
       return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-XX`;
     }
-    return document;
+    return cpf;
   };
 
-  const formatDateTime = (date: string, time: string) => {
-    if (!date || !time) return '';
-    const eventDate = new Date(date + 'T' + time);
-    return eventDate.toLocaleString('pt-BR');
-  };
-
-  // Authentication check
-  if (authLoading) {
-    return <div>Carregando...</div>;
-  }
-
-  if (!user) {
-    return <Navigate to="/auth" replace />;
-  }
-
-  if (!profile?.company_id) {
-    return <Navigate to="/setup" replace />;
+  if (loading) {
+    return (
+      <AdminLayout>
+        <div className="flex justify-center items-center h-64">
+          <div className="text-lg">Carregando...</div>
+        </div>
+      </AdminLayout>
+    );
   }
 
   return (
     <AdminLayout>
       <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-3xl font-bold">Check-in de Eventos</h1>
-        <p className="text-muted-foreground">Gerencie o check-in dos participantes em tempo real</p>
-      </div>
+        {/* Header */}
+        <div>
+          <h1 className="text-3xl font-bold">Check-in</h1>
+          <p className="text-muted-foreground">
+            Gerencie o check-in dos participantes dos seus eventos
+          </p>
+        </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <QrCodeIcon className="h-5 w-5" />
-            Filtros
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex gap-4">
-            <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-              <SelectTrigger className="w-[300px]">
-                <SelectValue placeholder="Selecione um evento" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos os Eventos</SelectItem>
-                {events.map((event) => (
-                  <SelectItem key={event.id} value={event.id}>
-                    {event.title} - {new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR')}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        {/* Filtro por evento */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Confirmados</CardTitle>
-            <UserIcon className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle>Filtros</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-primary">{stats.total_confirmations}</div>
+            <div className="flex gap-4">
+              <div className="flex-1">
+                <Label htmlFor="event-select">Evento</Label>
+                <Select
+                  value={selectedEventId}
+                  onValueChange={(value) => {
+                    setSelectedEventId(value === 'all' ? '' : value);
+                    loadRegistrations(value === 'all' ? undefined : value);
+                  }}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os eventos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os eventos</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
+        {/* Estatísticas */}
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Total</CardTitle>
+              <Users className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.total}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
+              <CheckCircle className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-green-600">{stats.checkedIn}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
+              <Clock className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-600">{stats.pending}</div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Taxa</CardTitle>
+              <Percent className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.percentage}%</div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Check-in */}
         <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Check-ins Realizados</CardTitle>
-            <UserCheckIcon className="h-4 w-4 text-muted-foreground" />
+          <CardHeader>
+            <CardTitle>Realizar Check-in</CardTitle>
+            <CardDescription>
+              Use o scanner de QR Code ou digite o CPF manualmente
+            </CardDescription>
           </CardHeader>
-           <CardContent>
-             <div className="text-2xl font-bold text-success">{stats.total_checkins}</div>
-           </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Faltantes</CardTitle>
-            <ClockIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-           <CardContent>
-             <div className="text-2xl font-bold text-muted-foreground">{stats.pending_checkins}</div>
-           </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">% Presença</CardTitle>
-            <TrendingUpIcon className="h-4 w-4 text-muted-foreground" />
-          </CardHeader>
-           <CardContent>
-             <div className="text-2xl font-bold text-primary">{stats.attendance_percentage}%</div>
-           </CardContent>
-        </Card>
-      </div>
-
-      {/* Scanner Section */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <ScanIcon className="h-5 w-5" />
-            Scanner de Check-in
-          </CardTitle>
-          <CardDescription>
-            Use o scanner de QR Code ou insira o CPF manualmente
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex gap-4">
-            <Dialog open={showScanner} onOpenChange={setShowScanner}>
-              <DialogTrigger asChild>
-                <Button size="lg">
-                  <QrCodeIcon className="mr-2 h-4 w-4" />
-                  Abrir Scanner
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Scanner de QR Code</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <QrReader
-                    onResult={handleQRCodeScan}
-                    constraints={{ 
-                      facingMode: 'environment',
-                      aspectRatio: 1,
-                      frameRate: { ideal: 30, max: 60 }
-                    }}
-                    containerStyle={{ width: '100%' }}
-                    videoStyle={{ width: '100%', height: 'auto' }}
-                  />
-                </div>
-              </DialogContent>
-            </Dialog>
-
-            <div className="flex gap-2 flex-1">
-              <Input
-                placeholder="CPF (apenas números)"
-                value={manualDocument}
-                onChange={(e) => setManualDocument(e.target.value.replace(/\D/g, ''))}
-                className="flex-1"
-              />
-              <Button onClick={handleManualCheckIn} variant="outline">
+          <CardContent className="space-y-4">
+            <div className="flex gap-4">
+              <Button onClick={() => setShowScanner(true)}>
+                <QrCode className="mr-2 h-4 w-4" />
+                Scanner QR Code
+              </Button>
+            </div>
+            
+            <div className="flex gap-4 items-end">
+              <div className="flex-1">
+                <Label htmlFor="manual-cpf">CPF Manual</Label>
+                <Input
+                  id="manual-cpf"
+                  placeholder="Digite o CPF (apenas números)"
+                  value={manualCpf}
+                  onChange={(e) => setManualCpf(e.target.value)}
+                  onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
+                />
+              </div>
+              <Button onClick={handleManualCheckIn}>
                 Check-in Manual
               </Button>
             </div>
-          </div>
-        </CardContent>
-      </Card>
+          </CardContent>
+        </Card>
 
-      {/* Registrations Table */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Lista de Participantes</CardTitle>
-          <CardDescription>
-            {selectedEventId === 'all' 
-              ? 'Todos os eventos' 
-              : events.find(e => e.id === selectedEventId)?.title || 'Evento selecionado'}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Nome</TableHead>
-                <TableHead>Email</TableHead>
-                <TableHead>CPF</TableHead>
-                <TableHead>Evento</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Horário Check-in</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {registrations.map((registration) => (
-                <TableRow key={registration.id}>
-                  <TableCell className="font-medium">{registration.name}</TableCell>
-                  <TableCell>{registration.email}</TableCell>
-                  <TableCell>{maskDocument(registration.document)}</TableCell>
-                  <TableCell>
-                    {registration.events ? (
-                      <div>
-                        <div className="font-medium">{registration.events.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {formatDateTime(registration.events.date, registration.events.time)}
-                        </div>
-                      </div>
-                    ) : (
-                      'Evento não encontrado'
-                    )}
-                  </TableCell>
-                   <TableCell>
-                     {getCheckinStatusBadge(registration.checked_in)}
-                   </TableCell>
-                  <TableCell>
-                    {registration.checkin_time ? (
-                      <div className="text-sm">
-                        {new Date(registration.checkin_time).toLocaleString('pt-BR')}
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground">-</span>
-                    )}
-                  </TableCell>
+        {/* Lista de participantes */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Participantes</CardTitle>
+            <CardDescription>
+              Lista de todos os participantes registrados
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>CPF</TableHead>
+                  <TableHead>Evento</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Check-in</TableHead>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-          
-          {registrations.length === 0 && (
-            <div className="text-center py-8 text-muted-foreground">
-              Nenhum participante encontrado
+              </TableHeader>
+              <TableBody>
+                {registrations.map((registration) => (
+                  <TableRow key={registration.id}>
+                    <TableCell className="font-medium">{registration.name}</TableCell>
+                    <TableCell>{maskCpf(registration.document)}</TableCell>
+                    <TableCell>{registration.events.title}</TableCell>
+                    <TableCell>
+                      <Badge variant={registration.checked_in ? "default" : "secondary"}>
+                        {registration.checked_in ? 'Presente' : 'Pendente'}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>
+                      {registration.checked_in && registration.checkin_time ? (
+                        <span className="text-sm text-muted-foreground">
+                          {new Date(registration.checkin_time).toLocaleString('pt-BR')}
+                        </span>
+                      ) : (
+                        <Button
+                          size="sm"
+                          onClick={() => processCheckIn(registration.document)}
+                        >
+                          Check-in
+                        </Button>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+
+        {/* Scanner QR Code Dialog */}
+        <Dialog open={showScanner} onOpenChange={setShowScanner}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle>Scanner QR Code</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4">
+              <div className="border rounded-lg overflow-hidden">
+                <QrReader
+                  onResult={handleQRScan}
+                  constraints={{ facingMode: 'environment' }}
+                />
+              </div>
+              <Button onClick={() => setShowScanner(false)} className="w-full">
+                Fechar Scanner
+              </Button>
             </div>
-          )}
-        </CardContent>
-      </Card>
+          </DialogContent>
+        </Dialog>
       </div>
     </AdminLayout>
   );
-};
-
-export default CheckIn;
+}

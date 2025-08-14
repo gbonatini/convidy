@@ -195,56 +195,56 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                 </div>
 
                 {/* Funil Visual em Formato de Funil */}
-                <div className="relative py-8">
+                <div className="relative py-4">
                   {/* Convites - Topo do Funil (mais largo) */}
-                  <div className="relative mb-6 animate-scale-in" style={{ animationDelay: '0.1s' }}>
+                  <div className="relative mb-3 animate-scale-in" style={{ animationDelay: '0.1s' }}>
                     <div 
                       className="mx-auto bg-gradient-to-r from-blue-500/20 to-blue-600/20 border-2 border-blue-500/30 relative overflow-hidden"
                       style={{
-                        width: '280px',
-                        height: '80px',
+                        width: '140px',
+                        height: '40px',
                         clipPath: 'polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%)',
-                        borderRadius: '8px 8px 0 0'
+                        borderRadius: '4px 4px 0 0'
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent"></div>
                       <div className="relative z-10 flex items-center justify-center h-full">
                         <div className="text-center">
-                          <Send className="h-6 w-6 text-blue-600 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{event.invites}</div>
-                          <div className="text-xs font-medium text-blue-600 dark:text-blue-400">Convites</div>
+                          <Send className="h-3 w-3 text-blue-600 mx-auto mb-0.5" />
+                          <div className="text-sm font-bold text-blue-700 dark:text-blue-300">{event.invites}</div>
+                          <div className="text-[10px] font-medium text-blue-600 dark:text-blue-400">Convites</div>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   {/* Seta de Conexão 1 */}
-                  <div className="flex justify-center mb-4">
-                    <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-muted-foreground/30 animate-pulse"></div>
+                  <div className="flex justify-center mb-2">
+                    <div className="w-0 h-0 border-l-[6px] border-r-[6px] border-t-[10px] border-l-transparent border-r-transparent border-t-muted-foreground/30 animate-pulse"></div>
                   </div>
 
                   {/* Confirmações - Meio do Funil */}
-                  <div className="relative mb-6 animate-scale-in" style={{ animationDelay: '0.2s' }}>
+                  <div className="relative mb-3 animate-scale-in" style={{ animationDelay: '0.2s' }}>
                     <div 
                       className="mx-auto bg-gradient-to-r from-green-500/20 to-green-600/20 border-2 border-green-500/30 relative overflow-hidden"
                       style={{
-                        width: '200px',
-                        height: '70px',
+                        width: '100px',
+                        height: '35px',
                         clipPath: 'polygon(5% 0%, 95% 0%, 85% 100%, 15% 100%)',
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent"></div>
                       <div className="relative z-10 flex items-center justify-center h-full">
                         <div className="text-center">
-                          <Users className="h-5 w-5 text-green-600 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-green-700 dark:text-green-300">{event.confirmations}</div>
-                          <div className="text-xs font-medium text-green-600 dark:text-green-400">Confirmações</div>
+                          <Users className="h-3 w-3 text-green-600 mx-auto mb-0.5" />
+                          <div className="text-sm font-bold text-green-700 dark:text-green-300">{event.confirmations}</div>
+                          <div className="text-[10px] font-medium text-green-600 dark:text-green-400">Confirmações</div>
                         </div>
                       </div>
                     </div>
                     {/* Taxa de Conversão */}
-                    <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
-                      <div className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${
+                    <div className="absolute -right-6 top-1/2 transform -translate-y-1/2">
+                      <div className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${
                         event.invites > 0 && (event.confirmations / event.invites) * 100 >= 50
                           ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
                           : (event.confirmations / event.invites) * 100 >= 25
@@ -257,8 +257,8 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                   </div>
 
                   {/* Seta de Conexão 2 */}
-                  <div className="flex justify-center mb-4">
-                    <div className="w-0 h-0 border-l-[10px] border-r-[10px] border-t-[18px] border-l-transparent border-r-transparent border-t-muted-foreground/30 animate-pulse"></div>
+                  <div className="flex justify-center mb-2">
+                    <div className="w-0 h-0 border-l-[5px] border-r-[5px] border-t-[9px] border-l-transparent border-r-transparent border-t-muted-foreground/30 animate-pulse"></div>
                   </div>
 
                   {/* Check-ins - Base do Funil (mais estreito) */}
@@ -266,24 +266,24 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                     <div 
                       className="mx-auto bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-2 border-orange-500/30 relative overflow-hidden"
                       style={{
-                        width: '120px',
-                        height: '60px',
+                        width: '60px',
+                        height: '30px',
                         clipPath: 'polygon(10% 0%, 90% 0%, 80% 100%, 20% 100%)',
-                        borderRadius: '0 0 8px 8px'
+                        borderRadius: '0 0 4px 4px'
                       }}
                     >
                       <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent"></div>
                       <div className="relative z-10 flex items-center justify-center h-full">
                         <div className="text-center">
-                          <UserCheck className="h-5 w-5 text-orange-600 mx-auto mb-1" />
-                          <div className="text-lg font-bold text-orange-700 dark:text-orange-300">{event.checkins}</div>
-                          <div className="text-xs font-medium text-orange-600 dark:text-orange-400">Check-ins</div>
+                          <UserCheck className="h-3 w-3 text-orange-600 mx-auto mb-0.5" />
+                          <div className="text-sm font-bold text-orange-700 dark:text-orange-300">{event.checkins}</div>
+                          <div className="text-[10px] font-medium text-orange-600 dark:text-orange-400">Check-ins</div>
                         </div>
                       </div>
                     </div>
                     {/* Taxa de Presença */}
-                    <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
-                      <div className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${
+                    <div className="absolute -right-6 top-1/2 transform -translate-y-1/2">
+                      <div className={`px-1.5 py-0.5 rounded-full text-[10px] font-bold border ${
                         event.confirmations > 0 && (event.checkins / event.confirmations) * 100 >= 70
                           ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
                           : (event.checkins / event.confirmations) * 100 >= 40

@@ -13,56 +13,103 @@ serve(async (req) => {
   }
 
   try {
+    console.log('🚀 Starting create-payment function');
+    
     const { planId, paymentMethod } = await req.json();
+    console.log('📝 Request data:', { planId, paymentMethod });
     
     // Inicializar Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     );
+    console.log('✅ Supabase client initialized');
 
     // Verificar autenticação
-    const authHeader = req.headers.get('Authorization')!;
-    const token = authHeader.replace('Bearer ', '');
-    const { data: { user } } = await supabase.auth.getUser(token);
-
-    if (!user) {
-      throw new Error('Unauthorized');
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      console.error('❌ No authorization header found');
+      throw new Error('Authorization header missing');
     }
 
+    const token = authHeader.replace('Bearer ', '');
+    console.log('🔑 Extracted token, authenticating user...');
+    
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    if (authError) {
+      console.error('❌ Auth error:', authError);
+      throw new Error(`Authentication failed: ${authError.message}`);
+    }
+
+    if (!user) {
+      console.error('❌ No user found after authentication');
+      throw new Error('User not authenticated');
+    }
+    console.log('✅ User authenticated:', user.email);
+
     // Buscar perfil do usuário
-    const { data: profile } = await supabase
+    console.log('🔍 Fetching user profile...');
+    const { data: profile, error: profileError } = await supabase
       .from('profiles')
       .select('company_id')
       .eq('user_id', user.id)
       .single();
 
-    if (!profile?.company_id) {
-      throw new Error('Company not found');
+    if (profileError) {
+      console.error('❌ Profile error:', profileError);
+      throw new Error(`Profile not found: ${profileError.message}`);
     }
 
+    if (!profile?.company_id) {
+      console.error('❌ No company_id found in profile');
+      throw new Error('Company not found for user');
+    }
+    console.log('✅ Profile found, company_id:', profile.company_id);
+
     // Buscar dados do plano
-    const { data: plan } = await supabase
+    console.log('🔍 Fetching plan data...');
+    const { data: plan, error: planError } = await supabase
       .from('system_plans')
       .select('*')
       .eq('id', planId)
       .single();
 
-    if (!plan) {
-      throw new Error('Plan not found');
+    if (planError) {
+      console.error('❌ Plan error:', planError);
+      throw new Error(`Plan not found: ${planError.message}`);
     }
 
+    if (!plan) {
+      console.error('❌ No plan data returned');
+      throw new Error('Plan not found');
+    }
+    console.log('✅ Plan found:', plan.name, 'Price:', plan.price);
+
     // Buscar dados da empresa
-    const { data: company } = await supabase
+    console.log('🔍 Fetching company data...');
+    const { data: company, error: companyError } = await supabase
       .from('companies')
       .select('name, email')
       .eq('id', profile.company_id)
       .single();
 
+    if (companyError) {
+      console.error('⚠️ Company error (non-fatal):', companyError);
+    }
+    console.log('✅ Company data:', company?.name || 'Not found');
+
+    // Verificar se a API key está configurada
+    const flowsApiKey = Deno.env.get('FLOWSPAY_API_KEY');
+    if (!flowsApiKey) {
+      console.error('❌ FlowsPay API key not configured');
+      throw new Error('FlowsPay API key not configured');
+    }
+    console.log('✅ FlowsPay API key found');
+
     // Criar pagamento na FlowsPay
     const flowsPayload = {
-      name: `Assinatura ${plan.name} - ${company?.name}`,
-      description: plan.description,
+      name: `Assinatura ${plan.name} - ${company?.name || user.email}`,
+      description: plan.description || plan.name,
       value: Math.round(plan.price * 100), // converter para centavos
       customer_name: company?.name || user.email,
       customer_email: company?.email || user.email,
@@ -72,13 +119,7 @@ serve(async (req) => {
       external_id: `${profile.company_id}_${planId}_${Date.now()}`
     };
 
-    console.log('Creating FlowsPay payment:', flowsPayload);
-
-    // Verificar se a API key está configurada
-    const flowsApiKey = Deno.env.get('FLOWSPAY_API_KEY');
-    if (!flowsApiKey) {
-      throw new Error('FlowsPay API key not configured');
-    }
+    console.log('📦 Creating FlowsPay payment with payload:', flowsPayload);
 
     const flowsResponse = await fetch('https://api.flowspay.com.br/v1/payments', {
       method: 'POST',
@@ -89,19 +130,19 @@ serve(async (req) => {
       body: JSON.stringify(flowsPayload),
     });
 
+    console.log('🌐 FlowsPay response status:', flowsResponse.status);
+
     if (!flowsResponse.ok) {
       const errorData = await flowsResponse.text();
-      console.error('FlowsPay error:', errorData);
-      throw new Error(`FlowsPay error: ${flowsResponse.status}`);
+      console.error('❌ FlowsPay error response:', errorData);
+      throw new Error(`FlowsPay API error (${flowsResponse.status}): ${errorData}`);
     }
 
     const paymentData = await flowsResponse.json();
-    console.log('FlowsPay response:', paymentData);
+    console.log('✅ FlowsPay payment created:', paymentData);
 
-    // Gerar ID de transação único  
-    const transactionId = `${profile.company_id}_${planId}_${Date.now()}`;
-    
     // Salvar transação no banco com ID do FlowsPay
+    console.log('💾 Saving transaction to database...');
     const { data: transaction, error: transactionError } = await supabase
       .from('payment_transactions')
       .insert({
@@ -118,9 +159,10 @@ serve(async (req) => {
       .single();
 
     if (transactionError) {
-      console.error('Error saving transaction:', transactionError);
-      throw transactionError;
+      console.error('❌ Error saving transaction:', transactionError);
+      throw new Error(`Database error: ${transactionError.message}`);
     }
+    console.log('✅ Transaction saved to database');
 
     // Preparar resposta baseada no método de pagamento
     let response;
@@ -131,13 +173,16 @@ serve(async (req) => {
         pixCopyPaste: paymentData.pix?.qr_code,
         pixKey: paymentData.pix?.key
       };
+      console.log('🎯 PIX response prepared, QR code available:', !!response.qrCodeBase64);
     } else {
       response = {
         transactionId: paymentData.id,
         checkoutUrl: paymentData.checkout_url || paymentData.payment_url
       };
+      console.log('💳 Card response prepared, checkout URL:', response.checkoutUrl);
     }
 
+    console.log('🎉 Function completed successfully');
     return new Response(
       JSON.stringify({
         success: true,
@@ -149,7 +194,8 @@ serve(async (req) => {
     );
 
   } catch (error) {
-    console.error('Error in create-payment function:', error);
+    console.error('💥 Error in create-payment function:', error);
+    console.error('💥 Error stack:', error.stack);
     return new Response(
       JSON.stringify({ 
         error: error.message,

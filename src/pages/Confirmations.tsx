@@ -383,7 +383,7 @@ const Confirmations = () => {
                       <h3 className="font-bold text-lg text-foreground truncate">{registration.name}</h3>
                       <p className="text-sm text-muted-foreground truncate">{registration.email}</p>
                     </div>
-                    <div className="flex flex-col gap-1 ml-3">
+                    <div className="flex flex-col gap-0.5 ml-2">
                       {getConfirmationStatusBadge(registration.status)}
                       {registration.checked_in && getCheckinStatusBadge(registration.checked_in)}
                     </div>

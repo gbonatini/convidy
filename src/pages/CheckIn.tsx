@@ -290,7 +290,9 @@ const CheckIn = () => {
         
         if (event_id) {
           console.log('[PROCESS CHECKIN] Fazendo busca com event_id:', event_id);
-          const { data, error } = await supabase
+          
+          // Primeira tentativa: busca com event_id e document usando .limit(1)
+          const { data: directSearch, error: directError } = await supabase
             .from('registrations')
             .select(`
               id, event_id, name, email, phone, status, qr_code, 
@@ -298,39 +300,91 @@ const CheckIn = () => {
             `)
             .eq('event_id', event_id)
             .eq('document', cleanDocument)
-            .single();
+            .order('created_at', { ascending: false })
+            .limit(1);
           
-          console.log('[PROCESS CHECKIN] Resultado da busca direta:', { data, error });
-          if (error && error.code !== 'PGRST116') throw error; // PGRST116 = no rows found
-          registration = data;
-        } else {
-          console.log('[PROCESS CHECKIN] Buscando por empresa (sem event_id específico)');
-          // Buscar por empresa toda
-          const { data: profileData } = await supabase
+          console.log('[PROCESS CHECKIN] Resultado da busca direta:', { 
+            data: directSearch, 
+            error: directError,
+            count: directSearch?.length || 0 
+          });
+          
+          if (directError) {
+            console.log('[PROCESS CHECKIN] Erro na busca direta:', directError);
+            throw directError;
+          }
+          
+          registration = directSearch && directSearch.length > 0 ? directSearch[0] : null;
+          
+          // Log detalhado do que foi encontrado
+          if (registration) {
+            console.log('[PROCESS CHECKIN] Registro encontrado na busca direta:', {
+              id: registration.id,
+              name: registration.name,
+              document: registration.document,
+              document_clean: registration.document?.replace(/\D/g, ''),
+              event_id: registration.event_id,
+              checked_in: registration.checked_in,
+              expected_document: cleanDocument
+            });
+          }
+        }
+        
+        // Se não encontrou com event_id específico, buscar por empresa
+        if (!registration) {
+          console.log('[PROCESS CHECKIN] Buscando por empresa (sem event_id específico ou fallback)');
+          
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('company_id')
             .eq('user_id', (await supabase.auth.getUser()).data.user?.id)
             .single();
-          
+
+          if (profileError) {
+            console.log('[PROCESS CHECKIN] Erro ao buscar perfil:', profileError);
+            throw profileError;
+          }
+
           console.log('[PROCESS CHECKIN] Company ID do usuário:', profileData?.company_id);
-          
+
           if (profileData?.company_id) {
-            const { data, error } = await supabase
+            const { data: companySearch, error: companyError } = await supabase
               .from('registrations')
               .select(`
                 id, event_id, name, email, phone, status, qr_code, 
                 checked_in, checkin_time, created_at, document,
-                events!inner(company_id)
+                events!inner(company_id, title)
               `)
               .eq('document', cleanDocument)
               .eq('events.company_id', profileData.company_id)
               .order('created_at', { ascending: false })
-              .limit(1)
-              .single();
+              .limit(1);
             
-            console.log('[PROCESS CHECKIN] Resultado da busca por empresa:', { data, error });
-            if (error && error.code !== 'PGRST116') throw error;
-            registration = data;
+            console.log('[PROCESS CHECKIN] Resultado da busca por empresa:', { 
+              data: companySearch, 
+              error: companyError,
+              count: companySearch?.length || 0 
+            });
+            
+            if (companyError) {
+              console.log('[PROCESS CHECKIN] Erro na busca por empresa:', companyError);
+              throw companyError;
+            }
+            
+            registration = companySearch && companySearch.length > 0 ? companySearch[0] : null;
+            
+            if (registration) {
+              console.log('[PROCESS CHECKIN] Registro encontrado na busca por empresa:', {
+                id: registration.id,
+                name: registration.name,
+                document: registration.document,
+                document_clean: registration.document?.replace(/\D/g, ''),
+                event_id: registration.event_id,
+                checked_in: registration.checked_in,
+                expected_document: cleanDocument,
+                event_title: (registration as any).events?.title
+              });
+            }
           }
         }
       } else {

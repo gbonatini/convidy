@@ -619,7 +619,14 @@ const CompanyPublic = () => {
       </main>
 
       {/* Código de Barras Modal */}
-      <Dialog open={showBarcode} onOpenChange={setShowBarcode}>
+      <Dialog open={showBarcode} onOpenChange={(open) => {
+        if (!open) {
+          // Resetar estados quando fechar o modal
+          setShowBarcode(false);
+          setRegistrationData(null);
+          setFormData({ name: '', document: '', phone: '', email: '' });
+        }
+      }}>
         <DialogContent className="w-[90vw] sm:max-w-[400px] p-6">
           <DialogHeader className="text-center space-y-3">
             <DialogTitle className="flex items-center justify-center gap-2 text-lg">
@@ -649,7 +656,11 @@ const CompanyPublic = () => {
                 Salve ou imprima este código de barras para apresentar no evento
               </div>
               
-              <Button onClick={() => setShowBarcode(false)} className="w-full">
+              <Button onClick={() => {
+                setShowBarcode(false);
+                setRegistrationData(null);
+                setFormData({ name: '', document: '', phone: '', email: '' });
+              }} className="w-full">
                 Fechar
               </Button>
             </div>

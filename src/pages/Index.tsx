@@ -145,9 +145,7 @@ const Index = () => {
       <section className="py-16 bg-card/50">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8">
-            <h2 className="text-2xl md:text-3xl font-bold">
-              +200 empresas confiam no Convidy
-            </h2>
+            <h2 className="text-2xl md:text-3xl font-bold">Empresas que confiam no Convidy</h2>
             
             {/* Fake but realistic company logos */}
             <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
@@ -175,7 +173,7 @@ const Index = () => {
             {/* Key Numbers */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
               <div className="text-center">
-                <div className="text-3xl font-bold text-primary">15.000+</div>
+                <div className="text-3xl font-bold text-primary">5.000+</div>
                 <div className="text-sm text-muted-foreground">eventos realizados</div>
               </div>
               <div className="text-center">

@@ -814,6 +814,7 @@ export default function Invites() {
                             size="sm"
                             variant="outline"
                             onClick={() => handleSendWhatsApp(invite)}
+                            className="border-green-500 text-green-600 hover:bg-green-50 hover:text-green-700 dark:border-green-400 dark:text-green-400 dark:hover:bg-green-950/20"
                           >
                             <MessageCircle className="h-4 w-4" />
                           </Button>

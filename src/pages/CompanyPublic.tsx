@@ -93,79 +93,67 @@ const CompanyPublic = () => {
 
   // Gerar código de barras quando registrationData estiver disponível
   useEffect(() => {
-    console.log('=== USEEFFECT CÓDIGO DE BARRAS ===');
-    console.log('registrationData:', registrationData);
-    console.log('barcodeRef.current:', barcodeRef.current);
-    console.log('showBarcode:', showBarcode);
-    console.log('formData.document:', formData.document);
-    
-    if (registrationData && barcodeRef.current && showBarcode) {
-      try {
-        console.log('=== GERANDO CÓDIGO DE BARRAS ===');
-        console.log('Dados da inscrição para barcode:', registrationData);
-        console.log('qr_code value:', registrationData.qr_code);
-        console.log('Canvas ref:', barcodeRef.current);
-        console.log('showBarcode:', showBarcode);
-        
-        // Usar sempre o CPF limpo como código de barras
-        // Pegar o CPF do registro, não do formulário (que pode estar limpo)
-        const documentFromRegistration = registrationData.document || formData.document;
-        const cleanDocument = documentFromRegistration.replace(/[^0-9]/g, '');
-        let barcodeValue = cleanDocument;
-        
-        console.log('CPF do registro:', registrationData.document);
-        console.log('CPF do formulário:', formData.document);
-        console.log('CPF usado:', documentFromRegistration);
-        console.log('CPF limpo para barcode:', barcodeValue);
-        console.log('Tipo do valor:', typeof barcodeValue);
-        console.log('Comprimento do valor:', barcodeValue?.length);
-        
-        if (!barcodeValue || barcodeValue.length === 0) {
-          throw new Error('CPF inválido para gerar código de barras');
-        }
-        
-        console.log('Valor final do barcode (CPF):', barcodeValue);
-        console.log('Tipo do valor:', typeof barcodeValue);
-        console.log('Comprimento do valor:', barcodeValue?.length);
-        
-        if (!barcodeValue || barcodeValue.length === 0) {
-          throw new Error('CPF inválido para gerar código de barras');
-        }
-        
-        JsBarcode(barcodeRef.current, barcodeValue, {
-          format: "CODE128",
-          width: 1.5,
-          height: 40,
-          displayValue: true,
-          fontSize: 10,
-          margin: 5
-        });
-        
-        console.log('✅ Barcode gerado com sucesso!');
-      } catch (error) {
-        console.error('❌ Erro ao gerar código de barras:', error);
-        
-        // Fallback: mostrar mensagem de erro no canvas
+    if (registrationData && showBarcode && registrationData.document) {
+      console.log('📊 Tentando gerar código de barras para CPF:', registrationData.document);
+      
+      // Aguardar o canvas estar renderizado no DOM
+      const generateBarcode = () => {
         if (barcodeRef.current) {
-          const ctx = barcodeRef.current.getContext('2d');
-          if (ctx) {
-            ctx.clearRect(0, 0, barcodeRef.current.width, barcodeRef.current.height);
-            ctx.font = '12px Arial';
-            ctx.fillStyle = 'red';
-            ctx.fillText('Erro ao gerar código', 10, 30);
+          try {
+            console.log('🎯 Canvas encontrado, gerando código de barras...');
+            
+            // Limpar o canvas
+            const canvas = barcodeRef.current;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // Usar o CPF limpo do registro
+            const cleanDocument = registrationData.document.replace(/[^0-9]/g, '');
+            
+            if (!cleanDocument || cleanDocument.length === 0) {
+              throw new Error('CPF inválido para gerar código de barras');
+            }
+            
+            console.log('📋 Gerando código de barras com CPF:', cleanDocument);
+            
+            // Gerar o código de barras
+            JsBarcode(barcodeRef.current, cleanDocument, {
+              format: "CODE128",
+              width: 2,
+              height: 40,
+              displayValue: true,
+              fontSize: 10,
+              margin: 5
+            });
+            
+            console.log('✅ Barcode gerado com sucesso!');
+          } catch (error) {
+            console.error('❌ Erro ao gerar código de barras:', error);
+            
+            // Fallback: mostrar mensagem de erro no canvas
+            if (barcodeRef.current) {
+              const ctx = barcodeRef.current.getContext('2d');
+              if (ctx) {
+                ctx.clearRect(0, 0, barcodeRef.current.width, barcodeRef.current.height);
+                ctx.font = '12px Arial';
+                ctx.fillStyle = 'red';
+                ctx.fillText('Erro ao gerar código', 10, 30);
+              }
+            }
           }
+        } else {
+          console.log('⏳ Canvas ainda não disponível, tentando novamente em 100ms...');
+          // Tentar novamente após um pequeno delay
+          setTimeout(generateBarcode, 100);
         }
-      }
-    } else {
-      console.log('Condições não atendidas para gerar barcode:', {
-        hasRegistrationData: !!registrationData,
-        hasCanvas: !!barcodeRef.current,
-        showBarcode,
-        hasDocument: !!formData.document,
-        documentValue: formData.document
-      });
+      };
+      
+      // Aguardar um pouco para o modal estar completamente renderizado
+      setTimeout(generateBarcode, 100);
     }
-  }, [registrationData, showBarcode, formData.document]);
+  }, [registrationData, showBarcode]);
 
   const fetchCompanyAndEvents = async () => {
     try {

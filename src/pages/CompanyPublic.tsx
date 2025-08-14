@@ -613,7 +613,7 @@ const CompanyPublic = () => {
                               className="w-full" 
                               onClick={() => setSelectedEvent(event)}
                               disabled={isEventFull}
-                              variant={isEventFull ? "secondary" : "default"}
+                              variant={isEventFull ? "outline" : "default"}
                             >
                               {isEventFull ? (
                                 <>

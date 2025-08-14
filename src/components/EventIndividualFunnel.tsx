@@ -181,9 +181,9 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
             const funnelSteps = calculateEventFunnel(event);
             
             return (
-              <div key={event.id} className="bg-gradient-to-br from-card to-muted/20 border border-border/50 rounded-xl p-6 space-y-6 shadow-sm hover:shadow-md transition-shadow">
+              <div key={event.id} className="bg-gradient-to-br from-card to-muted/20 border border-border/50 rounded-xl p-6 space-y-6 shadow-sm hover:shadow-md transition-all duration-300 hover:scale-[1.02]">
                 {/* Header do Evento */}
-                <div className="flex items-start justify-between">
+                <div className="flex items-start justify-between animate-fade-in">
                   <div className="space-y-2">
                     <h4 className="font-bold text-xl text-foreground">{event.title}</h4>
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
@@ -194,101 +194,150 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                   {getStatusBadge(event.status)}
                 </div>
 
-                {/* Funil Visual Melhorado */}
-                <div className="relative">
-                  <div className="grid grid-cols-3 gap-6">
-                    {funnelSteps.map((step, index) => {
-                      const Icon = step.icon;
-                      const isFirst = index === 0;
-                      const conversionRate = isFirst ? 100 : step.percentage;
-                      
-                      return (
-                        <div key={index} className="relative flex flex-col items-center space-y-3">
-                          {/* Linha de conexão */}
-                          {index < funnelSteps.length - 1 && (
-                            <div className="absolute top-6 left-full w-6 h-0.5 bg-gradient-to-r from-primary/30 to-muted-foreground/30 z-0" />
-                          )}
-                          
-                          {/* Ícone do Step */}
-                          <div className={`relative z-10 w-16 h-16 rounded-full border-3 flex items-center justify-center shadow-lg transition-all duration-300 ${
-                            step.completed 
-                              ? 'border-primary bg-gradient-to-br from-primary/20 to-primary/10 scale-110' 
-                              : 'border-muted-foreground/30 bg-muted/10'
-                          }`}>
-                            <Icon 
-                              className={`h-6 w-6 ${
-                                step.completed ? 'text-primary' : 'text-muted-foreground'
-                              }`} 
-                            />
-                          </div>
-                          
-                          {/* Conteúdo do Step */}
-                          <div className="text-center space-y-1">
-                            <div className="text-sm font-semibold text-foreground">{step.name}</div>
-                            <div className={`text-2xl font-bold ${
-                              step.completed ? 'text-primary' : 'text-muted-foreground'
-                            }`}>
-                              {step.value}
-                            </div>
-                            {!isFirst && (
-                              <div className={`text-xs px-2 py-1 rounded-full ${
-                                conversionRate >= 50 
-                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
-                                  : conversionRate >= 25 
-                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
-                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
-                              }`}>
-                                {conversionRate}%
-                              </div>
-                            )}
-                          </div>
+                {/* Funil Visual em Formato de Funil */}
+                <div className="relative py-8">
+                  {/* Convites - Topo do Funil (mais largo) */}
+                  <div className="relative mb-6 animate-scale-in" style={{ animationDelay: '0.1s' }}>
+                    <div 
+                      className="mx-auto bg-gradient-to-r from-blue-500/20 to-blue-600/20 border-2 border-blue-500/30 relative overflow-hidden"
+                      style={{
+                        width: '280px',
+                        height: '80px',
+                        clipPath: 'polygon(0% 0%, 100% 0%, 90% 100%, 10% 100%)',
+                        borderRadius: '8px 8px 0 0'
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-transparent"></div>
+                      <div className="relative z-10 flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <Send className="h-6 w-6 text-blue-600 mx-auto mb-1" />
+                          <div className="text-lg font-bold text-blue-700 dark:text-blue-300">{event.invites}</div>
+                          <div className="text-xs font-medium text-blue-600 dark:text-blue-400">Convites</div>
                         </div>
-                      );
-                    })}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seta de Conexão 1 */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-0 h-0 border-l-[12px] border-r-[12px] border-t-[20px] border-l-transparent border-r-transparent border-t-muted-foreground/30 animate-pulse"></div>
+                  </div>
+
+                  {/* Confirmações - Meio do Funil */}
+                  <div className="relative mb-6 animate-scale-in" style={{ animationDelay: '0.2s' }}>
+                    <div 
+                      className="mx-auto bg-gradient-to-r from-green-500/20 to-green-600/20 border-2 border-green-500/30 relative overflow-hidden"
+                      style={{
+                        width: '200px',
+                        height: '70px',
+                        clipPath: 'polygon(5% 0%, 95% 0%, 85% 100%, 15% 100%)',
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-green-500/10 to-transparent"></div>
+                      <div className="relative z-10 flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <Users className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                          <div className="text-lg font-bold text-green-700 dark:text-green-300">{event.confirmations}</div>
+                          <div className="text-xs font-medium text-green-600 dark:text-green-400">Confirmações</div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Taxa de Conversão */}
+                    <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+                      <div className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${
+                        event.invites > 0 && (event.confirmations / event.invites) * 100 >= 50
+                          ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+                          : (event.confirmations / event.invites) * 100 >= 25
+                            ? 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-600'
+                            : 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-600'
+                      }`}>
+                        {event.invites > 0 ? Math.round((event.confirmations / event.invites) * 100) : 0}%
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Seta de Conexão 2 */}
+                  <div className="flex justify-center mb-4">
+                    <div className="w-0 h-0 border-l-[10px] border-r-[10px] border-t-[18px] border-l-transparent border-r-transparent border-t-muted-foreground/30 animate-pulse"></div>
+                  </div>
+
+                  {/* Check-ins - Base do Funil (mais estreito) */}
+                  <div className="relative animate-scale-in" style={{ animationDelay: '0.3s' }}>
+                    <div 
+                      className="mx-auto bg-gradient-to-r from-orange-500/20 to-orange-600/20 border-2 border-orange-500/30 relative overflow-hidden"
+                      style={{
+                        width: '120px',
+                        height: '60px',
+                        clipPath: 'polygon(10% 0%, 90% 0%, 80% 100%, 20% 100%)',
+                        borderRadius: '0 0 8px 8px'
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-br from-orange-500/10 to-transparent"></div>
+                      <div className="relative z-10 flex items-center justify-center h-full">
+                        <div className="text-center">
+                          <UserCheck className="h-5 w-5 text-orange-600 mx-auto mb-1" />
+                          <div className="text-lg font-bold text-orange-700 dark:text-orange-300">{event.checkins}</div>
+                          <div className="text-xs font-medium text-orange-600 dark:text-orange-400">Check-ins</div>
+                        </div>
+                      </div>
+                    </div>
+                    {/* Taxa de Presença */}
+                    <div className="absolute -right-8 top-1/2 transform -translate-y-1/2">
+                      <div className={`px-2 py-1 rounded-full text-xs font-bold border-2 ${
+                        event.confirmations > 0 && (event.checkins / event.confirmations) * 100 >= 70
+                          ? 'bg-green-100 text-green-700 border-green-300 dark:bg-green-900/30 dark:text-green-400 dark:border-green-600'
+                          : (event.checkins / event.confirmations) * 100 >= 40
+                            ? 'bg-yellow-100 text-yellow-700 border-yellow-300 dark:bg-yellow-900/30 dark:text-yellow-400 dark:border-yellow-600'
+                            : 'bg-red-100 text-red-700 border-red-300 dark:bg-red-900/30 dark:text-red-400 dark:border-red-600'
+                      }`}>
+                        {event.confirmations > 0 ? Math.round((event.checkins / event.confirmations) * 100) : 0}%
+                      </div>
+                    </div>
                   </div>
                 </div>
 
                 {/* Estatísticas em Cards */}
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-2 gap-4 animate-fade-in" style={{ animationDelay: '0.4s' }}>
                   {/* Taxa de Conversão Geral */}
-                  <div className="bg-background/60 border border-border/50 rounded-lg p-4 text-center">
-                    <div className="text-sm text-muted-foreground mb-1">Taxa de Conversão</div>
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-4 text-center hover:scale-105 transition-transform duration-200">
+                    <div className="text-sm text-muted-foreground mb-1">Conversão Total</div>
                     <div className="text-2xl font-bold text-primary">
-                      {event.invites > 0 ? Math.round((event.confirmations / event.invites) * 100) : 0}%
+                      {event.invites > 0 ? Math.round((event.checkins / event.invites) * 100) : 0}%
                     </div>
-                    <div className="text-xs text-muted-foreground">Convites → Confirmações</div>
+                    <div className="text-xs text-muted-foreground">Convites → Check-ins</div>
                   </div>
                   
-                  {/* Taxa de Presença */}
-                  <div className="bg-background/60 border border-border/50 rounded-lg p-4 text-center">
-                    <div className="text-sm text-muted-foreground mb-1">Taxa de Presença</div>
+                  {/* Ocupação */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-4 text-center hover:scale-105 transition-transform duration-200">
+                    <div className="text-sm text-muted-foreground mb-1">Ocupação</div>
                     <div className="text-2xl font-bold text-warning">
-                      {event.confirmations > 0 ? Math.round((event.checkins / event.confirmations) * 100) : 0}%
+                      {event.capacity > 0 ? Math.round((event.confirmations / event.capacity) * 100) : 0}%
                     </div>
-                    <div className="text-xs text-muted-foreground">Confirmações → Check-ins</div>
+                    <div className="text-xs text-muted-foreground">{event.confirmations}/{event.capacity} lugares</div>
                   </div>
                 </div>
 
                 {/* Barra de Progresso da Ocupação */}
-                <div className="space-y-3">
+                <div className="space-y-3 animate-fade-in" style={{ animationDelay: '0.5s' }}>
                   <div className="flex justify-between items-center">
-                    <span className="text-sm font-medium text-foreground">Ocupação do Evento</span>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="outline" className="text-xs">
-                        {event.confirmations}/{event.capacity}
-                      </Badge>
-                      <span className="text-sm font-bold text-primary">
-                        {event.capacity > 0 ? Math.round((event.confirmations / event.capacity) * 100) : 0}%
-                      </span>
-                    </div>
+                    <span className="text-sm font-medium text-foreground">Capacidade do Evento</span>
+                    <Badge variant="outline" className="text-xs font-semibold">
+                      {event.confirmations}/{event.capacity}
+                    </Badge>
                   </div>
                   <div className="relative">
                     <Progress 
                       value={event.capacity > 0 ? (event.confirmations / event.capacity) * 100 : 0} 
-                      className="h-3 bg-muted"
+                      className="h-4 bg-muted"
                     />
-                    {/* Linha de capacidade máxima */}
-                    <div className="absolute top-0 right-0 w-0.5 h-3 bg-destructive/60" />
+                    {/* Indicador de lotação */}
+                    {event.capacity > 0 && (event.confirmations / event.capacity) * 100 >= 90 && (
+                      <div className="absolute top-0 right-2 transform -translate-y-1">
+                        <div className="bg-red-500 text-white text-xs px-2 py-1 rounded-full font-bold animate-pulse">
+                          Quase Lotado!
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

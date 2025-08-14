@@ -372,6 +372,9 @@ export default function Invites() {
     
     // Generate direct confirmation link
     const directLink = `${window.location.origin}/${companies?.slug}/convite/${invite.id}`;
+    console.log('🔗 Link direto gerado:', directLink);
+    console.log('🏢 Company slug:', companies?.slug);
+    console.log('📧 Invite ID:', invite.id);
     
     // Use saved message or default with direct link
     let message = invite.message_sent;

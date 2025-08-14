@@ -157,17 +157,29 @@ const InviteConfirmation = () => {
       console.log('📅 Evento carregado:', event);
 
       // Verificar se já foi confirmado - buscar registro existente
-      const { data: existingRegistration } = await supabase
+      console.log('🔍 Verificando se já existe registro de confirmação...');
+      console.log('Parâmetros da busca:', {
+        event_uuid: invite.event_id,
+        document_text: invite.cpf,
+        phone_text: invite.whatsapp
+      });
+      
+      const { data: existingRegistration, error: regError } = await supabase
         .rpc('get_registration_public', {
           event_uuid: invite.event_id,
           document_text: invite.cpf,
           phone_text: invite.whatsapp
         });
 
-      if (existingRegistration) {
+      console.log('📋 Registro existente encontrado:', existingRegistration);
+      console.log('❌ Erro na busca do registro:', regError);
+
+      if (existingRegistration && existingRegistration.length > 0) {
+        console.log('✅ Registro já existe, usando dados existentes');
         const regData = Array.isArray(existingRegistration) ? existingRegistration[0] : existingRegistration;
         setRegistrationData(regData);
       } else {
+        console.log('🚀 Registro não existe, iniciando confirmação automática...');
         // Se não foi confirmado, confirmar automaticamente
         await autoConfirm(invite, event);
       }

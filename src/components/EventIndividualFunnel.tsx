@@ -181,11 +181,11 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
             const funnelSteps = calculateEventFunnel(event);
             
             return (
-              <div key={event.id} className="border border-border rounded-lg p-4 space-y-4">
+              <div key={event.id} className="bg-gradient-to-br from-card to-muted/20 border border-border/50 rounded-xl p-6 space-y-6 shadow-sm hover:shadow-md transition-shadow">
                 {/* Header do Evento */}
                 <div className="flex items-start justify-between">
-                  <div className="space-y-1">
-                    <h4 className="font-semibold text-lg">{event.title}</h4>
+                  <div className="space-y-2">
+                    <h4 className="font-bold text-xl text-foreground">{event.title}</h4>
                     <div className="flex items-center space-x-2 text-sm text-muted-foreground">
                       <Clock className="h-4 w-4" />
                       <span>{getEventDate(event.date, event.time)}</span>
@@ -194,78 +194,102 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                   {getStatusBadge(event.status)}
                 </div>
 
-                {/* Estatísticas Rápidas */}
-                <div className="grid grid-cols-4 gap-4">
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-muted-foreground">{event.invites}</div>
-                    <div className="text-xs text-muted-foreground">Convites</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-info">{event.confirmations}</div>
-                    <div className="text-xs text-muted-foreground">Confirmações</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold text-warning">{event.checkins}</div>
-                    <div className="text-xs text-muted-foreground">Check-ins</div>
-                  </div>
-                  <div className="text-center">
-                    <div className="text-xl font-bold">
-                      {event.invites > 0 ? Math.round((event.confirmations / event.invites) * 100) : 0}%
-                    </div>
-                    <div className="text-xs text-muted-foreground">Taxa Conversão</div>
+                {/* Funil Visual Melhorado */}
+                <div className="relative">
+                  <div className="grid grid-cols-3 gap-6">
+                    {funnelSteps.map((step, index) => {
+                      const Icon = step.icon;
+                      const isFirst = index === 0;
+                      const conversionRate = isFirst ? 100 : step.percentage;
+                      
+                      return (
+                        <div key={index} className="relative flex flex-col items-center space-y-3">
+                          {/* Linha de conexão */}
+                          {index < funnelSteps.length - 1 && (
+                            <div className="absolute top-6 left-full w-6 h-0.5 bg-gradient-to-r from-primary/30 to-muted-foreground/30 z-0" />
+                          )}
+                          
+                          {/* Ícone do Step */}
+                          <div className={`relative z-10 w-16 h-16 rounded-full border-3 flex items-center justify-center shadow-lg transition-all duration-300 ${
+                            step.completed 
+                              ? 'border-primary bg-gradient-to-br from-primary/20 to-primary/10 scale-110' 
+                              : 'border-muted-foreground/30 bg-muted/10'
+                          }`}>
+                            <Icon 
+                              className={`h-6 w-6 ${
+                                step.completed ? 'text-primary' : 'text-muted-foreground'
+                              }`} 
+                            />
+                          </div>
+                          
+                          {/* Conteúdo do Step */}
+                          <div className="text-center space-y-1">
+                            <div className="text-sm font-semibold text-foreground">{step.name}</div>
+                            <div className={`text-2xl font-bold ${
+                              step.completed ? 'text-primary' : 'text-muted-foreground'
+                            }`}>
+                              {step.value}
+                            </div>
+                            {!isFirst && (
+                              <div className={`text-xs px-2 py-1 rounded-full ${
+                                conversionRate >= 50 
+                                  ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' 
+                                  : conversionRate >= 25 
+                                    ? 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400'
+                                    : 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400'
+                              }`}>
+                                {conversionRate}%
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
 
-                {/* Funil Visual */}
-                <div className="grid grid-cols-3 gap-4">
-                  {funnelSteps.map((step, index) => {
-                    const Icon = step.icon;
-                    const isFirst = index === 0;
-                    const conversionRate = isFirst ? 100 : step.percentage;
-                    
-                    return (
-                      <div key={index} className="text-center space-y-2">
-                        <div className={`mx-auto w-12 h-12 rounded-full border-2 flex items-center justify-center ${
-                          step.completed 
-                            ? 'border-primary bg-primary/10' 
-                            : 'border-muted-foreground bg-muted/10'
-                        }`}>
-                          <Icon 
-                            className={`h-5 w-5 ${
-                              step.completed ? 'text-primary' : 'text-muted-foreground'
-                            }`} 
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-xs font-medium">{step.name}</div>
-                          <div className={`text-lg font-bold ${
-                            step.completed ? 'text-primary' : 'text-muted-foreground'
-                          }`}>
-                            {step.value}
-                          </div>
-                          {!isFirst && (
-                            <div className="text-xs text-muted-foreground">
-                              {conversionRate}% do anterior
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
+                {/* Estatísticas em Cards */}
+                <div className="grid grid-cols-2 gap-4">
+                  {/* Taxa de Conversão Geral */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-4 text-center">
+                    <div className="text-sm text-muted-foreground mb-1">Taxa de Conversão</div>
+                    <div className="text-2xl font-bold text-primary">
+                      {event.invites > 0 ? Math.round((event.confirmations / event.invites) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Convites → Confirmações</div>
+                  </div>
+                  
+                  {/* Taxa de Presença */}
+                  <div className="bg-background/60 border border-border/50 rounded-lg p-4 text-center">
+                    <div className="text-sm text-muted-foreground mb-1">Taxa de Presença</div>
+                    <div className="text-2xl font-bold text-warning">
+                      {event.confirmations > 0 ? Math.round((event.checkins / event.confirmations) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-muted-foreground">Confirmações → Check-ins</div>
+                  </div>
                 </div>
 
                 {/* Barra de Progresso da Ocupação */}
-                <div className="space-y-2">
-                  <div className="flex justify-between text-sm">
-                    <span>Ocupação do Evento</span>
-                    <span className="font-semibold">
-                      {event.confirmations}/{event.capacity}
-                    </span>
+                <div className="space-y-3">
+                  <div className="flex justify-between items-center">
+                    <span className="text-sm font-medium text-foreground">Ocupação do Evento</span>
+                    <div className="flex items-center space-x-2">
+                      <Badge variant="outline" className="text-xs">
+                        {event.confirmations}/{event.capacity}
+                      </Badge>
+                      <span className="text-sm font-bold text-primary">
+                        {event.capacity > 0 ? Math.round((event.confirmations / event.capacity) * 100) : 0}%
+                      </span>
+                    </div>
                   </div>
-                  <Progress 
-                    value={event.capacity > 0 ? (event.confirmations / event.capacity) * 100 : 0} 
-                    className="h-2"
-                  />
+                  <div className="relative">
+                    <Progress 
+                      value={event.capacity > 0 ? (event.confirmations / event.capacity) * 100 : 0} 
+                      className="h-3 bg-muted"
+                    />
+                    {/* Linha de capacidade máxima */}
+                    <div className="absolute top-0 right-0 w-0.5 h-3 bg-destructive/60" />
+                  </div>
                 </div>
               </div>
             );

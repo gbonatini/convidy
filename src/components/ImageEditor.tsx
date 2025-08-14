@@ -1,10 +1,8 @@
 import React, { useState, useCallback, useRef } from 'react';
 import ReactCrop, { Crop, PixelCrop } from 'react-image-crop';
 import { Button } from '@/components/ui/button';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
-import { Slider } from '@/components/ui/slider';
-import { Label } from '@/components/ui/label';
-import { RotateCw, Move, ZoomIn, ZoomOut, Check, X } from 'lucide-react';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '@/components/ui/dialog';
+import { Check, X } from 'lucide-react';
 
 interface ImageEditorProps {
   image: string;
@@ -122,6 +120,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Editar Imagem do Evento</DialogTitle>
+          <DialogDescription>
+            Arraste para reposicionar a área de recorte da imagem do evento.
+          </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-6">

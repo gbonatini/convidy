@@ -416,15 +416,13 @@ const Confirmations = () => {
                     </div>
                   </div>
 
-                  {/* Botões de ação compactos */}
+                  {/* Botões de ação discretos */}
                   <div className="flex gap-1 pt-2">
-                    <Button variant="outline" size="sm" onClick={() => setSelectedRegistration(registration)} className="flex-1 text-xs">
-                      <Edit className="h-3 w-3 mr-1" />
-                      Editar
+                    <Button variant="ghost" size="sm" onClick={() => setSelectedRegistration(registration)} className="h-7 px-2 text-xs text-muted-foreground hover:text-foreground">
+                      <Edit className="h-3 w-3" />
                     </Button>
-                    <Button variant="destructive" size="sm" onClick={() => handleDeleteRegistration(registration.id)} className="flex-1 text-xs">
-                      <Trash2 className="h-3 w-3 mr-1" />
-                      Excluir
+                    <Button variant="ghost" size="sm" onClick={() => handleDeleteRegistration(registration.id)} className="h-7 px-2 text-xs text-muted-foreground hover:text-destructive">
+                      <Trash2 className="h-3 w-3" />
                     </Button>
                   </div>
                 </CardContent>

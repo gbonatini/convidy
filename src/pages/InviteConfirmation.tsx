@@ -89,9 +89,16 @@ const InviteConfirmation = () => {
 
   const fetchInviteData = async () => {
     try {
+      console.log('🔍 Buscando dados do convite...');
+      console.log('Slug:', slug);
+      console.log('InviteId:', inviteId);
+      
       // Buscar empresa
       const { data: companyData, error: companyError } = await supabase
         .rpc('get_company_public', { company_slug: slug });
+
+      console.log('Empresa encontrada:', companyData);
+      console.log('Erro da empresa:', companyError);
 
       if (companyError || !companyData) {
         throw new Error('Empresa não encontrada');
@@ -100,7 +107,9 @@ const InviteConfirmation = () => {
       const company = Array.isArray(companyData) ? companyData[0] : companyData;
       setCompany(company);
 
-      // Buscar convite com dados do evento
+      console.log('🏢 Empresa definida:', company);
+
+      // Primeiro tentar buscar o convite sem RLS (busca pública básica)
       const { data: inviteData, error: inviteError } = await supabase
         .from('invites')
         .select(`
@@ -110,22 +119,33 @@ const InviteConfirmation = () => {
           )
         `)
         .eq('id', inviteId)
-        .eq('company_id', company.id)
-        .single();
+        .eq('company_id', company.id);
 
-      if (inviteError || !inviteData) {
+      console.log('📧 Dados do convite:', inviteData);
+      console.log('❌ Erro do convite:', inviteError);
+
+      if (inviteError) {
+        console.error('Erro detalhado do convite:', inviteError);
+        throw new Error(`Erro ao buscar convite: ${inviteError.message}`);
+      }
+
+      if (!inviteData || inviteData.length === 0) {
         throw new Error('Convite não encontrado');
       }
 
-      setInvite(inviteData);
-      setEvent(inviteData.events);
+      const invite = inviteData[0];
+      setInvite(invite);
+      setEvent(invite.events);
+
+      console.log('✅ Convite carregado:', invite);
+      console.log('📅 Evento carregado:', invite.events);
 
       // Verificar se já foi confirmado - buscar registro existente
       const { data: existingRegistration } = await supabase
         .rpc('get_registration_public', {
-          event_uuid: inviteData.event_id,
-          document_text: inviteData.cpf,
-          phone_text: inviteData.whatsapp
+          event_uuid: invite.event_id,
+          document_text: invite.cpf,
+          phone_text: invite.whatsapp
         });
 
       if (existingRegistration) {
@@ -133,7 +153,7 @@ const InviteConfirmation = () => {
         setRegistrationData(regData);
       } else {
         // Se não foi confirmado, confirmar automaticamente
-        await autoConfirm(inviteData, inviteData.events);
+        await autoConfirm(invite, invite.events);
       }
 
     } catch (error: any) {

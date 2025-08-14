@@ -710,7 +710,7 @@ export default function Invites() {
 
         {/* Indicadores */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
+          <Card className="border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Convites</CardTitle>
               <Send className="h-4 w-4 text-muted-foreground" />
@@ -723,7 +723,7 @@ export default function Invites() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Convites Pendentes</CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
@@ -736,7 +736,7 @@ export default function Invites() {
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="border-0 shadow-lg">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Convites Enviados</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />

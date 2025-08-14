@@ -225,13 +225,29 @@ export default function CheckIn() {
   const processCheckInByBarcode = async (barcodeValue: string) => {
     try {
       console.log('[CHECK-IN] Iniciando com código de barras:', barcodeValue);
+      console.log('[CHECK-IN] Registros disponíveis:', registrations.map(r => ({ id: r.id, name: r.name, qr_code: r.qr_code })));
       
-      // Buscar registro pelo código de barras
-      const registration = registrations.find(reg => reg.qr_code === barcodeValue);
+      // Buscar registro pelo código de barras (busca exata primeiro)
+      let registration = registrations.find(reg => reg.qr_code === barcodeValue);
+      
+      // Se não encontrou com busca exata, tentar busca parcial (código pode estar incompleto)
+      if (!registration) {
+        console.log('[CHECK-IN] Busca exata falhou, tentando busca parcial...');
+        registration = registrations.find(reg => 
+          reg.qr_code && (
+            reg.qr_code.includes(barcodeValue) || 
+            barcodeValue.includes(reg.qr_code) ||
+            reg.qr_code.endsWith(barcodeValue)
+          )
+        );
+      }
       
       if (!registration) {
-        throw new Error('Registro não encontrado para este código de barras');
+        console.log('[CHECK-IN] Nenhum registro encontrado para código:', barcodeValue);
+        throw new Error(`Registro não encontrado para código: ${barcodeValue}`);
       }
+
+      console.log('[CHECK-IN] Registro encontrado:', registration);
 
       if (registration.checked_in) {
         toast.error(`${registration.name} já fez check-in anteriormente`);

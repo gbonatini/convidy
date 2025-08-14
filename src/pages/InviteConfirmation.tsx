@@ -181,16 +181,27 @@ const InviteConfirmation = () => {
   };
 
   const autoConfirm = async (inviteData: Invite, eventData: Event) => {
-    if (registrationData) return; // Já confirmado
+    console.log('🚀 Iniciando confirmação automática...');
+    console.log('Dados do convite:', inviteData);
+    console.log('Dados do evento:', eventData);
+    
+    if (registrationData) {
+      console.log('✅ Já existe registro, não confirmando novamente');
+      return; // Já confirmado
+    }
 
     setConfirming(true);
     
     try {
+      console.log('🔍 Verificando se o evento está ativo...');
       // Verificar se o evento ainda está ativo
       if (eventData.status !== 'active') {
+        console.log('❌ Evento não está ativo:', eventData.status);
         throw new Error('Este evento não está mais ativo');
       }
+      console.log('✅ Evento está ativo');
 
+      console.log('📊 Verificando capacidade do evento...');
       // Verificar capacidade do evento
       const { data: currentRegistrations, error: countError } = await supabase
         .from('registrations')
@@ -198,15 +209,23 @@ const InviteConfirmation = () => {
         .eq('event_id', eventData.id)
         .eq('status', 'confirmed');
 
+      console.log('Registros atuais:', currentRegistrations);
+      console.log('Erro na contagem:', countError);
+
       if (countError) {
+        console.log('❌ Erro ao verificar capacidade:', countError);
         throw new Error('Erro ao verificar capacidade do evento');
       }
 
       const currentCount = currentRegistrations?.length || 0;
+      console.log(`📈 Capacidade: ${currentCount}/${eventData.capacity}`);
+      
       if (currentCount >= eventData.capacity) {
+        console.log('🚫 Evento lotado!');
         throw new Error(`Este evento já atingiu sua capacidade máxima de ${eventData.capacity} participantes`);
       }
 
+      console.log('💾 Criando registro de confirmação...');
       // Criar registro de confirmação
       const { error: insertError } = await supabase
         .from('registrations')
@@ -220,8 +239,12 @@ const InviteConfirmation = () => {
           status: 'confirmed'
         });
 
+      console.log('Erro na inserção:', insertError);
+
       if (insertError) {
+        console.log('❌ Erro na inserção detalhado:', insertError);
         if (insertError.code === '23505') {
+          console.log('🔄 Registro duplicado detectado, buscando existente...');
           // Já existe registro - buscar dados existentes
           const { data: existingReg } = await supabase
             .rpc('get_registration_public', {
@@ -229,6 +252,8 @@ const InviteConfirmation = () => {
               document_text: inviteData.cpf,
               phone_text: inviteData.whatsapp
             });
+
+          console.log('Registro existente encontrado:', existingReg);
 
           if (existingReg) {
             const regData = Array.isArray(existingReg) ? existingReg[0] : existingReg;
@@ -239,6 +264,8 @@ const InviteConfirmation = () => {
               .from('invites')
               .update({ status: 'confirmed' })
               .eq('id', inviteData.id);
+
+            console.log('🎉 Confirmação já existia!');
 
             confetti({
               particleCount: 100,
@@ -253,10 +280,14 @@ const InviteConfirmation = () => {
             return;
           }
         }
+        console.log('❌ Erro definitivo na inserção');
         throw insertError;
       }
 
+      console.log('✅ Registro criado com sucesso!');
+
       // Buscar dados do registro criado
+      console.log('🔍 Buscando dados do registro criado...');
       await new Promise(resolve => setTimeout(resolve, 500)); // Aguardar processamento
 
       const { data: newRegistration } = await supabase
@@ -265,6 +296,8 @@ const InviteConfirmation = () => {
           document_text: inviteData.cpf,
           phone_text: inviteData.whatsapp
         });
+
+      console.log('Novo registro encontrado:', newRegistration);
 
       if (newRegistration) {
         const regData = Array.isArray(newRegistration) ? newRegistration[0] : newRegistration;
@@ -379,25 +412,6 @@ const InviteConfirmation = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header da empresa */}
-      <header className="border-b bg-card">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex items-center space-x-4">
-            {company.logo_url && (
-              <img 
-                src={company.logo_url} 
-                alt={company.name}
-                className="h-12 w-12 rounded-lg object-cover"
-              />
-            )}
-            <div>
-              <h1 className="text-2xl font-bold">{company.name}</h1>
-              <p className="text-muted-foreground">Confirmação de Presença</p>
-            </div>
-          </div>
-        </div>
-      </header>
-
       {/* Conteúdo principal */}
       <main className="container mx-auto px-4 py-8">
         <div className="max-w-2xl mx-auto space-y-6">

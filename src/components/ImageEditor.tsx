@@ -17,29 +17,42 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   onClose,
   onSave,
 }) => {
-  const [crop, setCrop] = useState<Crop>({
-    unit: '%',
-    width: 80,
-    height: 60,
-    x: 10,
-    y: 20,
-  });
+  const [crop, setCrop] = useState<Crop>();
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
-  const [scale, setScale] = useState(1);
-  const [rotation, setRotation] = useState(0);
+  const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
   const imgRef = useRef<HTMLImageElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
 
   const onImageLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => {
-    const { width, height } = e.currentTarget;
+    const { naturalWidth, naturalHeight } = e.currentTarget;
+    setImageSize({ width: naturalWidth, height: naturalHeight });
     
-    // Set default crop to center the image
+    // Calculate initial crop based on image orientation
+    const imageAspect = naturalWidth / naturalHeight;
+    const targetAspect = 16 / 9;
+    
+    let cropWidth, cropHeight, cropX, cropY;
+    
+    if (imageAspect > targetAspect) {
+      // Image is wider than target ratio
+      cropHeight = 90;
+      cropWidth = (cropHeight * targetAspect * naturalHeight) / naturalWidth;
+      cropX = (100 - cropWidth) / 2;
+      cropY = 5;
+    } else {
+      // Image is taller than target ratio
+      cropWidth = 90;
+      cropHeight = (cropWidth * naturalWidth) / (targetAspect * naturalHeight);
+      cropX = 5;
+      cropY = (100 - cropHeight) / 2;
+    }
+    
     setCrop({
       unit: '%',
-      width: 80,
-      height: 60,
-      x: 10,
-      y: 20,
+      width: cropWidth,
+      height: cropHeight,
+      x: cropX,
+      y: cropY,
     });
   }, []);
 
@@ -99,20 +112,10 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     onClose();
   };
 
-  const handleRotate = () => {
-    setRotation((prev) => (prev + 90) % 360);
-  };
-
   const resetPosition = () => {
-    setCrop({
-      unit: '%',
-      width: 80,
-      height: 60,
-      x: 10,
-      y: 20,
-    });
-    setScale(1);
-    setRotation(0);
+    if (imgRef.current) {
+      onImageLoad({ currentTarget: imgRef.current } as React.SyntheticEvent<HTMLImageElement>);
+    }
   };
 
   return (
@@ -127,8 +130,8 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 
         <div className="space-y-6">
           {/* Image Crop Area */}
-          <div className="flex justify-center bg-muted/20 p-4 rounded-lg">
-            <div className="relative">
+          <div className="flex justify-center bg-muted/20 p-6 rounded-lg">
+            <div className="relative max-w-full max-h-[500px] overflow-hidden">
               <ReactCrop
                 crop={crop}
                 onChange={(_, percentCrop) => setCrop(percentCrop)}
@@ -138,16 +141,24 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
               >
                 <img
                   ref={imgRef}
-                  alt="Crop preview"
+                  alt="Imagem para recorte"
                   src={image}
-                  style={{
-                    maxWidth: '600px',
-                    maxHeight: '400px',
-                  }}
+                  className="max-w-full max-h-[450px] object-contain"
                   onLoad={onImageLoad}
                 />
               </ReactCrop>
             </div>
+          </div>
+          
+          {/* Image info */}
+          <div className="text-center text-sm text-muted-foreground">
+            {imageSize.width > 0 && (
+              <p>
+                Dimensões originais: {imageSize.width} × {imageSize.height}px
+                {imageSize.height > imageSize.width ? " (vertical)" : " (horizontal)"}
+              </p>
+            )}
+            <p className="mt-1">Arraste a área de seleção para enquadrar sua imagem no formato 16:9</p>
           </div>
 
           {/* Simple Controls */}

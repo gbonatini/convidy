@@ -16,11 +16,12 @@ import EventFunnel from '@/components/EventFunnel';
 import EventProjections from '@/components/EventProjections';
 import EventIndicators from '@/components/EventIndicators';
 import EventIndividualFunnel from '@/components/EventIndividualFunnel';
-import { Loader2, LogOut, Users, Calendar, BarChart3, Settings, Plus, TrendingUp, CheckCircle, Clock, Building } from 'lucide-react';
+import { Loader2, LogOut, Users, Calendar, BarChart3, Settings, Plus, TrendingUp, CheckCircle, Clock, Building, Send } from 'lucide-react';
 interface DashboardStats {
   totalEvents: number;
   totalRegistrations: number;
   totalCheckins: number;
+  totalInvites: number;
   attendanceRate: number;
   activeEvents: number;
   eventsWithConfirmations: number;
@@ -54,6 +55,7 @@ const Dashboard = () => {
     totalEvents: 0,
     totalRegistrations: 0,
     totalCheckins: 0,
+    totalInvites: 0,
     attendanceRate: 0,
     activeEvents: 0,
     eventsWithConfirmations: 0,
@@ -121,6 +123,7 @@ const Dashboard = () => {
           totalEvents: 0,
           totalRegistrations: 0,
           totalCheckins: 0,
+          totalInvites: 0,
           attendanceRate: 0,
           activeEvents: 0,
           eventsWithConfirmations: 0,
@@ -147,6 +150,17 @@ const Dashboard = () => {
         .in('event_id', eventIds);
       
       if (registrationsError) throw registrationsError;
+
+      // Buscar convites
+      const {
+        data: invites,
+        error: invitesError
+      } = await supabase
+        .from('invites')
+        .select('id, event_id')
+        .in('event_id', eventIds);
+      
+      if (invitesError) throw invitesError;
 
       const totalRegistrations = registrations?.length || 0;
       const totalCheckins = registrations?.filter(r => r.checked_in).length || 0;
@@ -180,6 +194,7 @@ const Dashboard = () => {
         totalEvents: events.length,
         totalRegistrations,
         totalCheckins,
+        totalInvites: invites?.length || 0,
         attendanceRate,
         activeEvents,
         eventsWithConfirmations,
@@ -308,6 +323,17 @@ const Dashboard = () => {
             <CardContent>
               <div className="text-2xl font-bold">{stats.totalEvents}</div>
               <p className="text-xs text-muted-foreground">Eventos criados</p>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">Convidados</CardTitle>
+              <Send className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.totalInvites}</div>
+              <p className="text-xs text-muted-foreground">Convites enviados</p>
             </CardContent>
           </Card>
           

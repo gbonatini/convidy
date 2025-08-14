@@ -1,5 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
+import AdminLayout from '@/components/AdminLayout';
+import { CheckInFilters } from '@/components/CheckInFilters';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,11 +21,13 @@ import {
   Camera,
   Smartphone,
   UserCheck,
-  ScanLine
+  ScanLine,
+  Calendar,
+  MapPin,
+  TrendingUp
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import AdminLayout from '@/components/AdminLayout';
 import { BrowserMultiFormatReader } from '@zxing/library';
 
 interface Event {
@@ -61,6 +65,7 @@ export default function CheckIn() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
   const [selectedEventId, setSelectedEventId] = useState<string>('all');
+  const [checkinFilter, setCheckinFilter] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
   const [cpfInput, setCpfInput] = useState('');
   const [stats, setStats] = useState<Stats>({ total: 0, checkedIn: 0, pending: 0, percentage: 0 });
@@ -99,21 +104,36 @@ export default function CheckIn() {
     checkAuth();
   }, [navigate]);
 
-  // Filtrar registros por termo de busca
+  // Filtrar registros 
   useEffect(() => {
-    if (!searchTerm.trim()) {
-      setFilteredRegistrations(registrations);
-      return;
+    let filtered = registrations;
+
+    // Filtrar por evento
+    if (selectedEventId !== 'all') {
+      filtered = filtered.filter(reg => reg.events.id === selectedEventId);
     }
 
-    const filtered = registrations.filter(reg => 
-      reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      reg.document.includes(searchTerm.replace(/\D/g, '')) ||
-      reg.events.title.toLowerCase().includes(searchTerm.toLowerCase())
-    );
+    // Filtrar por status de check-in
+    if (checkinFilter !== 'all') {
+      if (checkinFilter === 'checked_in') {
+        filtered = filtered.filter(reg => reg.checked_in);
+      } else if (checkinFilter === 'pending') {
+        filtered = filtered.filter(reg => !reg.checked_in);
+      }
+    }
+
+    // Filtrar por termo de busca
+    if (searchTerm.trim()) {
+      filtered = filtered.filter(reg => 
+        reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        reg.document.includes(searchTerm.replace(/\D/g, '')) ||
+        reg.events.title.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+    }
     
     setFilteredRegistrations(filtered);
-  }, [searchTerm, registrations]);
+    calculateStats(filtered);
+  }, [searchTerm, registrations, selectedEventId, checkinFilter]);
 
   // Carregar dados
   const loadData = async (companyId: string) => {
@@ -175,17 +195,6 @@ export default function CheckIn() {
     calculateStats(regs);
   };
 
-  // Filtrar por evento
-  useEffect(() => {
-    if (selectedEventId === 'all') {
-      setFilteredRegistrations(registrations);
-      calculateStats(registrations);
-    } else {
-      const filtered = registrations.filter(reg => reg.events.id === selectedEventId);
-      setFilteredRegistrations(filtered);
-      calculateStats(filtered);
-    }
-  }, [selectedEventId, registrations]);
 
   const calculateStats = (regs: Registration[]) => {
     const total = regs.length;
@@ -582,42 +591,16 @@ export default function CheckIn() {
         </div>
 
         {/* Filtros */}
-        <Card>
-          <CardContent className="p-4">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1">
-                <Label htmlFor="search">Buscar participante</Label>
-                <div className="relative">
-                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    id="search"
-                    placeholder="Nome, CPF ou evento..."
-                    value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              
-              <div className="min-w-[200px]">
-                <Label htmlFor="event-filter">Filtrar por evento</Label>
-                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Todos os eventos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os eventos</SelectItem>
-                    {events.map((event) => (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.title}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+        <CheckInFilters
+          selectedEventId={selectedEventId}
+          checkinFilter={checkinFilter}
+          searchTerm={searchTerm}
+          onEventFilterChange={setSelectedEventId}
+          onCheckinFilterChange={setCheckinFilter}
+          onSearchTermChange={setSearchTerm}
+          events={events}
+          registrations={filteredRegistrations}
+        />
 
         {/* Lista de Registros */}
         <Card>
@@ -625,7 +608,47 @@ export default function CheckIn() {
             <CardTitle>Participantes ({filteredRegistrations.length})</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="overflow-x-auto">
+            {/* Mobile View */}
+            <div className="md:hidden space-y-3">
+              {filteredRegistrations.map((registration) => (
+                <div key={registration.id} className="border rounded-lg p-4 space-y-2">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{registration.name}</p>
+                      <p className="text-sm text-muted-foreground">{formatCpf(registration.document)}</p>
+                      <p className="text-sm text-muted-foreground">{registration.events.title}</p>
+                    </div>
+                    <Badge variant={registration.checked_in ? "success" : "warning"}>
+                      {registration.checked_in ? (
+                        <><CheckCircle className="h-3 w-3 mr-1" /> Confirmado</>
+                      ) : (
+                        <><Clock className="h-3 w-3 mr-1" /> Pendente</>
+                      )}
+                    </Badge>
+                  </div>
+                  <div className="flex justify-between items-center">
+                    {registration.checked_in && registration.checkin_time ? (
+                      <span className="text-xs text-muted-foreground">
+                        Check-in: {new Date(registration.checkin_time).toLocaleString()}
+                      </span>
+                    ) : (
+                      <div></div>
+                    )}
+                    {!registration.checked_in && (
+                      <Button
+                        size="sm"
+                        onClick={() => processCheckIn(registration.document)}
+                      >
+                        Check-in
+                      </Button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop View */}
+            <div className="hidden md:block">
               <Table>
                 <TableHeader>
                   <TableRow>

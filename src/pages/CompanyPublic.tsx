@@ -76,6 +76,7 @@ const CompanyPublic = () => {
   });
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [showBarcode, setShowBarcode] = useState(false);
+  const [eventCapacityStatus, setEventCapacityStatus] = useState<{[key: string]: {current: number, isFull: boolean}}>({});
   const barcodeRef = useRef<HTMLCanvasElement>(null);
 
   // Redireciona para a versão normalizada da URL (evita 404 por traço/unicode)
@@ -155,6 +156,38 @@ const CompanyPublic = () => {
     }
   }, [registrationData, showBarcode]);
 
+  const checkEventsCapacity = async (eventsData: Event[]) => {
+    const capacityPromises = eventsData.map(async (event) => {
+      const { data: registrations, error } = await supabase
+        .from('registrations')
+        .select('id', { count: 'exact' })
+        .eq('event_id', event.id)
+        .eq('status', 'confirmed');
+      
+      if (error) {
+        console.error('Erro ao verificar capacidade do evento:', event.id, error);
+        return { eventId: event.id, current: 0, isFull: false };
+      }
+      
+      const currentCount = registrations?.length || 0;
+      const isFull = currentCount >= event.capacity;
+      
+      return { eventId: event.id, current: currentCount, isFull };
+    });
+    
+    const results = await Promise.all(capacityPromises);
+    const capacityStatus: {[key: string]: {current: number, isFull: boolean}} = {};
+    
+    results.forEach(result => {
+      capacityStatus[result.eventId] = {
+        current: result.current,
+        isFull: result.isFull
+      };
+    });
+    
+    setEventCapacityStatus(capacityStatus);
+  };
+
   const fetchCompanyAndEvents = async () => {
     try {
       console.log('Slug capturado (raw -> normalizado):', slug, '->', safeSlug);
@@ -198,6 +231,11 @@ const CompanyPublic = () => {
 
         if (eventsError) throw eventsError;
         setEvents(eventsData || []);
+        
+        // Verificar capacidade de cada evento
+        if (eventsData && eventsData.length > 0) {
+          checkEventsCapacity(eventsData);
+        }
       } catch (evErr) {
         console.warn('Falha ao carregar eventos, exibindo página da empresa mesmo assim.', evErr);
         setEvents([]);
@@ -339,6 +377,18 @@ const CompanyPublic = () => {
 
       console.log('Fechando modal de confirmação...');
       setSelectedEvent(null); // Fechar o modal de confirmação imediatamente
+      
+      // Atualizar a capacidade do evento em tempo real
+      setEventCapacityStatus(prev => {
+        const updated = { ...prev };
+        if (updated[selectedEvent.id]) {
+          updated[selectedEvent.id] = {
+            current: updated[selectedEvent.id].current + 1,
+            isFull: (updated[selectedEvent.id].current + 1) >= selectedEvent.capacity
+          };
+        }
+        return updated;
+      });
       
       console.log('Limpando formulário...');
       setFormData({ name: '', document: '', phone: '', email: '' });
@@ -551,89 +601,109 @@ const CompanyPublic = () => {
                       )}
                     </div>
 
-                    <Dialog>
-                      <DialogTrigger asChild>
-                        <Button 
-                          className="w-full" 
-                          onClick={() => setSelectedEvent(event)}
-                        >
-                          Confirmar Presença
-                        </Button>
-                      </DialogTrigger>
-                      <DialogContent>
-                        <DialogHeader>
-                          <DialogTitle>Confirmar Presença</DialogTitle>
-                          <DialogDescription>
-                            Preencha seus dados para confirmar presença no evento: {event.title}
-                          </DialogDescription>
-                        </DialogHeader>
-                        
-                        <form onSubmit={handleSubmit} className="space-y-4">
-                          <div className="space-y-2">
-                            <Label htmlFor="name">Nome Completo *</Label>
-                            <Input
-                              id="name"
-                              name="name"
-                              placeholder="Seu nome completo"
-                              value={formData.name}
-                              onChange={handleInputChange}
-                              required
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="document">CPF *</Label>
-                            <Input
-                              id="document"
-                              name="document"
-                              placeholder="000.000.000-00"
-                              value={formData.document}
-                              onChange={handleInputChange}
-                              maxLength={14}
-                              required
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="phone">WhatsApp *</Label>
-                            <Input
-                              id="phone"
-                              name="phone"
-                              placeholder="(11) 99999-9999"
-                              value={formData.phone}
-                              onChange={handleInputChange}
-                              required
-                            />
-                          </div>
-                          
-                          <div className="space-y-2">
-                            <Label htmlFor="email">Email (opcional)</Label>
-                            <Input
-                              id="email"
-                              name="email"
-                              type="email"
-                              placeholder="seu@email.com"
-                              value={formData.email}
-                              onChange={handleInputChange}
-                            />
-                          </div>
-                          
-                          <Button type="submit" className="w-full" disabled={isSubmitting}>
-                            {isSubmitting ? (
-                              <>
-                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                Confirmando...
-                              </>
-                            ) : (
-                              <>
-                                <CheckCircle className="mr-2 h-4 w-4" />
-                                Confirmar Presença
-                              </>
-                            )}
-                          </Button>
-                        </form>
-                      </DialogContent>
-                    </Dialog>
+                    {(() => {
+                      const capacityInfo = eventCapacityStatus[event.id];
+                      const isEventFull = capacityInfo?.isFull || false;
+                      const currentCount = capacityInfo?.current || 0;
+                      
+                      return (
+                        <Dialog>
+                          <DialogTrigger asChild>
+                            <Button 
+                              className="w-full" 
+                              onClick={() => setSelectedEvent(event)}
+                              disabled={isEventFull}
+                              variant={isEventFull ? "secondary" : "default"}
+                            >
+                              {isEventFull ? (
+                                <>
+                                  <Users className="mr-2 h-4 w-4" />
+                                  Evento Lotado ({currentCount}/{event.capacity})
+                                </>
+                              ) : (
+                                <>
+                                  <CheckCircle className="mr-2 h-4 w-4" />
+                                  Confirmar Presença
+                                </>
+                              )}
+                            </Button>
+                          </DialogTrigger>
+                          <DialogContent>
+                            <DialogHeader>
+                              <DialogTitle>Confirmar Presença</DialogTitle>
+                              <DialogDescription>
+                                Preencha seus dados para confirmar presença no evento: {event.title}
+                              </DialogDescription>
+                            </DialogHeader>
+                            
+                            <form onSubmit={handleSubmit} className="space-y-4">
+                              <div className="space-y-2">
+                                <Label htmlFor="name">Nome Completo *</Label>
+                                <Input
+                                  id="name"
+                                  name="name"
+                                  placeholder="Seu nome completo"
+                                  value={formData.name}
+                                  onChange={handleInputChange}
+                                  required
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="document">CPF *</Label>
+                                <Input
+                                  id="document"
+                                  name="document"
+                                  placeholder="000.000.000-00"
+                                  value={formData.document}
+                                  onChange={handleInputChange}
+                                  maxLength={14}
+                                  required
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="phone">WhatsApp *</Label>
+                                <Input
+                                  id="phone"
+                                  name="phone"
+                                  placeholder="(11) 99999-9999"
+                                  value={formData.phone}
+                                  onChange={handleInputChange}
+                                  required
+                                />
+                              </div>
+                              
+                              <div className="space-y-2">
+                                <Label htmlFor="email">Email (opcional)</Label>
+                                <Input
+                                  id="email"
+                                  name="email"
+                                  type="email"
+                                  placeholder="seu@email.com"
+                                  value={formData.email}
+                                  onChange={handleInputChange}
+                                />
+                              </div>
+                              
+                              <Button type="submit" className="w-full" disabled={isSubmitting}>
+                                {isSubmitting ? (
+                                  <>
+                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                    Confirmando...
+                                  </>
+                                ) : (
+                                  <>
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Confirmar Presença
+                                  </>
+                                )}
+                              </Button>
+                            </form>
+                          </DialogContent>
+                        </Dialog>
+                      );
+                    })()}
                   </CardContent>
                 </Card>
               ))}

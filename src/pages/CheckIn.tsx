@@ -53,8 +53,9 @@ export default function CheckIn() {
   const [loading, setLoading] = useState(true);
   const [showScanner, setShowScanner] = useState(false);
   const [manualCpf, setManualCpf] = useState('');
+  const [userCompanyId, setUserCompanyId] = useState<string>('');
 
-  // Verificar autenticação
+  // Verificar autenticação e obter company_id
   useEffect(() => {
     const checkAuth = async () => {
       const { data: { user } } = await supabase.auth.getUser();
@@ -73,17 +74,21 @@ export default function CheckIn() {
         return;
       }
 
-      loadData();
+      setUserCompanyId(profile.company_id);
+      loadData(profile.company_id);
     };
 
     checkAuth();
   }, [navigate]);
 
   // Carregar dados
-  const loadData = async () => {
+  const loadData = async (companyId: string) => {
     try {
       setLoading(true);
-      await Promise.all([loadEvents(), loadRegistrations()]);
+      await Promise.all([
+        loadEvents(companyId), 
+        loadRegistrations(companyId)
+      ]);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
       toast.error('Erro ao carregar dados');
@@ -93,21 +98,11 @@ export default function CheckIn() {
   };
 
   // Carregar eventos
-  const loadEvents = async () => {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
-
-    const { data: profile } = await supabase.from('profiles')
-      .select('company_id')
-      .eq('user_id', user.user.id)
-      .single();
-
-    if (!profile?.company_id) return;
-
+  const loadEvents = async (companyId: string) => {
     const { data, error } = await supabase
       .from('events')
       .select('id, title, date, time')
-      .eq('company_id', profile.company_id)
+      .eq('company_id', companyId)
       .eq('status', 'active')
       .order('date', { ascending: true });
 
@@ -120,17 +115,7 @@ export default function CheckIn() {
   };
 
   // Carregar registros
-  const loadRegistrations = async (eventId?: string) => {
-    const { data: user } = await supabase.auth.getUser();
-    if (!user.user) return;
-
-    const { data: profile } = await supabase.from('profiles')
-      .select('company_id')
-      .eq('user_id', user.user.id)
-      .single();
-
-    if (!profile?.company_id) return;
-
+  const loadRegistrations = async (companyId: string, eventId?: string) => {
     let query = supabase
       .from('registrations')
       .select(`
@@ -138,7 +123,7 @@ export default function CheckIn() {
         checked_in, checkin_time,
         events!inner(title, date, time, company_id)
       `)
-      .eq('events.company_id', profile.company_id);
+      .eq('events.company_id', companyId);
 
     if (eventId) {
       query = query.eq('event_id', eventId);
@@ -165,28 +150,28 @@ export default function CheckIn() {
     setStats({ total, checkedIn, pending, percentage });
   };
 
-  // Processar QR Code escaneado
+  // NOVA FUNÇÃO: Processar QR Code escaneado
   const handleQRScan = async (result: any) => {
     if (!result) return;
 
     try {
-      console.log('[QR SCAN] Resultado bruto:', result.text);
+      console.log('[QR NOVA] Resultado do scanner:', result.text);
       
       // Decodificar QR Code base64
       const decoded = JSON.parse(atob(result.text));
-      console.log('[QR SCAN] JSON decodificado:', decoded);
+      console.log('[QR NOVA] Dados decodificados:', decoded);
 
-      // Extrair CPF do JSON decodificado
+      // Extrair CPF do JSON - múltiplas formas de armazenamento
       const cpf = decoded.cpf || decoded.document;
-      if (cpf) {
-        console.log('[QR SCAN] CPF extraído:', cpf);
-        await processCheckIn(cpf);
-      } else {
-        console.log('[QR SCAN] CPF não encontrado no QR code');
-        toast.error('QR Code não contém CPF válido');
+      if (!cpf) {
+        throw new Error('CPF não encontrado no QR Code');
       }
+
+      console.log('[QR NOVA] CPF extraído:', cpf);
+      await processCheckInNew(cpf);
+      
     } catch (error) {
-      console.error('[QR SCAN] Erro ao decodificar:', error);
+      console.error('[QR NOVA] Erro ao decodificar QR Code:', error);
       toast.error('QR Code inválido ou corrompido');
     }
   };
@@ -204,107 +189,85 @@ export default function CheckIn() {
       return;
     }
 
-    await processCheckIn(cleanCpf);
+    await processCheckInNew(cleanCpf);
     setManualCpf('');
   };
 
-  // Processar check-in (CORRIGIDO)
-  const processCheckIn = async (cpf: string) => {
-    console.log('[CHECK-IN] Iniciando para CPF:', cpf);
+  // NOVA FUNÇÃO: Processar check-in usando funções do banco
+  const processCheckInNew = async (cpf: string) => {
+    console.log('[CHECKIN NOVA] Iniciando para CPF:', cpf);
 
     try {
-      // Limpar CPF
-      const cleanCpf = cpf.replace(/\D/g, '');
-      console.log('[CHECK-IN] CPF limpo:', cleanCpf);
-      
-      // Obter dados do usuário autenticado e sua empresa
-      const { data: user } = await supabase.auth.getUser();
-      if (!user.user) {
-        toast.error('Usuário não autenticado');
+      if (!userCompanyId) {
+        toast.error('Erro: ID da empresa não encontrado');
         return;
       }
 
-      const { data: profile } = await supabase.from('profiles')
-        .select('company_id')
-        .eq('user_id', user.user.id)
-        .single();
+      // Buscar registro usando função do banco
+      const { data: searchResult, error: searchError } = await supabase
+        .rpc('checkin_by_cpf', {
+          cpf_input: cpf,
+          company_id_input: userCompanyId,
+          event_id_input: selectedEventId || null
+        });
 
-      if (!profile?.company_id) {
-        toast.error('Perfil não encontrado');
-        return;
-      }
+      console.log('[CHECKIN NOVA] Resultado da busca:', { searchResult, searchError });
 
-      console.log('[CHECK-IN] Company ID do usuário:', profile.company_id);
-
-      // Buscar registro pelo CPF na empresa do usuário
-      let query = supabase
-        .from('registrations')
-        .select(`
-          id, name, document, checked_in, checkin_time, event_id,
-          events!inner(title, company_id)
-        `)
-        .eq('document', cleanCpf)
-        .eq('events.company_id', profile.company_id);
-
-      // Se tem evento selecionado, filtrar por ele
-      if (selectedEventId) {
-        query = query.eq('event_id', selectedEventId);
-        console.log('[CHECK-IN] Filtrando por evento:', selectedEventId);
-      }
-
-      const { data, error } = await query
-        .order('created_at', { ascending: false })
-        .limit(1);
-
-      console.log('[CHECK-IN] Resultado da busca:', { data, error });
-
-      if (error) {
-        console.error('[CHECK-IN] Erro na busca:', error);
+      if (searchError) {
+        console.error('[CHECKIN NOVA] Erro na busca:', searchError);
         toast.error('Erro ao buscar registro');
         return;
       }
 
-      if (!data || data.length === 0) {
-        console.log('[CHECK-IN] Nenhum registro encontrado para CPF:', cleanCpf);
+      if (!searchResult || searchResult.length === 0) {
+        console.log('[CHECKIN NOVA] Nenhum registro encontrado');
         toast.error('CPF não encontrado nos registros desta empresa');
         return;
       }
 
-      const registration = data[0];
-      console.log('[CHECK-IN] Registro encontrado:', registration);
+      const participant = searchResult[0];
+      console.log('[CHECKIN NOVA] Participante encontrado:', participant);
 
       // Verificar se já fez check-in
-      if (registration.checked_in) {
-        console.log('[CHECK-IN] Check-in já realizado anteriormente');
-        toast.warning(`Check-in já realizado para ${registration.name} em ${new Date(registration.checkin_time).toLocaleString('pt-BR')}`);
+      if (participant.already_checked_in) {
+        console.log('[CHECKIN NOVA] Check-in já realizado');
+        const checkinDate = participant.checkin_time_existing 
+          ? new Date(participant.checkin_time_existing).toLocaleString('pt-BR')
+          : 'data não disponível';
+        toast.warning(`Check-in já realizado para ${participant.participant_name} em ${checkinDate}`);
         return;
       }
 
-      // Realizar check-in
-      console.log('[CHECK-IN] Realizando check-in...');
-      const { error: updateError } = await supabase
-        .from('registrations')
-        .update({
-          checked_in: true,
-          checkin_time: new Date().toISOString()
-        })
-        .eq('id', registration.id);
+      // Realizar check-in usando função do banco
+      const { data: checkinResult, error: checkinError } = await supabase
+        .rpc('perform_checkin', {
+          registration_id_input: participant.registration_id,
+          company_id_input: userCompanyId
+        });
 
-      if (updateError) {
-        console.error('[CHECK-IN] Erro no update:', updateError);
+      console.log('[CHECKIN NOVA] Resultado do check-in:', { checkinResult, checkinError });
+
+      if (checkinError) {
+        console.error('[CHECKIN NOVA] Erro ao realizar check-in:', checkinError);
         toast.error('Erro ao realizar check-in');
         return;
       }
 
-      console.log('[CHECK-IN] Sucesso!');
-      toast.success(`✅ Check-in realizado para ${registration.name}!`);
+      if (!checkinResult) {
+        console.log('[CHECKIN NOVA] Check-in não foi realizado (registro pode já ter sido processado)');
+        toast.warning('Check-in não foi realizado. O registro pode já ter sido processado.');
+        return;
+      }
+
+      console.log('[CHECKIN NOVA] Check-in realizado com sucesso!');
+      toast.success(`✅ Check-in realizado para ${participant.participant_name}!`);
       
       // Fechar scanner e recarregar dados
       setShowScanner(false);
-      loadRegistrations(selectedEventId || undefined);
+      loadRegistrations(userCompanyId, selectedEventId || undefined);
 
     } catch (error) {
-      console.error('[CHECK-IN] Erro geral:', error);
+      console.error('[CHECKIN NOVA] Erro geral:', error);
       toast.error('Erro no processo de check-in');
     }
   };
@@ -353,7 +316,7 @@ export default function CheckIn() {
                   value={selectedEventId}
                   onValueChange={(value) => {
                     setSelectedEventId(value === 'all' ? '' : value);
-                    loadRegistrations(value === 'all' ? undefined : value);
+                    loadRegistrations(userCompanyId, value === 'all' ? undefined : value);
                   }}
                 >
                   <SelectTrigger>
@@ -488,7 +451,7 @@ export default function CheckIn() {
                       ) : (
                         <Button
                           size="sm"
-                          onClick={() => processCheckIn(registration.document)}
+                          onClick={() => processCheckInNew(registration.document)}
                         >
                           Check-in
                         </Button>

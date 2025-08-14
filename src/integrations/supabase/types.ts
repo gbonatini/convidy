@@ -707,6 +707,20 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: undefined
       }
+      checkin_by_cpf: {
+        Args: {
+          cpf_input: string
+          company_id_input: string
+          event_id_input?: string
+        }
+        Returns: {
+          registration_id: string
+          participant_name: string
+          event_title: string
+          already_checked_in: boolean
+          checkin_time_existing: string
+        }[]
+      }
       find_registration_by_hash: {
         Args: { event_uuid: string; doc_hash: string }
         Returns: {
@@ -771,6 +785,10 @@ export type Database = {
       }
       is_super_admin: {
         Args: { user_email: string }
+        Returns: boolean
+      }
+      perform_checkin: {
+        Args: { registration_id_input: string; company_id_input: string }
         Returns: boolean
       }
     }

@@ -568,7 +568,7 @@ const SettingsPage = () => {
                   <div className="space-y-2">
                     <Label>Plano Atual</Label>
                     <div className="flex items-center space-x-2">
-                      <Badge variant="secondary">{company?.plan || 'Free'}</Badge>
+                      <Badge variant="secondary">Empresarial</Badge>
                       <Badge variant={company?.status === 'active' ? 'default' : 'destructive'}>
                         {company?.status === 'active' ? 'Ativo' : 'Inativo'}
                       </Badge>

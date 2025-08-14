@@ -93,6 +93,12 @@ const CompanyPublic = () => {
 
   // Gerar código de barras quando registrationData estiver disponível
   useEffect(() => {
+    console.log('=== USEEFFECT CÓDIGO DE BARRAS ===');
+    console.log('registrationData:', registrationData);
+    console.log('barcodeRef.current:', barcodeRef.current);
+    console.log('showBarcode:', showBarcode);
+    console.log('formData.document:', formData.document);
+    
     if (registrationData && barcodeRef.current && showBarcode) {
       try {
         console.log('=== GERANDO CÓDIGO DE BARRAS ===');
@@ -104,6 +110,15 @@ const CompanyPublic = () => {
         // Usar sempre o CPF limpo como código de barras
         const cleanDocument = formData.document.replace(/[^0-9]/g, '');
         let barcodeValue = cleanDocument;
+        
+        console.log('CPF original:', formData.document);
+        console.log('CPF limpo para barcode:', barcodeValue);
+        console.log('Tipo do valor:', typeof barcodeValue);
+        console.log('Comprimento do valor:', barcodeValue?.length);
+        
+        if (!barcodeValue || barcodeValue.length === 0) {
+          throw new Error('CPF inválido para gerar código de barras');
+        }
         
         console.log('Valor final do barcode (CPF):', barcodeValue);
         console.log('Tipo do valor:', typeof barcodeValue);

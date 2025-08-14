@@ -5,7 +5,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '
 import { Slider } from '@/components/ui/slider';
 import { Label } from '@/components/ui/label';
 import { RotateCw, Move, ZoomIn, ZoomOut, Check, X } from 'lucide-react';
-import 'react-image-crop/dist/ReactCrop.css';
 
 interface ImageEditorProps {
   image: string;
@@ -22,9 +21,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
 }) => {
   const [crop, setCrop] = useState<Crop>({
     unit: '%',
-    width: 100,
+    width: 80,
     height: 60,
-    x: 0,
+    x: 10,
     y: 20,
   });
   const [completedCrop, setCompletedCrop] = useState<PixelCrop>();
@@ -39,10 +38,10 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     // Set default crop to center the image
     setCrop({
       unit: '%',
-      width: 100,
-      height: Math.min(60, (height / width) * 100),
-      x: 0,
-      y: Math.max(0, (100 - Math.min(60, (height / width) * 100)) / 2),
+      width: 80,
+      height: 60,
+      x: 10,
+      y: 20,
     });
   }, []);
 
@@ -62,19 +61,10 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
     const scaleX = image.naturalWidth / image.width;
     const scaleY = image.naturalHeight / image.height;
 
-    const pixelRatio = window.devicePixelRatio;
+    canvas.width = completedCrop.width;
+    canvas.height = completedCrop.height;
 
-    canvas.width = completedCrop.width * pixelRatio;
-    canvas.height = completedCrop.height * pixelRatio;
-
-    ctx.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
     ctx.imageSmoothingQuality = 'high';
-
-    // Apply transformations
-    ctx.save();
-    ctx.translate(completedCrop.width / 2, completedCrop.height / 2);
-    ctx.rotate((rotation * Math.PI) / 180);
-    ctx.scale(scale, scale);
 
     ctx.drawImage(
       image,
@@ -82,13 +72,11 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
       completedCrop.y * scaleY,
       completedCrop.width * scaleX,
       completedCrop.height * scaleY,
-      -completedCrop.width / 2,
-      -completedCrop.height / 2,
+      0,
+      0,
       completedCrop.width,
       completedCrop.height
     );
-
-    ctx.restore();
 
     return new Promise<string>((resolve) => {
       canvas.toBlob((blob) => {
@@ -97,14 +85,18 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
           reader.onload = () => resolve(reader.result as string);
           reader.readAsDataURL(blob);
         }
-      }, 'image/jpeg', 0.95);
+      }, 'image/jpeg', 0.9);
     });
-  }, [completedCrop, scale, rotation]);
+  }, [completedCrop]);
 
   const handleSave = async () => {
+    console.log('🎨 Salvando imagem editada');
     const croppedImageUrl = await generateCroppedImage();
     if (croppedImageUrl) {
+      console.log('🎨 Imagem processada com sucesso');
       onSave(croppedImageUrl);
+    } else {
+      console.error('❌ Erro ao processar imagem');
     }
     onClose();
   };
@@ -116,9 +108,9 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
   const resetPosition = () => {
     setCrop({
       unit: '%',
-      width: 100,
+      width: 80,
       height: 60,
-      x: 0,
+      x: 10,
       y: 20,
     });
     setScale(1);
@@ -135,111 +127,37 @@ export const ImageEditor: React.FC<ImageEditorProps> = ({
         <div className="space-y-6">
           {/* Image Crop Area */}
           <div className="flex justify-center bg-muted/20 p-4 rounded-lg">
-            <ReactCrop
-              crop={crop}
-              onChange={(_, percentCrop) => setCrop(percentCrop)}
-              onComplete={(c) => setCompletedCrop(c)}
-              aspect={16 / 9}
-              className="max-w-full"
-            >
-              <img
-                ref={imgRef}
-                alt="Crop preview"
-                src={image}
-                style={{
-                  transform: `scale(${scale}) rotate(${rotation}deg)`,
-                  maxWidth: '100%',
-                  maxHeight: '400px',
-                }}
-                onLoad={onImageLoad}
-              />
-            </ReactCrop>
-          </div>
-
-          {/* Controls */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Position Controls */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <Move className="h-4 w-4" />
-                Posicionamento
-              </Label>
-              <div className="space-y-2">
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs w-12">X:</Label>
-                  <Slider
-                    value={[crop.x || 0]}
-                    onValueChange={([value]) => setCrop(prev => ({ ...prev, x: value }))}
-                    max={100 - (crop.width || 0)}
-                    step={1}
-                    className="flex-1"
-                  />
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label className="text-xs w-12">Y:</Label>
-                  <Slider
-                    value={[crop.y || 0]}
-                    onValueChange={([value]) => setCrop(prev => ({ ...prev, y: value }))}
-                    max={100 - (crop.height || 0)}
-                    step={1}
-                    className="flex-1"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Scale Control */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <ZoomIn className="h-4 w-4" />
-                Zoom ({Math.round(scale * 100)}%)
-              </Label>
-              <Slider
-                value={[scale]}
-                onValueChange={([value]) => setScale(value)}
-                min={0.5}
-                max={3}
-                step={0.1}
-                className="w-full"
-              />
-            </div>
-
-            {/* Rotation Control */}
-            <div className="space-y-3">
-              <Label className="text-sm font-medium flex items-center gap-2">
-                <RotateCw className="h-4 w-4" />
-                Rotação ({rotation}°)
-              </Label>
-              <div className="flex items-center gap-2">
-                <Slider
-                  value={[rotation]}
-                  onValueChange={([value]) => setRotation(value)}
-                  min={0}
-                  max={360}
-                  step={15}
-                  className="flex-1"
+            <div className="relative">
+              <ReactCrop
+                crop={crop}
+                onChange={(_, percentCrop) => setCrop(percentCrop)}
+                onComplete={(c) => setCompletedCrop(c)}
+                aspect={16 / 9}
+                className="max-w-full"
+              >
+                <img
+                  ref={imgRef}
+                  alt="Crop preview"
+                  src={image}
+                  style={{
+                    maxWidth: '600px',
+                    maxHeight: '400px',
+                  }}
+                  onLoad={onImageLoad}
                 />
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleRotate}
-                >
-                  <RotateCw className="h-4 w-4" />
-                </Button>
-              </div>
+              </ReactCrop>
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex justify-center gap-2">
+          {/* Simple Controls */}
+          <div className="flex justify-center">
             <Button
               type="button"
               variant="outline"
               onClick={resetPosition}
               className="flex items-center gap-2"
             >
-              Resetar
+              Resetar Posição
             </Button>
           </div>
         </div>

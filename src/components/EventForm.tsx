@@ -188,12 +188,17 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
   };
 
   const handleEditImage = () => {
+    console.log('🎨 handleEditImage chamado', { imagePreview, originalImage });
     if (imagePreview) {
+      console.log('🎨 Abrindo editor de imagem');
       setShowImageEditor(true);
+    } else {
+      console.log('❌ Nenhuma imagem para editar');
     }
   };
 
   const handleImageEdited = (editedImage: string) => {
+    console.log('🎨 Imagem editada recebida');
     setImagePreview(editedImage);
     setShowImageEditor(false);
     
@@ -203,7 +208,9 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
       .then(blob => {
         const file = new File([blob], 'edited-image.jpg', { type: 'image/jpeg' });
         setImageFile(file);
-      });
+        console.log('🎨 Imagem convertida para file:', file);
+      })
+      .catch(err => console.error('❌ Erro ao converter imagem:', err));
   };
 
   const removeImage = () => {

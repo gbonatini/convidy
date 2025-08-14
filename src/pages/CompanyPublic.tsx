@@ -280,10 +280,13 @@ const CompanyPublic = () => {
             description: "Registro salvo, mas houve problema ao gerar QR Code.",
           });
         } else {
+          console.log('QR Code obtido no retry:', regRow2);
           setRegistrationData(Array.isArray(regRow2) ? regRow2[0] : regRow2);
           setShowQRCode(true);
         }
       } else {
+        console.log('QR Code obtido:', regRow);
+        console.log('QR Code value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
         setRegistrationData(Array.isArray(regRow) ? regRow[0] : regRow);
         setShowQRCode(true);
       }

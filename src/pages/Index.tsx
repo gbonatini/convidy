@@ -850,7 +850,7 @@ const Index = () => {
               A plataforma completa para eventos corporativos que realmente funcionam
             </p>
             <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
-              <span>© 2024 Convidy. Todos os direitos reservados.</span>
+              <span>© 2025 Convidy. Todos os direitos reservados.</span>
             </div>
             <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground">
               <span>✅ LGPD Compliant</span>

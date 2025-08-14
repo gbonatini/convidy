@@ -101,50 +101,25 @@ const CompanyPublic = () => {
         console.log('Canvas ref:', barcodeRef.current);
         console.log('showBarcode:', showBarcode);
         
-        let barcodeValue = registrationData.qr_code;
+        // Usar sempre o CPF limpo como código de barras
+        const cleanDocument = formData.document.replace(/[^0-9]/g, '');
+        let barcodeValue = cleanDocument;
         
-        // Verificar se o qr_code existe e não está vazio
-        if (!barcodeValue) {
-          console.error('QR Code está vazio ou nulo');
-          // Gerar código único usando o ID do registro
-          barcodeValue = registrationData.id;
-          console.log('Código gerado como fallback (ID):', barcodeValue);
-        }
-        
-        // Se o qr_code ainda for o formato JSON antigo (base64), usar o ID único
-        if (barcodeValue && (barcodeValue.startsWith('eyJ') || barcodeValue.includes('{'))) {
-          console.log('Detectado formato antigo, usando ID único...');
-          // Usar o ID único do registro como código de barras
-          barcodeValue = registrationData.id;
-          console.log('Novo código (ID único):', barcodeValue);
-        }
-        
-        // Garantir que o código não seja muito longo para o CODE128
-        // Usar apenas o ID como código único
-        if (barcodeValue && barcodeValue.length > 20) {
-          barcodeValue = registrationData.id;
-          console.log('Código muito longo, usando ID único:', barcodeValue);
-        }
-        
-        console.log('Valor final do barcode:', barcodeValue);
-        console.log('Tipo do valor:', typeof barcodeValue);
-        console.log('Comprimento do valor:', barcodeValue?.length);
-        
-        console.log('Valor final do barcode:', barcodeValue);
+        console.log('Valor final do barcode (CPF):', barcodeValue);
         console.log('Tipo do valor:', typeof barcodeValue);
         console.log('Comprimento do valor:', barcodeValue?.length);
         
         if (!barcodeValue || barcodeValue.length === 0) {
-          throw new Error('Valor do código de barras está vazio');
+          throw new Error('CPF inválido para gerar código de barras');
         }
         
         JsBarcode(barcodeRef.current, barcodeValue, {
           format: "CODE128",
-          width: 2,
-          height: 60,
+          width: 1.5,
+          height: 40,
           displayValue: true,
-          fontSize: 12,
-          margin: 10
+          fontSize: 10,
+          margin: 5
         });
         
         console.log('✅ Barcode gerado com sucesso!');

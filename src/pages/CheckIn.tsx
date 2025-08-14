@@ -225,14 +225,23 @@ export default function CheckIn() {
   const processCheckInByBarcode = async (barcodeValue: string) => {
     try {
       console.log('[CHECK-IN] Iniciando com código de barras:', barcodeValue);
-      console.log('[CHECK-IN] Registros disponíveis:', registrations.map(r => ({ id: r.id, name: r.name, qr_code: r.qr_code })));
+      console.log('[CHECK-IN] Registros disponíveis:', registrations.map(r => ({ id: r.id, name: r.name, qr_code: r.qr_code, document: r.document })));
       
-      // Buscar registro pelo código de barras (busca exata primeiro)
-      let registration = registrations.find(reg => reg.qr_code === barcodeValue);
+      // Buscar registro pelo código de barras (CPF limpo)
+      let registration = registrations.find(reg => {
+        const cleanDocument = reg.document?.replace(/[^0-9]/g, '');
+        return cleanDocument === barcodeValue;
+      });
       
-      // Se não encontrou com busca exata, tentar busca pelo ID único
+      // Se não encontrou por CPF, tentar busca pelo qr_code
       if (!registration) {
-        console.log('[CHECK-IN] Busca exata falhou, tentando busca por ID único...');
+        console.log('[CHECK-IN] Busca por CPF falhou, tentando por qr_code...');
+        registration = registrations.find(reg => reg.qr_code === barcodeValue);
+      }
+      
+      // Se não encontrou por qr_code, tentar busca pelo ID único
+      if (!registration) {
+        console.log('[CHECK-IN] Busca por qr_code falhou, tentando busca por ID único...');
         registration = registrations.find(reg => reg.id === barcodeValue);
       }
       

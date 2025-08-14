@@ -392,6 +392,146 @@ const Index = () => {
         </div>
       </section>
 
+      {/* Invites Feature Section */}
+      <section className="py-20 bg-gradient-to-br from-green-50 to-emerald-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Convites que <span className="text-green-600">realmente</span> chegam aos convidados
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Esqueça emails que ninguém vê. Convide por WhatsApp com mensagens personalizadas 
+              e tenha <strong>95% de taxa de abertura</strong>
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            {/* Features List */}
+            <div className="space-y-8">
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <Users className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Convites em massa ou individuais</h3>
+                  <p className="text-muted-foreground">
+                    Importe listas do Excel, adicione um por um ou copie de outras plataformas. 
+                    Flexibilidade total para seu fluxo de trabalho.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Envio direto pelo WhatsApp</h3>
+                  <p className="text-muted-foreground">
+                    Um clique e todos os convites são enviados pelo seu WhatsApp automaticamente. 
+                    Seus convidados recebem na hora com link personalizado.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <MessageCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Mensagens 100% personalizáveis</h3>
+                  <p className="text-muted-foreground">
+                    Edite o texto, adicione variáveis como nome e local do evento. 
+                    Crie templates e reutilize. Sua marca, sua linguagem.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0">
+                  <CheckCircle className="h-6 w-6 text-green-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Confirmações em tempo real</h3>
+                  <p className="text-muted-foreground">
+                    Acompanhe quem confirmou, quem visualizou e quem ainda não respondeu. 
+                    Dashboard atualizado automaticamente.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mock WhatsApp Interface */}
+            <div className="relative">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border">
+                <div className="flex items-center space-x-3 pb-4 border-b">
+                  <div className="h-10 w-10 bg-green-500 rounded-full flex items-center justify-center">
+                    <MessageCircle className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Convidy</div>
+                    <div className="text-sm text-green-600">online</div>
+                  </div>
+                </div>
+                
+                <div className="py-6 space-y-4">
+                  <div className="bg-green-100 rounded-lg p-3 max-w-xs">
+                    <p className="text-sm">
+                      Olá, João! 👋<br/><br/>
+                      Você está convidado para o evento:<br/>
+                      <strong>Workshop de Vendas 2024</strong><br/><br/>
+                      📅 Data: 15/03/2024<br/>
+                      🕒 Horário: 14:00<br/>
+                      📍 Local: Auditório TechCorp<br/><br/>
+                      Confirme sua presença clicando no link:<br/>
+                      👉 convidy.app/confirmar/abc123
+                    </p>
+                  </div>
+                  
+                  <div className="flex justify-end">
+                    <div className="bg-blue-500 text-white rounded-lg p-3 max-w-xs">
+                      <p className="text-sm">Confirmado! Estarei lá 🎉</p>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="border-t pt-4">
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    <MessageCircle className="mr-2 h-4 w-4" />
+                    Enviar convites pelo WhatsApp
+                  </Button>
+                </div>
+              </div>
+              
+              {/* Floating stats */}
+              <div className="absolute -right-4 -top-4 bg-white rounded-lg shadow-lg p-4 border">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-green-600">95%</div>
+                  <div className="text-xs text-muted-foreground">taxa de abertura</div>
+                </div>
+              </div>
+              
+              <div className="absolute -left-4 -bottom-4 bg-white rounded-lg shadow-lg p-4 border">
+                <div className="text-center">
+                  <div className="text-2xl font-bold text-blue-600">3x</div>
+                  <div className="text-xs text-muted-foreground">mais eficaz</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div className="text-center mt-12">
+            <Link to="/auth">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-lg px-8">
+                <MessageCircle className="mr-2 h-5 w-5" />
+                Testar envio de convites grátis
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
       {/* Testimonials */}
       <section className="py-20">
         <div className="container mx-auto px-4">

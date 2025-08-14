@@ -415,19 +415,52 @@ const CheckIn = () => {
         return;
       }
 
-      // Validação adicional: verificar se o documento do registro corresponde ao esperado
+      // Validação crítica: verificar se o documento do registro corresponde EXATAMENTE ao esperado
       if (isDirectDocument) {
         const expectedDocument = document_identifier.replace(/\D/g, '');
         const foundDocument = registration.document?.replace(/\D/g, '');
+        
+        console.log('[PROCESS CHECKIN] VALIDAÇÃO CRÍTICA:', {
+          expected: expectedDocument,
+          found: foundDocument,
+          are_equal: expectedDocument === foundDocument,
+          registration_id: registration.id,
+          registration_name: registration.name,
+          registration_checked_in: registration.checked_in
+        });
         
         if (expectedDocument !== foundDocument) {
           console.log('[PROCESS CHECKIN] ERRO: Documento não confere!', {
             expected: expectedDocument,
             found: foundDocument
           });
-          toast.error('Erro: documento não confere');
+          toast.error('Erro: documento não confere com o encontrado');
           return;
         }
+        
+        // VERIFICAÇÃO EXTRA: Buscar novamente diretamente para confirmar o estado
+        console.log('[PROCESS CHECKIN] VERIFICAÇÃO EXTRA - Buscando novamente para confirmar estado...');
+        const { data: verificationData, error: verificationError } = await supabase
+          .from('registrations')
+          .select('id, checked_in, checkin_time, name, document')
+          .eq('id', registration.id)
+          .single();
+        
+        if (verificationError) {
+          console.log('[PROCESS CHECKIN] Erro na verificação extra:', verificationError);
+          throw verificationError;
+        }
+        
+        console.log('[PROCESS CHECKIN] RESULTADO DA VERIFICAÇÃO EXTRA:', {
+          id: verificationData.id,
+          name: verificationData.name,
+          document: verificationData.document,
+          checked_in: verificationData.checked_in,
+          checkin_time: verificationData.checkin_time
+        });
+        
+        // Usar os dados da verificação extra
+        registration = verificationData;
       }
 
       if (registration.checked_in) {

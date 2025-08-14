@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -24,6 +24,7 @@ import {
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import AdminLayout from '@/components/AdminLayout';
+import { BrowserMultiFormatReader } from '@zxing/library';
 
 interface Event {
   id: string;
@@ -68,6 +69,8 @@ export default function CheckIn() {
   // Scanner
   const [showScanner, setShowScanner] = useState(false);
   const [scannerError, setScannerError] = useState('');
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const codeReader = useRef<BrowserMultiFormatReader | null>(null);
 
   // Verificar autenticação e carregar dados
   useEffect(() => {
@@ -340,6 +343,58 @@ export default function CheckIn() {
     return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
 
+  // Iniciar scanner
+  const startScanner = async () => {
+    try {
+      console.log('Iniciando scanner...');
+      setShowScanner(true);
+      setScannerError('');
+      
+      // Aguardar o modal abrir
+      setTimeout(async () => {
+        if (videoRef.current) {
+          console.log('Inicializando leitor de código...');
+          codeReader.current = new BrowserMultiFormatReader();
+          
+          try {
+            await codeReader.current.decodeFromVideoDevice(
+              undefined, // device padrão
+              videoRef.current,
+              (result, error) => {
+                if (result) {
+                  console.log('Código detectado:', result.getText());
+                  handleBarcodeScan({ text: result.getText() });
+                  stopScanner();
+                }
+                if (error && error.name !== 'NotFoundException') {
+                  console.error('Erro no scanner:', error);
+                }
+              }
+            );
+          } catch (err: any) {
+            console.error('Erro ao inicializar câmera:', err);
+            setScannerError('Erro ao acessar câmera. Verifique as permissões.');
+          }
+        }
+      }, 500);
+      
+    } catch (error: any) {
+      console.error('Erro ao iniciar scanner:', error);
+      setScannerError('Erro ao inicializar scanner');
+    }
+  };
+
+  // Parar scanner
+  const stopScanner = () => {
+    console.log('Parando scanner...');
+    if (codeReader.current) {
+      codeReader.current.reset();
+      codeReader.current = null;
+    }
+    setShowScanner(false);
+    setScannerError('');
+  };
+
   if (loading) {
     return (
       <AdminLayout>
@@ -430,7 +485,7 @@ export default function CheckIn() {
             </CardHeader>
             <CardContent>
               <Button 
-                onClick={() => setShowScanner(true)} 
+                onClick={startScanner} 
                 className="w-full" 
                 size="lg"
               >
@@ -582,50 +637,46 @@ export default function CheckIn() {
             <div className="space-y-4">
               {/* Scanner Container */}
               <div className="relative">
-                <div className="border-2 border-dashed border-primary/50 rounded-lg overflow-hidden bg-black/5">
-                  <div
+                <div className="border-2 border-dashed border-primary/50 rounded-lg overflow-hidden bg-black">
+                  <video
+                    ref={videoRef}
                     style={{
                       width: '100%',
                       height: '280px',
-                      position: 'relative',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      backgroundColor: '#f3f4f6'
+                      objectFit: 'cover'
                     }}
-                  >
-                    <div className="text-center">
-                      <ScanLine className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Scanner automático de código de barras.<br/>
-                        Use o campo de CPF manual abaixo se houver problemas.
-                      </p>
-                      
-                      {/* Campo manual para código de barras */}
-                      <div className="mt-4 max-w-xs mx-auto">
-                        <Input
-                          placeholder="Digite o código de barras"
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') {
-                              const value = (e.target as HTMLInputElement).value;
-                              if (value) {
-                                handleBarcodeScan({ text: value });
-                                (e.target as HTMLInputElement).value = '';
-                              }
-                            }
-                          }}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                    muted
+                    playsInline
+                  />
                 </div>
 
                 {/* Overlay de mira */}
                 <div className="absolute inset-0 pointer-events-none">
                   <div className="relative w-full h-full flex items-center justify-center">
-                    <div className="w-64 h-20 border-2 border-red-500 rounded-lg bg-red-500/10"></div>
+                    <div className="w-64 h-20 border-2 border-red-500 rounded-lg bg-red-500/10">
+                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
+                        <ScanLine className="h-8 w-8 text-red-500 animate-pulse" />
+                      </div>
+                    </div>
                   </div>
                 </div>
+              </div>
+              
+              {/* Campo manual para código de barras */}
+              <div className="mt-4">
+                <Label>Ou digite o código manualmente:</Label>
+                <Input
+                  placeholder="Digite o código de barras"
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      const value = (e.target as HTMLInputElement).value;
+                      if (value) {
+                        handleBarcodeScan({ text: value });
+                        (e.target as HTMLInputElement).value = '';
+                      }
+                    }
+                  }}
+                />
               </div>
 
               {/* Status */}
@@ -647,7 +698,7 @@ export default function CheckIn() {
               <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowScanner(false)}
+                  onClick={stopScanner}
                   className="flex-1"
                 >
                   <X className="h-4 w-4 mr-2" />

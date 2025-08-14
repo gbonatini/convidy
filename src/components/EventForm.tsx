@@ -19,7 +19,8 @@ import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { usePlanLimits } from '@/hooks/usePlanLimits';
 import { LimitWarning } from '@/components/LimitWarning';
-import { Loader2, Upload, X } from 'lucide-react';
+import { ImageEditor } from '@/components/ImageEditor';
+import { Loader2, Upload, X, Edit } from 'lucide-react';
 
 const eventSchema = z.object({
   title: z.string().min(1, 'Título é obrigatório').max(100, 'Título muito longo'),
@@ -60,6 +61,8 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(event?.image_url || null);
   const [uploadingImage, setUploadingImage] = useState(false);
+  const [showImageEditor, setShowImageEditor] = useState(false);
+  const [originalImage, setOriginalImage] = useState<string | null>(null);
   
   const form = useForm<EventFormData>({
     resolver: zodResolver(eventSchema),
@@ -176,10 +179,31 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
       // Criar preview da imagem
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result as string);
+        const result = reader.result as string;
+        setImagePreview(result);
+        setOriginalImage(result);
       };
       reader.readAsDataURL(file);
     }
+  };
+
+  const handleEditImage = () => {
+    if (imagePreview) {
+      setShowImageEditor(true);
+    }
+  };
+
+  const handleImageEdited = (editedImage: string) => {
+    setImagePreview(editedImage);
+    setShowImageEditor(false);
+    
+    // Convert base64 to blob for upload
+    fetch(editedImage)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'edited-image.jpg', { type: 'image/jpeg' });
+        setImageFile(file);
+      });
   };
 
   const removeImage = () => {
@@ -355,15 +379,25 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
                     alt="Preview do evento" 
                     className="w-full h-48 object-cover rounded-md border"
                   />
-                  <Button
-                    type="button"
-                    variant="destructive"
-                    size="sm"
-                    className="absolute top-2 right-2"
-                    onClick={removeImage}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                  <div className="absolute top-2 right-2 flex gap-2">
+                    <Button
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={handleEditImage}
+                      className="bg-background/90 hover:bg-background"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={removeImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
                 </div>
               ) : (
                 <div className="border-2 border-dashed border-muted-foreground/25 rounded-md p-8 text-center">
@@ -393,6 +427,16 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
           </Button>
         </div>
       </form>
+
+      {/* Image Editor Modal */}
+      {originalImage && (
+        <ImageEditor
+          image={originalImage}
+          isOpen={showImageEditor}
+          onClose={() => setShowImageEditor(false)}
+          onSave={handleImageEdited}
+        />
+      )}
     </Form>
   );
 };

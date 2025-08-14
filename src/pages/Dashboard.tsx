@@ -300,7 +300,7 @@ const Dashboard = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="stats-cards">
-          <Card className="border-0 shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
               <Calendar className="h-4 w-4 text-muted-foreground" />
@@ -311,7 +311,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Confirmações</CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
@@ -322,7 +322,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
               <CheckCircle className="h-4 w-4 text-muted-foreground" />
@@ -333,7 +333,7 @@ const Dashboard = () => {
             </CardContent>
           </Card>
           
-          <Card className="border-0 shadow-lg">
+          <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Taxa de Presença</CardTitle>
               <TrendingUp className="h-4 w-4 text-muted-foreground" />

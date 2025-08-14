@@ -108,10 +108,14 @@ const CompanyPublic = () => {
         console.log('showBarcode:', showBarcode);
         
         // Usar sempre o CPF limpo como código de barras
-        const cleanDocument = formData.document.replace(/[^0-9]/g, '');
+        // Pegar o CPF do registro, não do formulário (que pode estar limpo)
+        const documentFromRegistration = registrationData.document || formData.document;
+        const cleanDocument = documentFromRegistration.replace(/[^0-9]/g, '');
         let barcodeValue = cleanDocument;
         
-        console.log('CPF original:', formData.document);
+        console.log('CPF do registro:', registrationData.document);
+        console.log('CPF do formulário:', formData.document);
+        console.log('CPF usado:', documentFromRegistration);
         console.log('CPF limpo para barcode:', barcodeValue);
         console.log('Tipo do valor:', typeof barcodeValue);
         console.log('Comprimento do valor:', barcodeValue?.length);
@@ -353,13 +357,15 @@ const CompanyPublic = () => {
           });
         } else {
           console.log('Código de barras obtido no retry:', regRow2);
-          setRegistrationData(Array.isArray(regRow2) ? regRow2[0] : regRow2);
+          const regData = Array.isArray(regRow2) ? regRow2[0] : regRow2;
+          setRegistrationData({ ...regData, document: normalizedDocument });
           setShowBarcode(true);
         }
       } else {
         console.log('Código de barras obtido:', regRow);
         console.log('Código de barras value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
-        setRegistrationData(Array.isArray(regRow) ? regRow[0] : regRow);
+        const regData = Array.isArray(regRow) ? regRow[0] : regRow;
+        setRegistrationData({ ...regData, document: normalizedDocument });
         setShowBarcode(true);
       }
 

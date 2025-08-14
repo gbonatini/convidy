@@ -281,35 +281,41 @@ const Confirmations = () => {
   return <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
+        <div className="space-y-4">
           <div>
-            <h1 className="text-3xl font-bold">
+            <h1 className="text-2xl sm:text-3xl font-bold">
               {eventFilter ? 'Confirmações do Evento' : 'Confirmações'}
             </h1>
-            <p className="text-muted-foreground">
+            <p className="text-muted-foreground text-sm sm:text-base">
               {eventFilter ? `Gerencie as confirmações deste evento específico` : `Gerencie todas as confirmações de presença da ${company?.name}`}
             </p>
           </div>
-          <div className="flex items-center space-x-2">
-            <Button
-              variant="outline"
-              onClick={() => exportConfirmations(filteredRegistrations, eventFilter || undefined)}
-              className="flex items-center space-x-2"
-            >
-              <Download className="h-4 w-4" />
-              <span>Exportar Excel</span>
-            </Button>
-            <Badge variant="outline" className="text-sm">
-              {registrations.length} confirmações
-            </Badge>
-            {eventFilter && <Button variant="outline" size="sm" asChild>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => exportConfirmations(filteredRegistrations, eventFilter || undefined)}
+                className="flex items-center gap-1"
+              >
+                <Download className="h-4 w-4" />
+                <span className="hidden sm:inline">Exportar Excel</span>
+                <span className="sm:hidden">Exportar</span>
+              </Button>
+              <Badge variant="outline" className="text-xs sm:text-sm">
+                {registrations.length} confirmações
+              </Badge>
+            </div>
+            {eventFilter && (
+              <Button variant="outline" size="sm" asChild>
                 <a href="/confirmations">Ver Todas</a>
-              </Button>}
+              </Button>
+            )}
           </div>
         </div>
 
         {/* Indicadores Importantes */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Confirmações</CardTitle>
@@ -383,7 +389,7 @@ const Confirmations = () => {
                 {searchTerm ? 'Nenhuma confirmação corresponde aos critérios de busca.' : 'Ainda não há confirmações de presença.'}
               </p>
             </CardContent>
-          </Card> : <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
+          </Card> : <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredRegistrations.map(registration => <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-4">
                   {/* Header com nome e status */}

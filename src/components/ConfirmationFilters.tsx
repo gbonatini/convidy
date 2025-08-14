@@ -56,16 +56,16 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-4 p-4 bg-background border rounded-lg">
-        <div className="flex items-center gap-2">
+      <div className="p-4 bg-background border rounded-lg">
+        <div className="flex items-center gap-2 mb-4">
           <Filter className="h-4 w-4 text-muted-foreground" />
           <span className="text-sm font-medium">Filtros:</span>
         </div>
         
-        <div className="flex flex-wrap items-center gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {/* Event Filter */}
           <Select value={eventFilter} onValueChange={onEventFilterChange}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Selecionar evento" />
             </SelectTrigger>
             <SelectContent>
@@ -80,7 +80,7 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
 
           {/* Status Filter */}
           <Select value={statusFilter} onValueChange={onStatusFilterChange}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Status" />
             </SelectTrigger>
             <SelectContent>
@@ -98,7 +98,7 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
 
           {/* Check-in Filter */}
           <Select value={checkinFilter} onValueChange={onCheckinFilterChange}>
-            <SelectTrigger className="w-[160px]">
+            <SelectTrigger className="w-full">
               <SelectValue placeholder="Check-in" />
             </SelectTrigger>
             <SelectContent>
@@ -119,7 +119,7 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
               variant="ghost"
               size="sm"
               onClick={clearAllFilters}
-              className="h-8 px-2 lg:px-3"
+              className="w-full sm:w-auto justify-center"
             >
               <X className="h-4 w-4" />
               Limpar filtros

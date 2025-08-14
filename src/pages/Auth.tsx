@@ -116,11 +116,25 @@ const Auth = () => {
       });
 
       if (error) {
+        console.error('Erro de cadastro:', error);
+        
         if (error.message.includes('already registered')) {
           toast({
             variant: "destructive",
             title: "Email já cadastrado",
             description: "Este email já está em uso. Tente fazer login ou use outro email.",
+          });
+        } else if (error.message.includes('Database error saving new user')) {
+          toast({
+            variant: "destructive",
+            title: "Erro temporário",
+            description: "Houve um problema temporário. Tente novamente em alguns segundos.",
+          });
+        } else if (error.message.includes('duplicate key value')) {
+          toast({
+            variant: "destructive",
+            title: "Conta já existe",
+            description: "Já existe uma conta com esses dados. Tente fazer login.",
           });
         } else {
           toast({

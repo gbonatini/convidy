@@ -95,10 +95,23 @@ const CompanyPublic = () => {
   useEffect(() => {
     if (registrationData && barcodeRef.current && showBarcode) {
       try {
+        console.log('=== GERANDO CÓDIGO DE BARRAS ===');
         console.log('Dados da inscrição para barcode:', registrationData);
         console.log('qr_code value:', registrationData.qr_code);
+        console.log('Canvas ref:', barcodeRef.current);
+        console.log('showBarcode:', showBarcode);
         
         let barcodeValue = registrationData.qr_code;
+        
+        // Verificar se o qr_code existe e não está vazio
+        if (!barcodeValue) {
+          console.error('QR Code está vazio ou nulo');
+          // Gerar código simples: CPF + primeiros 8 chars do event_id
+          const cleanDocument = formData.document.replace(/[^0-9]/g, '');
+          const eventIdShort = registrationData.event_id.replace(/-/g, '').substring(0, 8);
+          barcodeValue = cleanDocument + eventIdShort;
+          console.log('Código gerado como fallback:', barcodeValue);
+        }
         
         // Se o qr_code ainda for o formato JSON antigo (base64), gerar novo código simples
         if (barcodeValue && (barcodeValue.startsWith('eyJ') || barcodeValue.includes('{'))) {
@@ -110,7 +123,13 @@ const CompanyPublic = () => {
           console.log('Novo código gerado:', barcodeValue);
         }
         
-        console.log('Gerando barcode com valor:', barcodeValue);
+        console.log('Valor final do barcode:', barcodeValue);
+        console.log('Tipo do valor:', typeof barcodeValue);
+        console.log('Comprimento do valor:', barcodeValue?.length);
+        
+        if (!barcodeValue || barcodeValue.length === 0) {
+          throw new Error('Valor do código de barras está vazio');
+        }
         
         JsBarcode(barcodeRef.current, barcodeValue, {
           format: "CODE128",
@@ -121,12 +140,29 @@ const CompanyPublic = () => {
           margin: 10
         });
         
-        console.log('Barcode gerado com sucesso!');
+        console.log('✅ Barcode gerado com sucesso!');
       } catch (error) {
-        console.error('Erro ao gerar código de barras:', error);
+        console.error('❌ Erro ao gerar código de barras:', error);
+        
+        // Fallback: mostrar mensagem de erro no canvas
+        if (barcodeRef.current) {
+          const ctx = barcodeRef.current.getContext('2d');
+          if (ctx) {
+            ctx.clearRect(0, 0, barcodeRef.current.width, barcodeRef.current.height);
+            ctx.font = '12px Arial';
+            ctx.fillStyle = 'red';
+            ctx.fillText('Erro ao gerar código', 10, 30);
+          }
+        }
       }
+    } else {
+      console.log('Condições não atendidas para gerar barcode:', {
+        hasRegistrationData: !!registrationData,
+        hasCanvas: !!barcodeRef.current,
+        showBarcode
+      });
     }
-  }, [registrationData, showBarcode]);
+  }, [registrationData, showBarcode, formData.document]);
 
   const fetchCompanyAndEvents = async () => {
     try {

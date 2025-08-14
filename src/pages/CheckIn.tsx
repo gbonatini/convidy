@@ -189,11 +189,28 @@ export default function CheckIn() {
       console.log('[QR SCANNER] Resultado:', result.text);
       setScannerError('');
       
-      // Decodificar QR Code
-      const decoded = JSON.parse(atob(result.text));
-      console.log('[QR SCANNER] Decodificado:', decoded);
-
-      const cpf = decoded.cpf || decoded.document;
+      let cpf = '';
+      
+      // Tentar diferentes formatos de QR Code
+      try {
+        // Primeiro, tentar decodificar como Base64 + JSON
+        const decoded = JSON.parse(atob(result.text));
+        console.log('[QR SCANNER] Decodificado como JSON:', decoded);
+        cpf = decoded.cpf || decoded.document;
+      } catch (base64Error) {
+        console.log('[QR SCANNER] Não é Base64, tentando JSON direto...');
+        try {
+          // Tentar como JSON direto
+          const decoded = JSON.parse(result.text);
+          console.log('[QR SCANNER] Decodificado como JSON direto:', decoded);
+          cpf = decoded.cpf || decoded.document;
+        } catch (jsonError) {
+          console.log('[QR SCANNER] Não é JSON, usando texto direto...');
+          // Se não for JSON, assumir que é o CPF direto
+          cpf = result.text.replace(/\D/g, '');
+        }
+      }
+      
       if (!cpf) {
         throw new Error('CPF não encontrado no QR Code');
       }

@@ -649,7 +649,10 @@ const CompanyPublic = () => {
                 <div className="bg-white p-4 rounded-lg border-2 inline-block shadow-sm">
                   <canvas 
                     ref={barcodeRef}
+                    width={250}
+                    height={60}
                     className="max-w-full"
+                    style={{ border: '1px solid #ccc' }}
                   />
                 </div>
               </div>

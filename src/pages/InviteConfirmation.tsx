@@ -69,21 +69,67 @@ const InviteConfirmation = () => {
     }
   }, [slug, inviteId]);
 
-  // Gerar código de barras quando registrationData estiver disponível
+  // Gerar código de barras quando registrationData estiver disponível (igual ao CompanyPublic)
   useEffect(() => {
-    if (registrationData && registrationData.qr_code && barcodeRef.current) {
-      try {
-        JsBarcode(barcodeRef.current, registrationData.qr_code, {
-          format: "CODE128",
-          width: 2,
-          height: 40,
-          displayValue: true,
-          fontSize: 10,
-          margin: 5
-        });
-      } catch (error) {
-        console.error('Erro ao gerar código de barras:', error);
-      }
+    if (registrationData && registrationData.document) {
+      console.log('📊 Tentando gerar código de barras para CPF:', registrationData.document);
+      
+      // Aguardar o canvas estar renderizado no DOM
+      const generateBarcode = () => {
+        if (barcodeRef.current) {
+          try {
+            console.log('🎯 Canvas encontrado, gerando código de barras...');
+            
+            // Limpar o canvas
+            const canvas = barcodeRef.current;
+            const ctx = canvas.getContext('2d');
+            if (ctx) {
+              ctx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            // Usar o CPF limpo do registro
+            const cleanDocument = registrationData.document.replace(/[^0-9]/g, '');
+            
+            if (!cleanDocument || cleanDocument.length === 0) {
+              throw new Error('CPF inválido para gerar código de barras');
+            }
+            
+            console.log('📋 Gerando código de barras com CPF:', cleanDocument);
+            
+            // Gerar o código de barras
+            JsBarcode(barcodeRef.current, cleanDocument, {
+              format: "CODE128",
+              width: 2,
+              height: 40,
+              displayValue: true,
+              fontSize: 10,
+              margin: 5
+            });
+            
+            console.log('✅ Barcode gerado com sucesso!');
+          } catch (error) {
+            console.error('❌ Erro ao gerar código de barras:', error);
+            
+            // Fallback: mostrar mensagem de erro no canvas
+            if (barcodeRef.current) {
+              const ctx = barcodeRef.current.getContext('2d');
+              if (ctx) {
+                ctx.clearRect(0, 0, barcodeRef.current.width, barcodeRef.current.height);
+                ctx.font = '12px Arial';
+                ctx.fillStyle = 'red';
+                ctx.fillText('Erro ao gerar código', 10, 30);
+              }
+            }
+          }
+        } else {
+          console.log('⏳ Canvas ainda não disponível, tentando novamente em 100ms...');
+          // Tentar novamente após um pequeno delay
+          setTimeout(generateBarcode, 100);
+        }
+      };
+      
+      // Aguardar um pouco para o modal estar completamente renderizado
+      setTimeout(generateBarcode, 100);
     }
   }, [registrationData]);
 
@@ -205,153 +251,160 @@ const InviteConfirmation = () => {
     setConfirming(true);
     
     try {
-      console.log('🔍 Verificando se o evento está ativo...');
-      // Verificar se o evento ainda está ativo
-      if (eventData.status !== 'active') {
-        console.log('❌ Evento não está ativo:', eventData.status);
-        throw new Error('Este evento não está mais ativo');
-      }
-      console.log('✅ Evento está ativo');
-
-      console.log('📊 Verificando capacidade do evento...');
-      // Verificar capacidade do evento
+      console.log('=== INÍCIO DA CONFIRMAÇÃO AUTOMÁTICA ===');
+      console.log('Evento selecionado:', eventData);
+      console.log('Dados do convite:', inviteData);
+      
+      // Verificar capacidade do evento antes de confirmar
       const { data: currentRegistrations, error: countError } = await supabase
         .from('registrations')
         .select('id', { count: 'exact' })
         .eq('event_id', eventData.id)
         .eq('status', 'confirmed');
-
-      console.log('Registros atuais:', currentRegistrations);
-      console.log('Erro na contagem:', countError);
-
+      
       if (countError) {
-        console.log('❌ Erro ao verificar capacidade:', countError);
+        console.error('Erro ao verificar capacidade:', countError);
         throw new Error('Erro ao verificar capacidade do evento');
       }
-
-      const currentCount = currentRegistrations?.length || 0;
-      console.log(`📈 Capacidade: ${currentCount}/${eventData.capacity}`);
       
+      const currentCount = currentRegistrations?.length || 0;
       if (currentCount >= eventData.capacity) {
-        console.log('🚫 Evento lotado!');
-        throw new Error(`Este evento já atingiu sua capacidade máxima de ${eventData.capacity} participantes`);
-      }
-
-      console.log('💾 Criando registro de confirmação...');
-      // Criar registro de confirmação
-      const { error: insertError } = await supabase
-        .from('registrations')
-        .insert({
-          event_id: eventData.id,
-          name: inviteData.full_name,
-          email: inviteData.email || `${inviteData.whatsapp}@temp.com`,
-          phone: inviteData.whatsapp,
-          document: inviteData.cpf,
-          document_type: 'cpf',
-          status: 'confirmed'
-        });
-
-      console.log('Erro na inserção:', insertError);
-
-      if (insertError) {
-        console.log('❌ Erro na inserção detalhado:', insertError);
-        if (insertError.code === '23505') {
-          console.log('🔄 Registro duplicado detectado, buscando existente...');
-          // Já existe registro - buscar dados existentes
-          const { data: existingReg } = await supabase
-            .rpc('get_registration_public', {
-              event_uuid: eventData.id,
-              document_text: inviteData.cpf,
-              phone_text: inviteData.whatsapp
-            });
-
-          console.log('Registro existente encontrado:', existingReg);
-
-          if (existingReg) {
-            const regData = Array.isArray(existingReg) ? existingReg[0] : existingReg;
-            setRegistrationData(regData);
-            
-            // Atualizar status do convite para confirmed
-            await supabase
-              .from('invites')
-              .update({ status: 'confirmed' })
-              .eq('id', inviteData.id);
-
-            console.log('🎉 Confirmação já existia!');
-
-            confetti({
-              particleCount: 100,
-              spread: 70,
-              origin: { y: 0.6 }
-            });
-
-            toast({
-              title: "🎉 Presença já confirmada!",
-              description: "Sua presença já estava confirmada para este evento.",
-            });
-            return;
-          }
-        }
-        console.log('❌ Erro definitivo na inserção');
-        throw insertError;
-      }
-
-      console.log('✅ Registro criado com sucesso!');
-
-      // Buscar dados do registro criado
-      console.log('🔍 Buscando dados do registro criado...');
-      await new Promise(resolve => setTimeout(resolve, 500)); // Aguardar processamento
-
-      const { data: newRegistration } = await supabase
-        .rpc('get_registration_public', {
-          event_uuid: eventData.id,
-          document_text: inviteData.cpf,
-          phone_text: inviteData.whatsapp
-        });
-
-      console.log('Novo registro encontrado:', newRegistration);
-
-      if (newRegistration) {
-        const regData = Array.isArray(newRegistration) ? newRegistration[0] : newRegistration;
-        setRegistrationData(regData);
-
-        // Atualizar status do convite para confirmed
-        await supabase
-          .from('invites')
-          .update({ status: 'confirmed' })
-          .eq('id', inviteData.id);
-
-        confetti({
-          particleCount: 100,
-          spread: 70,
-          origin: { y: 0.6 }
-        });
-
         toast({
-          title: "🎉 Presença confirmada!",
-          description: "Sua presença foi confirmada com sucesso!",
+          variant: "destructive",
+          title: "Evento lotado",
+          description: `Este evento já atingiu sua capacidade máxima de ${eventData.capacity} participantes.`,
         });
-      } else {
-        throw new Error('Erro ao obter dados da confirmação');
+        return;
       }
+      
+      // Normalizar CPF removendo pontuação e traços
+      const normalizedDocument = inviteData.cpf.replace(/\D/g, '');
+      
+      const insertData = {
+        event_id: eventData.id,
+        name: inviteData.full_name,
+        email: inviteData.email || `${inviteData.whatsapp.replace(/\D/g, '')}@temp.com`,
+        phone: inviteData.whatsapp,
+        document: normalizedDocument,
+        document_type: 'cpf',
+        qr_code: '', // Will be generated by trigger
+        status: 'confirmed'
+      } as any;
+
+      console.log('Dados para inserção:', insertData);
+
+      const { error } = await supabase
+        .from('registrations')
+        .insert([insertData]);
+
+      console.log('Inserção concluída. Sem retorno de dados devido às políticas RLS.', { error });
+
+      if (error) {
+        console.error('Erro na inserção:', error);
+        
+        if (error.code === '23505') {
+          console.log('Erro de constraint única detectado');
+          if (error.message?.includes('registrations_event_document_unique')) {
+            toast({
+              variant: "destructive",
+              title: "CPF já confirmado",
+              description: "Este CPF já foi usado para confirmar presença neste evento.",
+            });
+          } else if (error.message?.includes('registrations_event_id_email_key')) {
+            toast({
+              variant: "destructive", 
+              title: "Email já usado",
+              description: "Este email já foi usado para confirmar presença neste evento.",
+            });
+          } else {
+            toast({
+              variant: "destructive",
+              title: "Registro duplicado", 
+              description: "Já existe uma confirmação para estes dados neste evento.",
+            });
+          }
+          return;
+        } else if (error.message?.includes('RLS')) {
+          toast({
+            variant: "destructive",
+            title: "Erro de permissão",
+            description: "Não é possível confirmar presença neste evento no momento.",
+          });
+          return;
+        } else {
+          toast({
+            variant: "destructive",
+            title: "Erro ao confirmar presença",
+            description: error.message || "Tente novamente em alguns instantes.",
+          });
+          return;
+        }
+      }
+
+      // Efeito de confetti para celebrar!
+      confetti({
+        particleCount: 100,
+        spread: 70,
+        origin: { y: 0.6 }
+      });
+
+      toast({
+        title: "🎉 Confirmação realizada!",
+        description: "Aguarde... gerando seu código de barras de check-in!",
+      });
+
+      console.log('Confirmação automática bem-sucedida!');
+      
+      // Buscar o registro via função segura (sem SELECT público)
+      const fetchBarcode = async () => {
+        const { data: regRow, error: regErr } = await (supabase as any).rpc('get_registration_public', {
+          event_uuid: eventData.id,
+          document_text: normalizedDocument,
+          phone_text: inviteData.whatsapp,
+        });
+        return { regRow, regErr };
+      };
+
+      const { regRow, regErr } = await fetchBarcode();
+      if (regErr || !regRow) {
+        console.log('Código de barras não disponível imediatamente, tentando novamente...', regErr);
+        await new Promise((r) => setTimeout(r, 400));
+        const { regRow: regRow2, regErr: regErr2 } = await fetchBarcode();
+        if (regErr2 || !regRow2) {
+          console.error('Erro ao obter código de barras após retry:', regErr2);
+          toast({
+            variant: "destructive",
+            title: "Erro ao gerar código de barras",
+            description: "Registro salvo, mas houve problema ao gerar código de barras.",
+          });
+        } else {
+          console.log('Código de barras obtido no retry:', regRow2);
+          const regData = Array.isArray(regRow2) ? regRow2[0] : regRow2;
+          setRegistrationData({ ...regData, document: normalizedDocument });
+        }
+      } else {
+        console.log('Código de barras obtido:', regRow);
+        console.log('Código de barras value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
+        const regData = Array.isArray(regRow) ? regRow[0] : regRow;
+        setRegistrationData({ ...regData, document: normalizedDocument });
+      }
+
+      // Atualizar status do convite para confirmed
+      await supabase
+        .from('invites')
+        .update({ status: 'confirmed' })
+        .eq('id', inviteData.id);
 
     } catch (error: any) {
-      console.error('Erro na confirmação automática:', error);
+      console.error('=== ERRO NA CONFIRMAÇÃO AUTOMÁTICA ===');
+      console.error('Erro completo:', error);
       
-      if (error.code === '23505') {
-        toast({
-          variant: "destructive",
-          title: "CPF já confirmado",
-          description: "Este CPF já foi usado para confirmar presença neste evento.",
-        });
-      } else {
-        setError(error.message || 'Erro ao confirmar presença automaticamente');
-        toast({
-          variant: "destructive",
-          title: "Erro na confirmação",
-          description: error.message || "Erro ao confirmar presença automaticamente.",
-        });
-      }
+      setError(error.message || 'Erro ao confirmar presença automaticamente');
+      toast({
+        variant: "destructive",
+        title: "Erro na confirmação",
+        description: error.message || "Erro ao confirmar presença automaticamente.",
+      });
     } finally {
       setConfirming(false);
     }
@@ -526,7 +579,7 @@ const InviteConfirmation = () => {
                     <strong>Nome:</strong> {registrationData.name}
                   </p>
                   <p className="text-sm text-muted-foreground">
-                    <strong>Código:</strong> {registrationData.qr_code}
+                    <strong>CPF:</strong> {registrationData.document}
                   </p>
                 </div>
 

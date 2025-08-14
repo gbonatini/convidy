@@ -106,22 +106,29 @@ const CompanyPublic = () => {
         // Verificar se o qr_code existe e não está vazio
         if (!barcodeValue) {
           console.error('QR Code está vazio ou nulo');
-          // Gerar código simples: CPF + primeiros 8 chars do event_id
-          const cleanDocument = formData.document.replace(/[^0-9]/g, '');
-          const eventIdShort = registrationData.event_id.replace(/-/g, '').substring(0, 8);
-          barcodeValue = cleanDocument + eventIdShort;
-          console.log('Código gerado como fallback:', barcodeValue);
+          // Gerar código único usando o ID do registro
+          barcodeValue = registrationData.id;
+          console.log('Código gerado como fallback (ID):', barcodeValue);
         }
         
-        // Se o qr_code ainda for o formato JSON antigo (base64), gerar novo código simples
+        // Se o qr_code ainda for o formato JSON antigo (base64), usar o ID único
         if (barcodeValue && (barcodeValue.startsWith('eyJ') || barcodeValue.includes('{'))) {
-          console.log('Detectado formato antigo, gerando novo código de barras...');
-          // Gerar código simples: CPF + primeiros 8 chars do event_id
-          const cleanDocument = formData.document.replace(/[^0-9]/g, '');
-          const eventIdShort = registrationData.event_id.replace(/-/g, '').substring(0, 8);
-          barcodeValue = cleanDocument + eventIdShort;
-          console.log('Novo código gerado:', barcodeValue);
+          console.log('Detectado formato antigo, usando ID único...');
+          // Usar o ID único do registro como código de barras
+          barcodeValue = registrationData.id;
+          console.log('Novo código (ID único):', barcodeValue);
         }
+        
+        // Garantir que o código não seja muito longo para o CODE128
+        // Usar apenas o ID como código único
+        if (barcodeValue && barcodeValue.length > 20) {
+          barcodeValue = registrationData.id;
+          console.log('Código muito longo, usando ID único:', barcodeValue);
+        }
+        
+        console.log('Valor final do barcode:', barcodeValue);
+        console.log('Tipo do valor:', typeof barcodeValue);
+        console.log('Comprimento do valor:', barcodeValue?.length);
         
         console.log('Valor final do barcode:', barcodeValue);
         console.log('Tipo do valor:', typeof barcodeValue);

@@ -230,14 +230,21 @@ export default function CheckIn() {
       // Buscar registro pelo código de barras (busca exata primeiro)
       let registration = registrations.find(reg => reg.qr_code === barcodeValue);
       
-      // Se não encontrou com busca exata, tentar busca parcial (código pode estar incompleto)
+      // Se não encontrou com busca exata, tentar busca pelo ID único
       if (!registration) {
-        console.log('[CHECK-IN] Busca exata falhou, tentando busca parcial...');
+        console.log('[CHECK-IN] Busca exata falhou, tentando busca por ID único...');
+        registration = registrations.find(reg => reg.id === barcodeValue);
+      }
+      
+      // Busca parcial como último recurso
+      if (!registration) {
+        console.log('[CHECK-IN] Busca por ID falhou, tentando busca parcial...');
         registration = registrations.find(reg => 
           reg.qr_code && (
             reg.qr_code.includes(barcodeValue) || 
             barcodeValue.includes(reg.qr_code) ||
-            reg.qr_code.endsWith(barcodeValue)
+            reg.qr_code.endsWith(barcodeValue) ||
+            reg.id.includes(barcodeValue)
           )
         );
       }

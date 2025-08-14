@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { supabase } from '@/integrations/supabase/client';
-import { Calendar, Users, CheckCircle, TrendingUp, Target, Clock } from 'lucide-react';
+import { Calendar, Users, CheckCircle, TrendingUp, Target, Clock, Send, UserCheck } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -14,6 +14,7 @@ interface EventData {
   time: string;
   capacity: number;
   status: string;
+  invites: number;
   confirmations: number;
   checkins: number;
   created_at: string;
@@ -49,9 +50,16 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
         return;
       }
 
-      // Buscar confirmações e check-ins para cada evento
+      // Buscar convites, confirmações e check-ins para cada evento
       const eventsWithStats = await Promise.all(
         eventsData.map(async (event) => {
+          // Buscar convites
+          const { data: invitesData, error: invitesError } = await supabase
+            .from('invites')
+            .select('id')
+            .eq('event_id', event.id);
+
+          // Buscar confirmações
           const { data: registrations, error: regError } = await supabase
             .from('registrations')
             .select('checked_in')
@@ -59,11 +67,13 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
 
           if (regError) throw regError;
 
+          const invites = invitesData?.length || 0;
           const confirmations = registrations?.length || 0;
           const checkins = registrations?.filter(r => r.checked_in).length || 0;
 
           return {
             ...event,
+            invites,
             confirmations,
             checkins,
           };
@@ -81,25 +91,17 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
   const calculateEventFunnel = (event: EventData) => {
     const steps = [
       {
-        name: 'Criado',
-        value: 1,
-        percentage: 100,
-        icon: Calendar,
+        name: 'Convites',
+        value: event.invites,
+        percentage: 100, // Base do funil
+        icon: Send,
         color: 'hsl(var(--muted-foreground))',
-        completed: true,
-      },
-      {
-        name: 'Ativo',
-        value: event.status === 'active' ? 1 : 0,
-        percentage: event.status === 'active' ? 100 : 0,
-        icon: TrendingUp,
-        color: 'hsl(var(--success))',
-        completed: event.status === 'active',
+        completed: event.invites > 0,
       },
       {
         name: 'Confirmações',
         value: event.confirmations,
-        percentage: event.capacity > 0 ? Math.round((event.confirmations / event.capacity) * 100) : 0,
+        percentage: event.invites > 0 ? Math.round((event.confirmations / event.invites) * 100) : 0,
         icon: Users,
         color: 'hsl(var(--info))',
         completed: event.confirmations > 0,
@@ -108,7 +110,7 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
         name: 'Check-ins',
         value: event.checkins,
         percentage: event.confirmations > 0 ? Math.round((event.checkins / event.confirmations) * 100) : 0,
-        icon: CheckCircle,
+        icon: UserCheck,
         color: 'hsl(var(--warning))',
         completed: event.checkins > 0,
       },
@@ -193,7 +195,11 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                 </div>
 
                 {/* Estatísticas Rápidas */}
-                <div className="grid grid-cols-3 gap-4">
+                <div className="grid grid-cols-4 gap-4">
+                  <div className="text-center">
+                    <div className="text-xl font-bold text-muted-foreground">{event.invites}</div>
+                    <div className="text-xs text-muted-foreground">Convites</div>
+                  </div>
                   <div className="text-center">
                     <div className="text-xl font-bold text-info">{event.confirmations}</div>
                     <div className="text-xs text-muted-foreground">Confirmações</div>
@@ -204,16 +210,19 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                   </div>
                   <div className="text-center">
                     <div className="text-xl font-bold">
-                      {event.confirmations > 0 ? Math.round((event.checkins / event.confirmations) * 100) : 0}%
+                      {event.invites > 0 ? Math.round((event.confirmations / event.invites) * 100) : 0}%
                     </div>
-                    <div className="text-xs text-muted-foreground">Taxa Presença</div>
+                    <div className="text-xs text-muted-foreground">Taxa Conversão</div>
                   </div>
                 </div>
 
                 {/* Funil Visual */}
-                <div className="grid grid-cols-4 gap-2">
+                <div className="grid grid-cols-3 gap-4">
                   {funnelSteps.map((step, index) => {
                     const Icon = step.icon;
+                    const isFirst = index === 0;
+                    const conversionRate = isFirst ? 100 : step.percentage;
+                    
                     return (
                       <div key={index} className="text-center space-y-2">
                         <div className={`mx-auto w-12 h-12 rounded-full border-2 flex items-center justify-center ${
@@ -229,14 +238,16 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
                         </div>
                         <div className="space-y-1">
                           <div className="text-xs font-medium">{step.name}</div>
-                          <div className={`text-sm font-bold ${
+                          <div className={`text-lg font-bold ${
                             step.completed ? 'text-primary' : 'text-muted-foreground'
                           }`}>
-                            {step.name === 'Confirmações' || step.name === 'Check-ins' 
-                              ? step.value 
-                              : `${step.percentage}%`
-                            }
+                            {step.value}
                           </div>
+                          {!isFirst && (
+                            <div className="text-xs text-muted-foreground">
+                              {conversionRate}% do anterior
+                            </div>
+                          )}
                         </div>
                       </div>
                     );

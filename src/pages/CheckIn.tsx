@@ -643,7 +643,7 @@ export default function CheckIn() {
                       <TableCell>{formatCpf(registration.document)}</TableCell>
                       <TableCell>{registration.events.title}</TableCell>
                       <TableCell>
-                        <Badge variant={registration.checked_in ? "default" : "secondary"}>
+                        <Badge variant={registration.checked_in ? "success" : "warning"}>
                           {registration.checked_in ? (
                             <><CheckCircle className="h-3 w-3 mr-1" /> Confirmado</>
                           ) : (

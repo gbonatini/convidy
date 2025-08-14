@@ -16,6 +16,7 @@ import SettingsPage from "./pages/SettingsPage";
 import Plans from "./pages/Plans";
 import Billing from "./pages/Billing";
 import CompanyPublic from "./pages/CompanyPublic";
+import InviteConfirmation from "./pages/InviteConfirmation";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/plans" element={<Plans />} />
             <Route path="/billing" element={<Billing />} />
             <Route path="/settings" element={<SettingsPage />} />
+            <Route path="/:slug/convite/:inviteId" element={<InviteConfirmation />} />
             <Route path="/:slug" element={<CompanyPublic />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />

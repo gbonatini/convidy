@@ -370,16 +370,21 @@ export default function Invites() {
 
     const whatsappNumber = invite.whatsapp.replace(/\D/g, '');
     
-    // Use saved message or default
+    // Generate direct confirmation link
+    const directLink = `${window.location.origin}/${companies?.slug}/convite/${invite.id}`;
+    
+    // Use saved message or default with direct link
     let message = invite.message_sent;
     if (!message) {
-      // Fallback to simple message if no template
+      // Default message with direct confirmation link
       const eventDate = new Date(event.date + 'T00:00:00').toLocaleDateString('pt-BR');
-      const eventLink = companies?.slug ? `${window.location.origin}/${companies.slug}` : window.location.origin;
-      message = `Olá ${invite.full_name}, você está convidado para o evento ${event.title} no dia ${eventDate}. Para confirmar presença, acesse: ${eventLink}`;
+      message = `Olá ${invite.full_name}, você está convidado para o evento ${event.title} no dia ${eventDate}. Clique aqui para confirmar sua presença automaticamente: ${directLink}`;
     } else {
-      // Process the saved template
+      // Process the saved template but replace the link with direct confirmation link
       message = processMessage(message, invite, event);
+      // Replace any occurrence of the general company link with the direct confirmation link
+      const generalLink = companies?.slug ? `${window.location.origin}/${companies.slug}` : window.location.origin;
+      message = message.replace(generalLink, directLink);
     }
     
     const whatsappUrl = `https://wa.me/55${whatsappNumber}?text=${encodeURIComponent(message)}`;

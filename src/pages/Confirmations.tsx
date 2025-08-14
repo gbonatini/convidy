@@ -376,48 +376,52 @@ const Confirmations = () => {
             </CardContent>
           </Card> : <div className="grid md:grid-cols-2 xl:grid-cols-3 gap-4">
             {filteredRegistrations.map(registration => <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
-                <CardContent className="p-4 space-y-3">
-                  {/* Header com avatar e nome */}
-                  <div className="flex items-center gap-3">
-                    
+                <CardContent className="p-4">
+                  {/* Header com nome e status */}
+                  <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-lg text-foreground truncate">{registration.name}</h3>
                       <p className="text-sm text-muted-foreground truncate">{registration.email}</p>
                     </div>
-                  </div>
-
-                  {/* Informações do evento */}
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm text-gray-500">{registration.event?.title || 'Evento não encontrado'}</h4>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <MapPin className="h-3 w-3 flex-shrink-0" />
-                      <span className="truncate">{registration.event?.location || 'Local não disponível'}</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3 flex-shrink-0" />
-                      <span>
-                        {registration.event?.date ? formatDate(registration.event.date) : 'Data não disponível'} - {registration.event?.time ? formatTime(registration.event.time) : 'N/A'}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Status e informações adicionais */}
-                  <div className="space-y-2">
-                    <div className="flex items-center gap-2 flex-wrap">
+                    <div className="flex flex-col gap-1 ml-3">
                       {getConfirmationStatusBadge(registration.status)}
                       {registration.checked_in && getCheckinStatusBadge(registration.checked_in)}
                     </div>
-                    
-                    <div className="text-xs text-muted-foreground space-y-1">
-                      <div>CPF: {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.***.$3-**')}</div>
-                      {registration.phone && <div>Tel: {registration.phone}</div>}
-                      <div>Confirmado: {formatCreatedAt(registration.created_at)}</div>
-                      {registration.checked_in && registration.checkin_time && <div>Check-in: {formatCreatedAt(registration.checkin_time)}</div>}
+                  </div>
+
+                  {/* Informações do evento */}
+                  <div className="bg-muted/30 rounded-lg p-3 mb-3">
+                    <h4 className="font-semibold text-sm text-foreground mb-2">{registration.event?.title || "Evento não encontrado"}</h4>
+                    <div className="grid grid-cols-1 gap-1 text-xs text-muted-foreground">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-3 w-3 flex-shrink-0" />
+                        <span className="truncate">{registration.event?.location || "Local não disponível"}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Clock className="h-3 w-3 flex-shrink-0" />
+                        <span>
+                          {registration.event?.date ? formatDate(registration.event.date) : "Data não disponível"} - {registration.event?.time ? formatTime(registration.event.time) : "N/A"}
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Botões de ação seguindo padrão dos convites */}
-                  <div className="flex space-x-2 pt-2">
+                  {/* Informações pessoais e datas */}
+                  <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground mb-3">
+                    <div className="space-y-1">
+                      <div><strong>CPF:</strong> {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}</div>
+                      {registration.phone && <div><strong>Tel:</strong> {registration.phone}</div>}
+                    </div>
+                    <div className="space-y-1">
+                      <div><strong>Confirmado:</strong> {formatCreatedAt(registration.created_at)}</div>
+                      {registration.checked_in && registration.checkin_time && (
+                        <div><strong>Check-in:</strong> {formatCreatedAt(registration.checkin_time)}</div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Botões de ação */}
+                  <div className="flex space-x-2 pt-2 border-t border-border/50">
                     <Button
                       size="sm"
                       variant="outline"

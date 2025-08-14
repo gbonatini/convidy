@@ -477,20 +477,20 @@ const Index = () => {
                 <div className="py-6 space-y-4">
                   <div className="bg-green-100 rounded-lg p-3 max-w-xs">
                     <p className="text-sm">
-                      Olá, João! 👋<br/><br/>
-                      Você está convidado para o evento:<br/>
-                      <strong>Workshop de Vendas 2024</strong><br/><br/>
-                      📅 Data: 15/03/2024<br/>
-                      🕒 Horário: 14:00<br/>
-                      📍 Local: Auditório TechCorp<br/><br/>
-                      Confirme sua presença clicando no link:<br/>
+                      Olá, João! 👋<br /><br />
+                      Você está convidado para o evento:<br />
+                      <strong>Workshop de Vendas 2024</strong><br /><br />
+                      📅 Data: 15/03/2024<br />
+                      🕒 Horário: 14:00<br />
+                      📍 Local: Auditório TechCorp<br /><br />
+                      Confirme sua presença clicando no link:<br />
                       👉 convidy.app/confirmar/abc123
                     </p>
                   </div>
                   
                   <div className="flex justify-end">
                     <div className="bg-blue-500 text-white rounded-lg p-3 max-w-xs">
-                      <p className="text-sm">Confirmado! Estarei lá 🎉</p>
+                      <p className="text-sm">Confirmei no link! Estarei lá 🎉</p>
                     </div>
                   </div>
                 </div>

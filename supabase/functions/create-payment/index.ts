@@ -27,6 +27,8 @@ serve(async (req) => {
 
     // Verificar autenticação
     const authHeader = req.headers.get('Authorization');
+    console.log('🔑 Auth header received:', authHeader ? 'Present' : 'Missing');
+    
     if (!authHeader) {
       console.error('❌ No authorization header found');
       throw new Error('Authorization header missing');
@@ -35,7 +37,13 @@ serve(async (req) => {
     const token = authHeader.replace('Bearer ', '');
     console.log('🔑 Extracted token, authenticating user...');
     
-    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+    // Usar o cliente com anon key para verificar o token do usuário
+    const authClient = createClient(
+      Deno.env.get('SUPABASE_URL') ?? '',
+      Deno.env.get('SUPABASE_ANON_KEY') ?? ''
+    );
+    
+    const { data: { user }, error: authError } = await authClient.auth.getUser(token);
     if (authError) {
       console.error('❌ Auth error:', authError);
       throw new Error(`Authentication failed: ${authError.message}`);

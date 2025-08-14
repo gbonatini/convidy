@@ -314,7 +314,7 @@ const Dashboard = () => {
             </div>}
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6" data-tour="stats-cards">
+        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6" data-tour="stats-cards">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
               <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>

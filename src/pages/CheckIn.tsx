@@ -170,21 +170,24 @@ export default function CheckIn() {
     if (!result) return;
 
     try {
-      console.log('[QR SCAN] Resultado:', result.text);
+      console.log('[QR SCAN] Resultado bruto:', result.text);
       
-      // Decodificar QR Code
+      // Decodificar QR Code base64
       const decoded = JSON.parse(atob(result.text));
-      console.log('[QR SCAN] Decodificado:', decoded);
+      console.log('[QR SCAN] JSON decodificado:', decoded);
 
-      if (decoded.cpf || decoded.document) {
-        const cpf = decoded.cpf || decoded.document;
+      // Extrair CPF do JSON decodificado
+      const cpf = decoded.cpf || decoded.document;
+      if (cpf) {
+        console.log('[QR SCAN] CPF extraído:', cpf);
         await processCheckIn(cpf);
       } else {
-        toast.error('QR Code inválido');
+        console.log('[QR SCAN] CPF não encontrado no QR code');
+        toast.error('QR Code não contém CPF válido');
       }
     } catch (error) {
-      console.error('[QR SCAN] Erro:', error);
-      toast.error('QR Code inválido');
+      console.error('[QR SCAN] Erro ao decodificar:', error);
+      toast.error('QR Code inválido ou corrompido');
     }
   };
 

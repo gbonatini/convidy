@@ -8,9 +8,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Badge } from '@/components/ui/badge';
-import { QrReader } from 'react-qr-reader';
 import { 
-  QrCode, 
+  BarChart3, 
   Users, 
   CheckCircle, 
   Clock, 
@@ -19,7 +18,8 @@ import {
   X,
   Camera,
   Smartphone,
-  UserCheck
+  UserCheck,
+  ScanLine
 } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
@@ -29,26 +29,24 @@ interface Event {
   id: string;
   title: string;
   date: string;
-  time: string;
+  location: string;
+  capacity: number;
+  company_id: string;
 }
 
 interface Registration {
   id: string;
-  event_id: string;
   name: string;
-  email: string;
-  phone: string;
   document: string;
+  phone: string;
+  email: string;
   checked_in: boolean;
   checkin_time: string | null;
-  events: {
-    title: string;
-    date: string;
-    time: string;
-  };
+  events: Event;
+  qr_code: string;
 }
 
-interface CheckInStats {
+interface Stats {
   total: number;
   checkedIn: number;
   pending: number;
@@ -57,23 +55,26 @@ interface CheckInStats {
 
 export default function CheckIn() {
   const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
   const [events, setEvents] = useState<Event[]>([]);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [filteredRegistrations, setFilteredRegistrations] = useState<Registration[]>([]);
-  const [selectedEventId, setSelectedEventId] = useState<string>('');
-  const [stats, setStats] = useState<CheckInStats>({ total: 0, checkedIn: 0, pending: 0, percentage: 0 });
-  const [loading, setLoading] = useState(true);
-  const [showScanner, setShowScanner] = useState(false);
-  const [manualCpf, setManualCpf] = useState('');
+  const [selectedEventId, setSelectedEventId] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState('');
+  const [cpfInput, setCpfInput] = useState('');
+  const [stats, setStats] = useState<Stats>({ total: 0, checkedIn: 0, pending: 0, percentage: 0 });
   const [userCompanyId, setUserCompanyId] = useState<string>('');
-  const [scannerError, setScannerError] = useState<string>('');
+  
+  // Scanner
+  const [showScanner, setShowScanner] = useState(false);
+  const [scannerError, setScannerError] = useState('');
 
-  // Verificar autenticação e obter company_id
+  // Verificar autenticação e carregar dados
   useEffect(() => {
     const checkAuth = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      
+      if (error || !user) {
         navigate('/auth');
         return;
       }
@@ -121,17 +122,15 @@ export default function CheckIn() {
       ]);
     } catch (error) {
       console.error('Erro ao carregar dados:', error);
-      toast.error('Erro ao carregar dados');
     } finally {
       setLoading(false);
     }
   };
 
-  // Carregar eventos
   const loadEvents = async (companyId: string) => {
     const { data, error } = await supabase
       .from('events')
-      .select('id, title, date, time')
+      .select('*')
       .eq('company_id', companyId)
       .eq('status', 'active')
       .order('date', { ascending: true });
@@ -144,34 +143,47 @@ export default function CheckIn() {
     setEvents(data || []);
   };
 
-  // Carregar registros
-  const loadRegistrations = async (companyId: string, eventId?: string) => {
-    let query = supabase
+  const loadRegistrations = async (companyId: string) => {
+    const { data, error } = await supabase
       .from('registrations')
       .select(`
-        id, event_id, name, email, phone, document,
-        checked_in, checkin_time,
-        events!inner(title, date, time, company_id)
+        *,
+        events!inner(
+          id,
+          title,
+          date,
+          location,
+          capacity,
+          company_id
+        )
       `)
-      .eq('events.company_id', companyId);
-
-    if (eventId) {
-      query = query.eq('event_id', eventId);
-    }
-
-    const { data, error } = await query.order('created_at', { ascending: false });
+      .eq('events.company_id', companyId)
+      .eq('events.status', 'active')
+      .order('created_at', { ascending: false });
 
     if (error) {
       console.error('Erro ao carregar registros:', error);
       return;
     }
 
-    setRegistrations(data || []);
-    setFilteredRegistrations(data || []);
-    calculateStats(data || []);
+    const regs = data || [];
+    setRegistrations(regs);
+    setFilteredRegistrations(regs);
+    calculateStats(regs);
   };
 
-  // Calcular estatísticas
+  // Filtrar por evento
+  useEffect(() => {
+    if (selectedEventId === 'all') {
+      setFilteredRegistrations(registrations);
+      calculateStats(registrations);
+    } else {
+      const filtered = registrations.filter(reg => reg.events.id === selectedEventId);
+      setFilteredRegistrations(filtered);
+      calculateStats(filtered);
+    }
+  }, [selectedEventId, registrations]);
+
   const calculateStats = (regs: Registration[]) => {
     const total = regs.length;
     const checkedIn = regs.filter(r => r.checked_in).length;
@@ -181,172 +193,161 @@ export default function CheckIn() {
     setStats({ total, checkedIn, pending, percentage });
   };
 
-  // Scanner QR Code melhorado
-  const handleQRScan = async (result: any) => {
+  // Scanner de código de barras melhorado
+  const handleBarcodeScan = async (result: any) => {
     if (!result) return;
 
     try {
-      console.log('[QR SCANNER] Resultado:', result.text);
+      console.log('[BARCODE SCANNER] Resultado:', result.text);
       setScannerError('');
       
-      let cpf = '';
+      // O código de barras é o valor direto (sem decodificação)
+      const barcodeValue = result.text;
       
-      // Tentar diferentes formatos de QR Code
-      try {
-        // Primeiro, tentar decodificar como Base64 + JSON
-        const decoded = JSON.parse(atob(result.text));
-        console.log('[QR SCANNER] Decodificado como JSON:', decoded);
-        cpf = decoded.cpf || decoded.document;
-      } catch (base64Error) {
-        console.log('[QR SCANNER] Não é Base64, tentando JSON direto...');
-        try {
-          // Tentar como JSON direto
-          const decoded = JSON.parse(result.text);
-          console.log('[QR SCANNER] Decodificado como JSON direto:', decoded);
-          cpf = decoded.cpf || decoded.document;
-        } catch (jsonError) {
-          console.log('[QR SCANNER] Não é JSON, usando texto direto...');
-          // Se não for JSON, assumir que é o CPF direto
-          cpf = result.text.replace(/\D/g, '');
-        }
-      }
-      
-      if (!cpf) {
-        throw new Error('CPF não encontrado no QR Code');
+      if (!barcodeValue) {
+        throw new Error('Código de barras inválido');
       }
 
-      console.log('[QR SCANNER] CPF extraído:', cpf);
-      await processCheckIn(cpf);
+      console.log('[BARCODE SCANNER] Código extraído:', barcodeValue);
+      await processCheckInByBarcode(barcodeValue);
       
-    } catch (error) {
-      console.error('[QR SCANNER] Erro:', error);
-      setScannerError('QR Code inválido ou corrompido');
-      toast.error('QR Code inválido');
+    } catch (error: any) {
+      console.error('[BARCODE SCANNER] Erro:', error);
+      setScannerError(error.message || 'Erro ao processar código de barras');
+      toast.error(`Erro no scanner: ${error.message}`);
     }
   };
 
-  // Erro do scanner
-  const handleScannerError = (error: any) => {
-    console.error('[QR SCANNER] Erro do dispositivo:', error);
-    setScannerError('Erro ao acessar câmera. Verifique as permissões.');
-  };
-
-  // Check-in manual por CPF
-  const handleManualCheckIn = async () => {
-    if (!manualCpf.trim()) {
-      toast.error('Digite o CPF');
-      return;
-    }
-
-    const cleanCpf = manualCpf.replace(/\D/g, '');
-    if (cleanCpf.length !== 11) {
-      toast.error('CPF deve ter 11 dígitos');
-      return;
-    }
-
-    await processCheckIn(cleanCpf);
-    setManualCpf('');
-  };
-
-  // Processar check-in
-  const processCheckIn = async (cpf: string) => {
-    console.log('[CHECK-IN] Iniciando para CPF:', cpf);
-
+  // Processar check-in por código de barras
+  const processCheckInByBarcode = async (barcodeValue: string) => {
     try {
-      if (!userCompanyId) {
-        toast.error('Erro: ID da empresa não encontrado');
+      console.log('[CHECK-IN] Iniciando com código de barras:', barcodeValue);
+      
+      // Buscar registro pelo código de barras
+      const registration = registrations.find(reg => reg.qr_code === barcodeValue);
+      
+      if (!registration) {
+        throw new Error('Registro não encontrado para este código de barras');
+      }
+
+      if (registration.checked_in) {
+        toast.error(`${registration.name} já fez check-in anteriormente`);
+        setShowScanner(false);
         return;
       }
 
-      // Buscar registro usando função do banco
-      const { data: searchResult, error: searchError } = await supabase
-        .rpc('checkin_by_cpf', {
-          cpf_input: cpf,
-          company_id_input: userCompanyId,
-          event_id_input: selectedEventId || null
-        });
+      // Realizar check-in usando a função do banco
+      const { data, error } = await (supabase as any).rpc('perform_checkin', {
+        registration_id_input: registration.id,
+        company_id_input: userCompanyId
+      });
 
-      console.log('[CHECK-IN] Resultado da busca:', { searchResult, searchError });
-
-      if (searchError) {
-        console.error('[CHECK-IN] Erro na busca:', searchError);
-        toast.error('Erro ao buscar registro');
-        return;
+      if (error) {
+        console.error('[CHECK-IN] Erro RPC:', error);
+        throw new Error('Erro ao realizar check-in');
       }
 
-      if (!searchResult || searchResult.length === 0) {
-        toast.error('CPF não encontrado nos registros desta empresa');
-        return;
+      if (!data) {
+        throw new Error('Check-in não foi possível - verificar dados');
       }
 
-      const participant = searchResult[0];
+      toast.success(`✅ Check-in realizado: ${registration.name}`);
+      setShowScanner(false);
+      
+      // Atualizar dados
+      await loadRegistrations(userCompanyId);
+      
+    } catch (error: any) {
+      console.error('[CHECK-IN] Erro:', error);
+      toast.error(error.message || 'Erro ao realizar check-in');
+    }
+  };
 
-      // Verificar se já fez check-in
-      if (participant.already_checked_in) {
-        const checkinDate = participant.checkin_time_existing 
-          ? new Date(participant.checkin_time_existing).toLocaleString('pt-BR')
-          : 'data não disponível';
-        toast.warning(`Check-in já realizado para ${participant.participant_name} em ${checkinDate}`);
+  // Processar check-in via CPF manual
+  const processCheckIn = async (cpf: string) => {
+    try {
+      console.log('[CHECK-IN] Iniciando processamento CPF:', cpf);
+      const cleanCpf = cpf.replace(/\D/g, '');
+      
+      if (cleanCpf.length !== 11) {
+        throw new Error('CPF deve ter 11 dígitos');
+      }
+
+      // Usar função do banco para buscar por CPF
+      const { data: result, error } = await (supabase as any).rpc('checkin_by_cpf', {
+        cpf_input: cleanCpf,
+        company_id_input: userCompanyId,
+        event_id_input: selectedEventId === 'all' ? null : selectedEventId
+      });
+
+      console.log('[CHECK-IN] Resultado da busca:', result, error);
+
+      if (error) {
+        console.error('[CHECK-IN] Erro RPC:', error);
+        throw new Error('Erro ao buscar registro');
+      }
+
+      if (!result || result.length === 0) {
+        throw new Error('Pessoa não encontrada ou não inscrita nos eventos ativos');
+      }
+
+      const reg = result[0];
+      console.log('[CHECK-IN] Registro encontrado:', reg);
+
+      if (reg.already_checked_in) {
+        toast.error(`${reg.participant_name} já fez check-in em ${reg.event_title}`);
         return;
       }
 
       // Realizar check-in
-      const { data: checkinResult, error: checkinError } = await supabase
-        .rpc('perform_checkin', {
-          registration_id_input: participant.registration_id,
-          company_id_input: userCompanyId
-        });
+      const { data: checkinResult, error: checkinError } = await (supabase as any).rpc('perform_checkin', {
+        registration_id_input: reg.registration_id,
+        company_id_input: userCompanyId
+      });
+
+      console.log('[CHECK-IN] Resultado check-in:', checkinResult, checkinError);
 
       if (checkinError) {
         console.error('[CHECK-IN] Erro ao realizar check-in:', checkinError);
-        toast.error('Erro ao realizar check-in');
-        return;
+        throw new Error('Erro ao realizar check-in');
       }
 
       if (!checkinResult) {
-        toast.warning('Check-in não foi realizado. O registro pode já ter sido processado.');
-        return;
+        throw new Error('Check-in não foi possível');
       }
 
-      toast.success(`✅ Check-in realizado para ${participant.participant_name}!`);
+      toast.success(`✅ Check-in realizado: ${reg.participant_name} - ${reg.event_title}`);
+      setCpfInput('');
       
-      // Fechar scanner e recarregar dados
-      setShowScanner(false);
-      loadRegistrations(userCompanyId, selectedEventId || undefined);
-
-    } catch (error) {
-      console.error('[CHECK-IN] Erro geral:', error);
-      toast.error('Erro no processo de check-in');
+      // Atualizar dados
+      await loadRegistrations(userCompanyId);
+      
+    } catch (error: any) {
+      console.error('[CHECK-IN] Erro completo:', error);
+      toast.error(error.message || 'Erro ao processar check-in');
     }
   };
 
-  // Abrir scanner
-  const openScanner = () => {
-    setScannerError('');
-    setShowScanner(true);
-  };
-
-  // Máscara para CPF
-  const maskCpf = (cpf: string) => {
-    if (!cpf) return '';
-    const cleaned = cpf.replace(/\D/g, '');
-    if (cleaned.length === 11) {
-      return `${cleaned.slice(0, 3)}.${cleaned.slice(3, 6)}.${cleaned.slice(6, 9)}-XX`;
+  const handleCpfSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (cpfInput.trim()) {
+      await processCheckIn(cpfInput);
     }
-    return cpf;
   };
 
-  // Máscara de entrada CPF
-  const handleCpfInput = (value: string) => {
+  const formatCpf = (value: string) => {
     const cleaned = value.replace(/\D/g, '');
-    setManualCpf(cleaned);
+    return cleaned.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
   };
 
   if (loading) {
     return (
       <AdminLayout>
-        <div className="flex justify-center items-center h-64">
-          <div className="animate-pulse text-lg">Carregando...</div>
+        <div className="flex items-center justify-center h-64">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4"></div>
+            <p>Carregando...</p>
+          </div>
         </div>
       </AdminLayout>
     );
@@ -354,102 +355,132 @@ export default function CheckIn() {
 
   return (
     <AdminLayout>
-      <div className="space-y-4 sm:space-y-6 p-4 sm:p-0">
-        {/* Header Mobile Optimized */}
-        <div className="text-center sm:text-left">
-          <h1 className="text-2xl sm:text-3xl font-bold">Check-in</h1>
-          <p className="text-sm sm:text-base text-muted-foreground mt-1">
-            Gerencie o check-in dos participantes
-          </p>
+      <div className="container mx-auto p-4 space-y-6">
+        {/* Header */}
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+          <div>
+            <h1 className="text-2xl font-bold">Check-in de Participantes</h1>
+            <p className="text-muted-foreground">Realize o check-in via scanner ou CPF manual</p>
+          </div>
         </div>
 
-        {/* Estatísticas Cards Mobile */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          <Card className="animate-fade-in">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Total</CardTitle>
-                <Users className="h-4 w-4 text-muted-foreground" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl sm:text-2xl font-bold">{stats.total}</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="animate-fade-in">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Presentes</CardTitle>
-                <CheckCircle className="h-4 w-4 text-green-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-green-600">{stats.checkedIn}</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="animate-fade-in">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Pendentes</CardTitle>
-                <Clock className="h-4 w-4 text-orange-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-orange-600">{stats.pending}</div>
-            </CardContent>
-          </Card>
-          
-          <Card className="animate-fade-in">
-            <CardHeader className="pb-2">
-              <div className="flex items-center justify-between">
-                <CardTitle className="text-sm font-medium">Taxa</CardTitle>
-                <Percent className="h-4 w-4 text-blue-600" />
-              </div>
-            </CardHeader>
-            <CardContent className="pt-0">
-              <div className="text-xl sm:text-2xl font-bold text-blue-600">{stats.percentage}%</div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Filtros e Check-in Mobile */}
-        <div className="space-y-4">
-          {/* Filtro por evento */}
+        {/* Estatísticas */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Filtros</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
-                <Label htmlFor="event-select" className="text-sm font-medium">Evento</Label>
-                <Select
-                  value={selectedEventId}
-                  onValueChange={(value) => {
-                    setSelectedEventId(value === 'all' ? '' : value);
-                    loadRegistrations(userCompanyId, value === 'all' ? undefined : value);
-                  }}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Todos os eventos" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">Todos os eventos</SelectItem>
-                    {events.map((event) => (
-                      <SelectItem key={event.id} value={event.id}>
-                        {event.title} - {new Date(event.date).toLocaleDateString('pt-BR')}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Users className="h-5 w-5 text-blue-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Total</p>
+                  <p className="text-xl font-bold text-blue-600">{stats.total}</p>
+                </div>
               </div>
-              
-              {/* Busca */}
-              <div>
-                <Label htmlFor="search" className="text-sm font-medium">Buscar participante</Label>
-                <div className="relative mt-1">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <CheckCircle className="h-5 w-5 text-green-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Check-in</p>
+                  <p className="text-xl font-bold text-green-600">{stats.checkedIn}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Clock className="h-5 w-5 text-orange-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Pendente</p>
+                  <p className="text-xl font-bold text-orange-600">{stats.pending}</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-2">
+                <Percent className="h-5 w-5 text-purple-600" />
+                <div>
+                  <p className="text-sm text-muted-foreground">Taxa</p>
+                  <p className="text-xl font-bold text-purple-600">{stats.percentage}%</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Ações de Check-in */}
+        <div className="grid gap-4 md:grid-cols-2">
+          {/* Scanner */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScanLine className="h-5 w-5" />
+                Scanner de Código de Barras
+              </CardTitle>
+              <CardDescription>
+                Use a câmera para escanear códigos de barras dos participantes
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => setShowScanner(true)} 
+                className="w-full" 
+                size="lg"
+              >
+                <Camera className="h-4 w-4 mr-2" />
+                Abrir Scanner
+              </Button>
+            </CardContent>
+          </Card>
+
+          {/* CPF Manual */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <UserCheck className="h-5 w-5" />
+                Check-in Manual
+              </CardTitle>
+              <CardDescription>
+                Digite o CPF do participante para fazer check-in
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleCpfSubmit} className="space-y-3">
+                <div className="space-y-2">
+                  <Label htmlFor="cpf">CPF do Participante</Label>
+                  <Input
+                    id="cpf"
+                    type="text"
+                    placeholder="000.000.000-00"
+                    value={formatCpf(cpfInput)}
+                    onChange={(e) => setCpfInput(e.target.value.replace(/\D/g, ''))}
+                    maxLength={14}
+                  />
+                </div>
+                <Button type="submit" className="w-full" disabled={cpfInput.length < 11}>
+                  <UserCheck className="h-4 w-4 mr-2" />
+                  Fazer Check-in
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Filtros */}
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <Label htmlFor="search">Buscar participante</Label>
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
                   <Input
                     id="search"
                     placeholder="Nome, CPF ou evento..."
@@ -459,126 +490,34 @@ export default function CheckIn() {
                   />
                 </div>
               </div>
-            </CardContent>
-          </Card>
-
-          {/* Check-in Actions Mobile */}
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg flex items-center gap-2">
-                <UserCheck className="h-5 w-5" />
-                Realizar Check-in
-              </CardTitle>
-              <CardDescription className="text-sm">
-                Use o scanner QR Code ou digite o CPF manualmente
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              {/* Botões de Check-in Mobile */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <Button 
-                  onClick={openScanner}
-                  className="w-full h-12 text-base hover-scale"
-                  size="lg"
-                >
-                  <Camera className="mr-2 h-5 w-5" />
-                  Scanner QR Code
-                </Button>
-                
-                <Button 
-                  variant="outline"
-                  onClick={handleManualCheckIn}
-                  className="w-full h-12 text-base hover-scale"
-                  size="lg"
-                  disabled={!manualCpf.trim()}
-                >
-                  <Smartphone className="mr-2 h-5 w-5" />
-                  Check-in Manual
-                </Button>
-              </div>
               
-              {/* Input CPF Manual */}
-              <div>
-                <Label htmlFor="manual-cpf" className="text-sm font-medium">CPF Manual</Label>
-                <Input
-                  id="manual-cpf"
-                  placeholder="Digite apenas os números do CPF"
-                  value={manualCpf}
-                  onChange={(e) => handleCpfInput(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleManualCheckIn()}
-                  maxLength={11}
-                  className="mt-1 text-base"
-                />
-                {manualCpf && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    CPF: {maskCpf(manualCpf)}
-                  </p>
-                )}
+              <div className="min-w-[200px]">
+                <Label htmlFor="event-filter">Filtrar por evento</Label>
+                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Todos os eventos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os eventos</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Lista Mobile-First */}
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-lg">
-              Participantes ({filteredRegistrations.length})
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            {/* Mobile Cards */}
-            <div className="block sm:hidden">
-              {filteredRegistrations.length === 0 ? (
-                <div className="text-center py-8 px-4">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-2" />
-                  <p className="text-muted-foreground">
-                    {searchTerm ? 'Nenhum participante encontrado' : 'Nenhum participante registrado'}
-                  </p>
-                </div>
-              ) : (
-                <div className="space-y-2 p-4">
-                  {filteredRegistrations.map((registration) => (
-                    <Card key={registration.id} className="p-4 hover-scale">
-                      <div className="space-y-2">
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h4 className="font-medium text-base">{registration.name}</h4>
-                            <p className="text-sm text-muted-foreground">{registration.events.title}</p>
-                          </div>
-                          <Badge variant={registration.checked_in ? "default" : "secondary"}>
-                            {registration.checked_in ? 'Presente' : 'Pendente'}
-                          </Badge>
-                        </div>
-                        
-                        <div className="flex justify-between items-center text-sm">
-                          <span className="text-muted-foreground">
-                            CPF: {maskCpf(registration.document)}
-                          </span>
-                          
-                          {registration.checked_in && registration.checkin_time ? (
-                            <span className="text-xs text-green-600">
-                              {new Date(registration.checkin_time).toLocaleString('pt-BR')}
-                            </span>
-                          ) : (
-                            <Button
-                              size="sm"
-                              onClick={() => processCheckIn(registration.document)}
-                              className="h-8 px-3"
-                            >
-                              Check-in
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </Card>
-                  ))}
-                </div>
-              )}
             </div>
+          </CardContent>
+        </Card>
 
-            {/* Desktop Table */}
-            <div className="hidden sm:block">
+        {/* Lista de Registros */}
+        <Card>
+          <CardHeader>
+            <CardTitle>Participantes ({filteredRegistrations.length})</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -593,22 +532,27 @@ export default function CheckIn() {
                   {filteredRegistrations.map((registration) => (
                     <TableRow key={registration.id}>
                       <TableCell className="font-medium">{registration.name}</TableCell>
-                      <TableCell>{maskCpf(registration.document)}</TableCell>
+                      <TableCell>{formatCpf(registration.document)}</TableCell>
                       <TableCell>{registration.events.title}</TableCell>
                       <TableCell>
                         <Badge variant={registration.checked_in ? "default" : "secondary"}>
-                          {registration.checked_in ? 'Presente' : 'Pendente'}
+                          {registration.checked_in ? (
+                            <><CheckCircle className="h-3 w-3 mr-1" /> Confirmado</>
+                          ) : (
+                            <><Clock className="h-3 w-3 mr-1" /> Pendente</>
+                          )}
                         </Badge>
                       </TableCell>
                       <TableCell>
                         {registration.checked_in && registration.checkin_time ? (
                           <span className="text-sm text-muted-foreground">
-                            {new Date(registration.checkin_time).toLocaleString('pt-BR')}
+                            {new Date(registration.checkin_time).toLocaleString()}
                           </span>
                         ) : (
                           <Button
                             size="sm"
                             onClick={() => processCheckIn(registration.document)}
+                            disabled={registration.checked_in}
                           >
                             Check-in
                           </Button>
@@ -618,29 +562,20 @@ export default function CheckIn() {
                   ))}
                 </TableBody>
               </Table>
-              
-              {filteredRegistrations.length === 0 && (
-                <div className="text-center py-8">
-                  <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
-                  <p className="text-muted-foreground">
-                    {searchTerm ? 'Nenhum participante encontrado' : 'Nenhum participante registrado'}
-                  </p>
-                </div>
-              )}
             </div>
           </CardContent>
         </Card>
 
-        {/* Scanner QR Code Dialog Melhorado */}
+        {/* Scanner Modal */}
         <Dialog open={showScanner} onOpenChange={setShowScanner}>
-          <DialogContent className="w-[95vw] max-w-md mx-auto">
+          <DialogContent className="w-[90vw] sm:max-w-[500px] p-6">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-2">
-                <QrCode className="h-5 w-5" />
-                Scanner QR Code
+                <ScanLine className="h-5 w-5" />
+                Scanner de Código de Barras
               </DialogTitle>
               <DialogDescription>
-                Posicione o QR Code dentro da área de leitura
+                Posicione o código de barras dentro da área de leitura
               </DialogDescription>
             </DialogHeader>
             
@@ -648,50 +583,74 @@ export default function CheckIn() {
               {/* Scanner Container */}
               <div className="relative">
                 <div className="border-2 border-dashed border-primary/50 rounded-lg overflow-hidden bg-black/5">
-                  <QrReader
-                    onResult={handleQRScan}
-                    constraints={{ 
-                      facingMode: 'environment'
-                    }}
-                    videoStyle={{
+                  <div
+                    style={{
                       width: '100%',
                       height: '280px',
-                      objectFit: 'cover'
+                      position: 'relative',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      backgroundColor: '#f3f4f6'
                     }}
-                  />
+                  >
+                    <div className="text-center">
+                      <ScanLine className="h-12 w-12 mx-auto mb-2 text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Scanner automático de código de barras.<br/>
+                        Use o campo de CPF manual abaixo se houver problemas.
+                      </p>
+                      
+                      {/* Campo manual para código de barras */}
+                      <div className="mt-4 max-w-xs mx-auto">
+                        <Input
+                          placeholder="Digite o código de barras"
+                          onKeyDown={(e) => {
+                            if (e.key === 'Enter') {
+                              const value = (e.target as HTMLInputElement).value;
+                              if (value) {
+                                handleBarcodeScan({ text: value });
+                                (e.target as HTMLInputElement).value = '';
+                              }
+                            }
+                          }}
+                        />
+                      </div>
+                    </div>
+                  </div>
                 </div>
-                
-                {/* Scanner Overlay */}
+
+                {/* Overlay de mira */}
                 <div className="absolute inset-0 pointer-events-none">
-                  <div className="w-full h-full relative">
-                    {/* Corner indicators */}
-                    <div className="absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-primary"></div>
-                    <div className="absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-primary"></div>
-                    <div className="absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-primary"></div>
-                    <div className="absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-primary"></div>
+                  <div className="relative w-full h-full flex items-center justify-center">
+                    <div className="w-64 h-20 border-2 border-red-500 rounded-lg bg-red-500/10"></div>
                   </div>
                 </div>
               </div>
 
-              {/* Scanner Status */}
-              {scannerError ? (
-                <div className="text-center text-red-600 text-sm">
-                  {scannerError}
-                </div>
-              ) : (
-                <div className="text-center text-muted-foreground text-sm">
-                  Posicione o QR Code dentro da área marcada
+              {/* Status */}
+              {scannerError && (
+                <div className="text-center p-3 bg-red-50 rounded-lg">
+                  <p className="text-sm text-red-600">{scannerError}</p>
                 </div>
               )}
 
-              {/* Actions */}
-              <div className="flex gap-3">
+              {!scannerError && (
+                <div className="text-center p-3 bg-blue-50 rounded-lg">
+                  <p className="text-sm text-blue-600">
+                    Aponte a câmera para o código de barras
+                  </p>
+                </div>
+              )}
+
+              {/* Ações */}
+              <div className="flex gap-2">
                 <Button 
                   variant="outline" 
-                  onClick={() => setShowScanner(false)} 
+                  onClick={() => setShowScanner(false)}
                   className="flex-1"
                 >
-                  <X className="mr-2 h-4 w-4" />
+                  <X className="h-4 w-4 mr-2" />
                   Fechar
                 </Button>
               </div>

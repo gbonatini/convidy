@@ -721,6 +721,21 @@ export type Database = {
           checkin_time_existing: string
         }[]
       }
+      find_registration_by_barcode: {
+        Args: { event_uuid: string; barcode_value: string }
+        Returns: {
+          id: string
+          event_id: string
+          name: string
+          email: string
+          phone: string
+          status: string
+          qr_code: string
+          checked_in: boolean
+          checkin_time: string
+          created_at: string
+        }[]
+      }
       find_registration_by_hash: {
         Args: { event_uuid: string; doc_hash: string }
         Returns: {
@@ -750,6 +765,10 @@ export type Database = {
           checkin_time: string
           created_at: string
         }[]
+      }
+      generate_barcode_data_simple: {
+        Args: { event_uuid: string; document_text: string }
+        Returns: string
       }
       generate_qr_data: {
         Args:

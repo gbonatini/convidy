@@ -19,10 +19,10 @@ import {
   Mail,
   Loader2,
   CheckCircle,
-  QrCode,
+  BarChart3,
   Download
 } from 'lucide-react';
-import { QRCodeSVG } from 'qrcode.react';
+import JsBarcode from 'jsbarcode';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -75,8 +75,8 @@ const CompanyPublic = () => {
     email: ''
   });
   const [registrationData, setRegistrationData] = useState<any>(null);
-  const [showQRCode, setShowQRCode] = useState(false);
-  const qrRef = useRef<HTMLDivElement>(null);
+  const [showBarcode, setShowBarcode] = useState(false);
+  const barcodeRef = useRef<HTMLCanvasElement>(null);
 
   // Redireciona para a versão normalizada da URL (evita 404 por traço/unicode)
   useEffect(() => {
@@ -90,6 +90,24 @@ const CompanyPublic = () => {
       fetchCompanyAndEvents();
     }
   }, [safeSlug]);
+
+  // Gerar código de barras quando registrationData estiver disponível
+  useEffect(() => {
+    if (registrationData && barcodeRef.current && showBarcode) {
+      try {
+        JsBarcode(barcodeRef.current, registrationData.qr_code, {
+          format: "CODE128",
+          width: 2,
+          height: 60,
+          displayValue: true,
+          fontSize: 12,
+          margin: 10
+        });
+      } catch (error) {
+        console.error('Erro ao gerar código de barras:', error);
+      }
+    }
+  }, [registrationData, showBarcode]);
 
   const fetchCompanyAndEvents = async () => {
     try {
@@ -248,7 +266,7 @@ const CompanyPublic = () => {
 
       toast({
         title: "🎉 Confirmação realizada!",
-        description: "Aguarde... gerando seu QR Code de check-in!",
+        description: "Aguarde... gerando seu código de barras de check-in!",
       });
 
       console.log('Fechando modal de confirmação...');
@@ -258,7 +276,7 @@ const CompanyPublic = () => {
       setFormData({ name: '', document: '', phone: '', email: '' });
 
       // Buscar o registro via função segura (sem SELECT público)
-      const fetchQr = async () => {
+      const fetchBarcode = async () => {
         const { data: regRow, error: regErr } = await (supabase as any).rpc('get_registration_public', {
           event_uuid: selectedEvent.id,
           document_text: normalizedDocument,
@@ -267,28 +285,28 @@ const CompanyPublic = () => {
         return { regRow, regErr };
       };
 
-      const { regRow, regErr } = await fetchQr();
+      const { regRow, regErr } = await fetchBarcode();
       if (regErr || !regRow) {
-        console.log('QR Code não disponível imediatamente, tentando novamente...', regErr);
+        console.log('Código de barras não disponível imediatamente, tentando novamente...', regErr);
         await new Promise((r) => setTimeout(r, 400));
-        const { regRow: regRow2, regErr: regErr2 } = await fetchQr();
+        const { regRow: regRow2, regErr: regErr2 } = await fetchBarcode();
         if (regErr2 || !regRow2) {
-          console.error('Erro ao obter QR Code após retry:', regErr2);
+          console.error('Erro ao obter código de barras após retry:', regErr2);
           toast({
             variant: "destructive",
-            title: "Erro ao gerar QR Code",
-            description: "Registro salvo, mas houve problema ao gerar QR Code.",
+            title: "Erro ao gerar código de barras",
+            description: "Registro salvo, mas houve problema ao gerar código de barras.",
           });
         } else {
-          console.log('QR Code obtido no retry:', regRow2);
+          console.log('Código de barras obtido no retry:', regRow2);
           setRegistrationData(Array.isArray(regRow2) ? regRow2[0] : regRow2);
-          setShowQRCode(true);
+          setShowBarcode(true);
         }
       } else {
-        console.log('QR Code obtido:', regRow);
-        console.log('QR Code value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
+        console.log('Código de barras obtido:', regRow);
+        console.log('Código de barras value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
         setRegistrationData(Array.isArray(regRow) ? regRow[0] : regRow);
-        setShowQRCode(true);
+        setShowBarcode(true);
       }
 
     } catch (error: any) {
@@ -552,8 +570,8 @@ const CompanyPublic = () => {
         </div>
       </main>
 
-      {/* QR Code Modal */}
-      <Dialog open={showQRCode} onOpenChange={setShowQRCode}>
+      {/* Código de Barras Modal */}
+      <Dialog open={showBarcode} onOpenChange={setShowBarcode}>
         <DialogContent className="w-[90vw] sm:max-w-[400px] p-6">
           <DialogHeader className="text-center space-y-3">
             <DialogTitle className="flex items-center justify-center gap-2 text-lg">
@@ -561,28 +579,26 @@ const CompanyPublic = () => {
               Confirmação Realizada!
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Sua presença foi confirmada com sucesso. Use o QR Code abaixo para o check-in no evento.
+              Sua presença foi confirmada com sucesso. Use o código de barras abaixo para o check-in no evento.
             </p>
           </DialogHeader>
           
           {registrationData && (
             <div className="space-y-6">
               <div className="text-center">
-                <div ref={qrRef} className="bg-white p-4 rounded-lg border-2 inline-block shadow-sm">
-                  <QRCodeSVG 
-                    value={registrationData.qr_code}
-                    size={160}
-                    level="M"
-                    includeMargin={true}
+                <div className="bg-white p-4 rounded-lg border-2 inline-block shadow-sm">
+                  <canvas 
+                    ref={barcodeRef}
+                    className="max-w-full"
                   />
                 </div>
               </div>
               
               <div className="text-center text-xs text-muted-foreground">
-                Salve ou imprima este QR Code para apresentar no evento
+                Salve ou imprima este código de barras para apresentar no evento
               </div>
               
-              <Button onClick={() => setShowQRCode(false)} className="w-full">
+              <Button onClick={() => setShowBarcode(false)} className="w-full">
                 Fechar
               </Button>
             </div>

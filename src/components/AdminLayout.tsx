@@ -23,7 +23,7 @@ import {
   LogOut,
   Building,
   Send,
-  QrCode,
+  BarChart3,
   ExternalLink,
   Crown
 } from 'lucide-react';
@@ -36,7 +36,7 @@ const menuItems = [
   { title: 'Eventos', url: '/events', icon: Calendar, tourId: 'sidebar-events' },
   { title: 'Convites', url: '/invites', icon: Send, tourId: 'sidebar-invites' },
   { title: 'Confirmações', url: '/confirmations', icon: Users, tourId: 'sidebar-confirmations' },
-  { title: 'Check-in', url: '/checkin', icon: QrCode, tourId: 'sidebar-checkin' },
+  { title: 'Check-in', url: '/checkin', icon: BarChart3, tourId: 'sidebar-checkin' },
   { title: 'Planos', url: '/plans', icon: Crown, tourId: 'sidebar-plans' },
   { title: 'Configurações', url: '/settings', icon: Settings, tourId: 'sidebar-settings' },
 ];

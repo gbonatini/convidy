@@ -156,7 +156,9 @@ const CompanyPublic = () => {
       console.log('Condições não atendidas para gerar barcode:', {
         hasRegistrationData: !!registrationData,
         hasCanvas: !!barcodeRef.current,
-        showBarcode
+        showBarcode,
+        hasDocument: !!formData.document,
+        documentValue: formData.document
       });
     }
   }, [registrationData, showBarcode, formData.document]);

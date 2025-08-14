@@ -274,6 +274,28 @@ const CompanyPublic = () => {
       console.log('Evento selecionado:', selectedEvent);
       console.log('Dados do formulário:', formData);
       
+      // Verificar capacidade do evento antes de confirmar
+      const { data: currentRegistrations, error: countError } = await supabase
+        .from('registrations')
+        .select('id', { count: 'exact' })
+        .eq('event_id', selectedEvent.id)
+        .eq('status', 'confirmed');
+      
+      if (countError) {
+        console.error('Erro ao verificar capacidade:', countError);
+        throw new Error('Erro ao verificar capacidade do evento');
+      }
+      
+      const currentCount = currentRegistrations?.length || 0;
+      if (currentCount >= selectedEvent.capacity) {
+        toast({
+          variant: "destructive",
+          title: "Evento lotado",
+          description: `Este evento já atingiu sua capacidade máxima de ${selectedEvent.capacity} participantes.`,
+        });
+        return;
+      }
+      
       // Normalizar CPF removendo pontuação e traços
       const normalizedDocument = formData.document.replace(/\D/g, '');
       
@@ -521,10 +543,12 @@ const CompanyPublic = () => {
                         <span className="truncate">{event.location}</span>
                       </div>
                       
-                      <div className="flex items-center space-x-2">
-                        <Users className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
-                        <span className="truncate">Capacidade: {event.capacity} pessoas</span>
-                      </div>
+                      {event.price > 0 && (
+                        <div className="flex items-center space-x-2">
+                          <BarChart3 className="h-3 w-3 sm:h-4 sm:w-4 text-muted-foreground flex-shrink-0" />
+                          <span className="truncate">R$ {event.price.toFixed(2)}</span>
+                        </div>
+                      )}
                     </div>
 
                     <Dialog>

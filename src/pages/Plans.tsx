@@ -11,7 +11,6 @@ import { useToast } from '@/hooks/use-toast';
 import { PaymentModal } from '@/components/PaymentModal';
 import { Crown, Zap, Users, Check, Loader2, ArrowLeft } from 'lucide-react';
 import { Link } from 'react-router-dom';
-
 interface Plan {
   id: string;
   name: string;
@@ -24,7 +23,6 @@ interface Plan {
   features: any[];
   is_active: boolean;
 }
-
 interface CompanyPlan {
   plan_id: string;
   plan_expires_at: string | null;
@@ -33,24 +31,26 @@ interface CompanyPlan {
     slug: string;
   };
 }
-
 const Plans = () => {
-  const { user, profile, loading } = useAuth();
-  const { toast } = useToast();
+  const {
+    user,
+    profile,
+    loading
+  } = useAuth();
+  const {
+    toast
+  } = useToast();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [currentPlan, setCurrentPlan] = useState<CompanyPlan | null>(null);
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [showPayment, setShowPayment] = useState(false);
-
   const fetchPlans = async () => {
     try {
-      const { data, error } = await supabase
-        .from('system_plans')
-        .select('*')
-        .eq('is_active', true)
-        .order('sort_order');
-
+      const {
+        data,
+        error
+      } = await supabase.from('system_plans').select('*').eq('is_active', true).order('sort_order');
       if (error) throw error;
       setPlans((data || []).map(plan => ({
         ...plan,
@@ -61,52 +61,42 @@ const Plans = () => {
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível carregar os planos disponíveis.",
+        description: "Não foi possível carregar os planos disponíveis."
       });
     } finally {
       setLoadingPlans(false);
     }
   };
-
   const fetchCurrentPlan = async () => {
     if (!profile?.company_id) return;
-
     try {
       // Buscar dados da empresa
-      const { data: companyData, error: companyError } = await supabase
-        .from('companies')
-        .select('plan_id, plan_expires_at')
-        .eq('id', profile.company_id)
-        .single();
-
+      const {
+        data: companyData,
+        error: companyError
+      } = await supabase.from('companies').select('plan_id, plan_expires_at').eq('id', profile.company_id).single();
       if (companyError) throw companyError;
 
       // Buscar dados do plano
-      const { data: planData, error: planError } = await supabase
-        .from('system_plans')
-        .select('name, slug')
-        .eq('id', companyData.plan_id)
-        .single();
-
+      const {
+        data: planData,
+        error: planError
+      } = await supabase.from('system_plans').select('name, slug').eq('id', companyData.plan_id).single();
       if (planError) throw planError;
-
       const combinedData = {
         plan_id: companyData.plan_id,
         plan_expires_at: companyData.plan_expires_at,
         system_plans: planData
       };
-
       setCurrentPlan(combinedData as any);
     } catch (error) {
       console.error('Erro ao carregar plano atual:', error);
     }
   };
-
   useEffect(() => {
     fetchPlans();
     fetchCurrentPlan();
   }, [profile]);
-
   const getPlanIcon = (planName: string) => {
     switch (planName.toLowerCase()) {
       case 'empresarial':
@@ -117,7 +107,6 @@ const Plans = () => {
         return <Users className="h-6 w-6 text-gray-500" />;
     }
   };
-
   const getPlanGradient = (planName: string) => {
     switch (planName.toLowerCase()) {
       case 'empresarial':
@@ -128,25 +117,20 @@ const Plans = () => {
         return 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 border-gray-200 dark:border-gray-800';
     }
   };
-
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('pt-BR', {
       style: 'currency',
-      currency: 'BRL',
+      currency: 'BRL'
     }).format(price);
   };
-
   const formatLimit = (limit: number | null, suffix: string = '') => {
     return limit === null ? 'Ilimitado' : `${limit}${suffix}`;
   };
-
   const isCurrentPlan = (planId: string) => {
     return currentPlan?.plan_id === planId;
   };
-
   const handleSelectPlan = (plan: Plan) => {
     if (isCurrentPlan(plan.id)) return;
-    
     if (plan.slug === 'free') {
       // Downgrade direto para free
       handleDowngradeToFree(plan.id);
@@ -155,56 +139,43 @@ const Plans = () => {
       setShowPayment(true);
     }
   };
-
   const handleDowngradeToFree = async (planId: string) => {
     if (!profile?.company_id) return;
-
     try {
-      const { error } = await supabase
-        .from('companies')
-        .update({
-          plan_id: planId,
-          plan_expires_at: null,
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', profile.company_id);
-
+      const {
+        error
+      } = await supabase.from('companies').update({
+        plan_id: planId,
+        plan_expires_at: null,
+        updated_at: new Date().toISOString()
+      }).eq('id', profile.company_id);
       if (error) throw error;
-
       toast({
         title: "Plano alterado",
-        description: "Seu plano foi alterado para Gratuito.",
+        description: "Seu plano foi alterado para Gratuito."
       });
-
       fetchCurrentPlan();
     } catch (error) {
       console.error('Erro ao alterar plano:', error);
       toast({
         variant: "destructive",
         title: "Erro",
-        description: "Não foi possível alterar o plano.",
+        description: "Não foi possível alterar o plano."
       });
     }
   };
-
   if (!loading && !user) {
     return <Navigate to="/auth" replace />;
   }
-
   if (!loading && profile && !profile.company_id) {
     return <Navigate to="/setup" replace />;
   }
-
   if (loading || loadingPlans) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
+    return <div className="min-h-screen flex items-center justify-center">
         <Loader2 className="h-8 w-8 animate-spin" />
-      </div>
-    );
+      </div>;
   }
-
-  return (
-    <AdminLayout>
+  return <AdminLayout>
       <div className="space-y-8">
         <div className="flex items-center space-x-4">
           <Link to="/dashboard">
@@ -221,26 +192,18 @@ const Plans = () => {
           </div>
         </div>
 
-        {currentPlan && (
-          <Card className="border-primary bg-primary/5">
+        {currentPlan && <Card className="border-primary bg-primary/5">
             <CardHeader>
               <CardTitle className="flex items-center space-x-2">
                 <Check className="h-5 w-5 text-primary" />
                 <span>Plano Atual: {currentPlan.system_plans.name}</span>
               </CardTitle>
-              <CardDescription>
-                {currentPlan.plan_expires_at 
-                  ? `Válido até ${new Date(currentPlan.plan_expires_at).toLocaleDateString('pt-BR')}`
-                  : 'Plano gratuito ativo'
-                }
-              </CardDescription>
+              
             </CardHeader>
-          </Card>
-        )}
+          </Card>}
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map((plan) => (
-            <Card key={plan.id} className={`relative ${getPlanGradient(plan.name)}`}>
+          {plans.map(plan => <Card key={plan.id} className={`relative ${getPlanGradient(plan.name)}`}>
               <CardHeader className="text-center">
                 <div className="flex justify-center mb-4">
                   {getPlanIcon(plan.name)}
@@ -286,50 +249,27 @@ const Plans = () => {
                 <Separator />
 
                 <div className="space-y-2">
-                  {plan.features.map((feature, index) => (
-                    <div key={index} className="flex items-center space-x-2">
+                  {plan.features.map((feature, index) => <div key={index} className="flex items-center space-x-2">
                       <Check className="h-4 w-4 text-primary" />
                       <span className="text-sm">{feature}</span>
-                    </div>
-                  ))}
+                    </div>)}
                 </div>
 
-                <Button 
-                  className="w-full mt-6" 
-                  onClick={() => handleSelectPlan(plan)}
-                  disabled={isCurrentPlan(plan.id)}
-                  variant={isCurrentPlan(plan.id) ? "outline" : "default"}
-                >
-                  {isCurrentPlan(plan.id) ? (
-                    <>
+                <Button className="w-full mt-6" onClick={() => handleSelectPlan(plan)} disabled={isCurrentPlan(plan.id)} variant={isCurrentPlan(plan.id) ? "outline" : "default"}>
+                  {isCurrentPlan(plan.id) ? <>
                       <Check className="h-4 w-4 mr-2" />
                       Plano Atual
-                    </>
-                  ) : plan.price === 0 ? (
-                    'Usar Plano Gratuito'
-                  ) : (
-                    'Assinar Plano'
-                  )}
+                    </> : plan.price === 0 ? 'Usar Plano Gratuito' : 'Assinar Plano'}
                 </Button>
               </CardContent>
-            </Card>
-          ))}
+            </Card>)}
         </div>
       </div>
 
-      {selectedPlan && (
-        <PaymentModal 
-          open={showPayment}
-          onOpenChange={setShowPayment}
-          plan={selectedPlan}
-          onSuccess={() => {
-            setShowPayment(false);
-            fetchCurrentPlan();
-          }}
-        />
-      )}
-    </AdminLayout>
-  );
+      {selectedPlan && <PaymentModal open={showPayment} onOpenChange={setShowPayment} plan={selectedPlan} onSuccess={() => {
+      setShowPayment(false);
+      fetchCurrentPlan();
+    }} />}
+    </AdminLayout>;
 };
-
 export default Plans;

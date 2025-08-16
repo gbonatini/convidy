@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Users, Calendar, BarChart3, Shield, Smartphone, Zap, CheckCircle, ArrowRight, Star, MessageCircle, QrCode, Activity, TrendingUp, Clock, Globe, UserCheck, Database, Award, Target, X, Check, AlertTriangle, Timer, ChevronDown, Building2, Briefcase, Users2, Gift, Crown, Flame } from 'lucide-react';
+import { Users, Calendar, BarChart3, Shield, Smartphone, Zap, CheckCircle, ArrowRight, Star, MessageCircle, QrCode, Activity, TrendingUp, Clock, Globe, UserCheck, Database, Award, Target, X, Check, AlertTriangle, Timer, ChevronDown, Building2, Briefcase, Users2, Gift, Crown, Flame, Brain, LineChart, PieChart, Settings, Eye, Rocket, DollarSign, Users as UsersIcon, Building, CreditCard } from 'lucide-react';
 const Index = () => {
   const [timeLeft, setTimeLeft] = useState({
     hours: 23,
@@ -533,6 +533,402 @@ const Index = () => {
               <Button size="lg" className="bg-gradient-to-r from-green-600 to-blue-600 hover:from-green-700 hover:to-blue-700 text-lg px-8">
                 <QrCode className="mr-2 h-5 w-5" />
                 Quero check-in sem filas no meu evento
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </section>
+
+      {/* AI Intelligence Section */}
+      <section className="py-20 bg-gradient-to-br from-purple-50 to-indigo-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <Badge variant="outline" className="bg-purple-100 text-purple-700 border-purple-300">
+              Inteligência Artificial Integrada
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              IA que <span className="text-purple-600">aprende</span> com seus eventos
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Nossa inteligência artificial analisa comportamentos, prevê presença e otimiza seus eventos automaticamente. 
+              Cada evento fica <strong>melhor que o anterior</strong>.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 max-w-6xl mx-auto">
+            {/* IA Features */}
+            <div className="space-y-8">
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <Brain className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Análise Comportamental por CPF</h3>
+                  <p className="text-muted-foreground">
+                    A IA cruza dados históricos de participantes (conformidade LGPD total) para identificar padrões: 
+                    horários preferidos, tipos de eventos favoritos, pontualidade e frequência.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <TrendingUp className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Predição de Presença</h3>
+                  <p className="text-muted-foreground">
+                    Sistema preditivo que calcula a probabilidade de cada convidado comparecer, 
+                    baseado no histórico comportamental. Previne eventos lotados ou vazios.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <PieChart className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Score de Performance</h3>
+                  <p className="text-muted-foreground">
+                    Métricas avançadas calculam score de performance, projeções de ocupação, 
+                    metas de check-in e identificam eventos em risco automaticamente.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start space-x-4">
+                <div className="h-12 w-12 rounded-full bg-purple-100 flex items-center justify-center flex-shrink-0">
+                  <LineChart className="h-6 w-6 text-purple-600" />
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Relatórios Inteligentes</h3>
+                  <p className="text-muted-foreground">
+                    Dashboards com insights únicos, funil de conversão completo e análise individual por evento. 
+                    Exportação em Excel com dados que realmente importam.
+                  </p>
+                </div>
+              </div>
+            </div>
+            
+            {/* Mock IA Dashboard */}
+            <div className="relative">
+              <div className="bg-white rounded-2xl shadow-xl p-6 border">
+                <div className="flex items-center space-x-3 pb-4 border-b">
+                  <div className="h-10 w-10 bg-purple-500 rounded-full flex items-center justify-center">
+                    <Brain className="h-5 w-5 text-white" />
+                  </div>
+                  <div>
+                    <div className="font-medium">Dashboard IA</div>
+                    <div className="text-sm text-purple-600">análise em tempo real</div>
+                  </div>
+                </div>
+                
+                <div className="py-6 space-y-4">
+                  <div className="bg-purple-50 rounded-lg p-4">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="text-sm font-medium">Score de Performance</span>
+                      <span className="text-lg font-bold text-purple-600">94.2%</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-2">
+                      <div className="bg-purple-600 h-2 rounded-full" style={{width: '94%'}}></div>
+                    </div>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="bg-green-50 rounded p-3 text-center">
+                      <div className="text-lg font-bold text-green-600">87%</div>
+                      <div className="text-xs text-green-600">Taxa Presença</div>
+                    </div>
+                    <div className="bg-blue-50 rounded p-3 text-center">
+                      <div className="text-lg font-bold text-blue-600">142</div>
+                      <div className="text-xs text-blue-600">Presença Prevista</div>
+                    </div>
+                  </div>
+                  
+                  <div className="bg-amber-50 rounded-lg p-3">
+                    <div className="text-sm font-medium text-amber-700 mb-1">⚠️ Insights IA</div>
+                    <div className="text-xs text-amber-600">
+                      15 convidados com baixa probabilidade de presença. 
+                      Considere lembretes personalizados.
+                    </div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Floating AI badge */}
+              <div className="absolute -right-4 -top-4 bg-purple-600 text-white rounded-lg shadow-lg p-3 text-center">
+                <Brain className="h-5 w-5 mx-auto mb-1" />
+                <div className="text-xs font-bold">IA ATIVA</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Customization & Templates Section */}
+      <section className="py-20 bg-gradient-to-br from-blue-50 to-cyan-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <Badge variant="outline" className="bg-blue-100 text-blue-700 border-blue-300">
+              Personalização Total
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Sua marca, sua identidade, <span className="text-blue-600">seu sucesso</span>
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              White label completo, templates personalizáveis e páginas públicas com sua identidade visual. 
+              <strong>Seus clientes só veem sua marca</strong>.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 max-w-6xl mx-auto">
+            {/* Templates */}
+            <Card className="border-2 border-blue-200 bg-blue-50/50">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                  <MessageCircle className="h-8 w-8 text-blue-600" />
+                </div>
+                <CardTitle className="text-xl text-blue-800">Templates Inteligentes</CardTitle>
+                <CardDescription>
+                  Crie mensagens personalizadas com variáveis dinâmicas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Variáveis automáticas (nome, evento, data)</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Templates reutilizáveis</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Linguagem da sua empresa</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* White Label */}
+            <Card className="border-2 border-purple-200 bg-purple-50/50">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                  <Eye className="h-8 w-8 text-purple-600" />
+                </div>
+                <CardTitle className="text-xl text-purple-800">White Label Completo</CardTitle>
+                <CardDescription>
+                  Página pública personalizada com logo e cores da empresa
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Logo e cores personalizadas</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">URL própria da empresa</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Zero menção ao Convidy</span>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise Settings */}
+            <Card className="border-2 border-green-200 bg-green-50/50">
+              <CardHeader className="text-center">
+                <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Settings className="h-8 w-8 text-green-600" />
+                </div>
+                <CardTitle className="text-xl text-green-800">Configurações Avançadas</CardTitle>
+                <CardDescription>
+                  Controle total sobre notificações e multi-usuários
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Sistema multi-usuário</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Notificações personalizadas</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Configurações de segurança</span>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      </section>
+
+      {/* Plans Section */}
+      <section className="py-20 bg-gradient-to-br from-orange-50 to-red-100">
+        <div className="container mx-auto px-4">
+          <div className="text-center space-y-4 mb-16">
+            <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
+              Planos para Cada Necessidade
+            </Badge>
+            <h2 className="text-3xl md:text-4xl font-bold">
+              Comece <span className="text-green-600">grátis</span>, evolua conforme cresce
+            </h2>
+            <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
+              Do plano gratuito robusto até recursos empresariais com IA. 
+              <strong>Sem surpresas, sem fidelidade, sem complicação</strong>.
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+            {/* Free Plan */}
+            <Card className="border-2 border-green-200 bg-green-50/50 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-green-600 text-white px-4 py-1">
+                  SEMPRE GRÁTIS
+                </Badge>
+              </div>
+              <CardHeader className="text-center pt-8">
+                <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                  <Gift className="h-8 w-8 text-green-600" />
+                </div>
+                <CardTitle className="text-2xl text-green-800">Gratuito</CardTitle>
+                <div className="text-3xl font-bold">R$ 0</div>
+                <CardDescription className="text-green-600 font-medium">
+                  Para sempre • Sem cartão
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Até 5 eventos por mês</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">50 convidados por evento</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">WhatsApp + QR Code</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Dashboard básico</span>
+                </div>
+                <div className="pt-4">
+                  <Button className="w-full bg-green-600 hover:bg-green-700">
+                    Começar Grátis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Professional Plan */}
+            <Card className="border-2 border-blue-200 bg-blue-50/50 relative transform scale-105">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-blue-600 text-white px-4 py-1">
+                  MAIS POPULAR
+                </Badge>
+              </div>
+              <CardHeader className="text-center pt-8">
+                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
+                  <Rocket className="h-8 w-8 text-blue-600" />
+                </div>
+                <CardTitle className="text-2xl text-blue-800">Profissional</CardTitle>
+                <div className="text-3xl font-bold">R$ 97<span className="text-lg text-muted-foreground">/mês</span></div>
+                <CardDescription className="text-blue-600 font-medium">
+                  Sem fidelidade • Cancele quando quiser
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Eventos ilimitados</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">500 convidados por evento</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Templates personalizados</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">White label básico</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Relatórios avançados</span>
+                </div>
+                <div className="pt-4">
+                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                    Testar 7 Dias Grátis
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Enterprise Plan */}
+            <Card className="border-2 border-purple-200 bg-purple-50/50 relative">
+              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
+                <Badge className="bg-purple-600 text-white px-4 py-1">
+                  IA INCLUÍDA
+                </Badge>
+              </div>
+              <CardHeader className="text-center pt-8">
+                <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
+                  <Crown className="h-8 w-8 text-purple-600" />
+                </div>
+                <CardTitle className="text-2xl text-purple-800">Empresarial</CardTitle>
+                <div className="text-3xl font-bold">R$ 297<span className="text-lg text-muted-foreground">/mês</span></div>
+                <CardDescription className="text-purple-600 font-medium">
+                  Para agências e grandes empresas
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Tudo do Profissional +</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Brain className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium">IA Comportamental</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Brain className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium">Predição de Presença</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">White label completo</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Multi-usuários ilimitados</span>
+                </div>
+                <div className="pt-4">
+                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
+                    Solicitar Demo
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="text-center mt-12">
+            <p className="text-muted-foreground mb-4">
+              💡 <strong>Dica:</strong> Comece com o plano gratuito e evolua conforme sua necessidade. 
+              Sem fidelidade, sem taxa de cancelamento.
+            </p>
+            <Link to="/auth">
+              <Button size="lg" className="bg-green-600 hover:bg-green-700">
+                <Gift className="mr-2 h-5 w-5" />
+                Começar Grátis Agora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

@@ -142,33 +142,30 @@ const Index = () => {
       </section>
 
       {/* Social Proof Section */}
-      <section className="py-16 bg-card/50">
+      <section className="py-16 bg-accent/30">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-8">
-            <h2 className="text-2xl md:text-3xl font-bold">Empresas que confiam no Convidy</h2>
+            <h2 className="text-2xl md:text-3xl font-bold text-foreground">Empresas que confiam no Convidy</h2>
             
             {/* Fake but realistic company logos */}
-            <div className="flex flex-wrap items-center justify-center gap-8 opacity-60">
-              <div className="flex items-center space-x-2">
+            <div className="flex flex-wrap items-center justify-center gap-8 opacity-70">
+              <div className="flex items-center space-x-2 text-muted-foreground">
                 <Building2 className="h-8 w-8" />
                 <span className="font-bold text-lg">TechCorp</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 text-muted-foreground">
                 <Briefcase className="h-8 w-8" />
                 <span className="font-bold text-lg">InnovaRH</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 text-muted-foreground">
                 <Users2 className="h-8 w-8" />
                 <span className="font-bold text-lg">EventPro</span>
               </div>
-              <div className="flex items-center space-x-2">
+              <div className="flex items-center space-x-2 text-muted-foreground">
                 <Award className="h-8 w-8" />
                 <span className="font-bold text-lg">Excellence</span>
               </div>
             </div>
-
-            {/* Case Study */}
-            
 
             {/* Key Numbers */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-3xl mx-auto">
@@ -177,11 +174,11 @@ const Index = () => {
                 <div className="text-sm text-muted-foreground">eventos realizados</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-green-600">87%</div>
+                <div className="text-3xl font-bold text-success">87%</div>
                 <div className="text-sm text-muted-foreground">taxa média de presença</div>
               </div>
               <div className="text-center">
-                <div className="text-3xl font-bold text-blue-600">3x</div>
+                <div className="text-3xl font-bold text-info">3x</div>
                 <div className="text-sm text-muted-foreground">mais presença vs método tradicional</div>
               </div>
             </div>
@@ -193,7 +190,7 @@ const Index = () => {
       <section className="py-20 bg-gradient-to-b from-destructive/5 to-background">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
               Ainda usando planilhas e check-in na mão?
             </h2>
             <p className="text-xl text-destructive font-medium">
@@ -210,34 +207,34 @@ const Index = () => {
               </div>
               
               <div className="space-y-4">
-                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg">
-                  <X className="h-5 w-5 text-destructive mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <X className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Convites por email que ninguém vê</h4>
+                    <h4 className="font-medium text-foreground">Convites por email que ninguém vê</h4>
                     <p className="text-sm text-muted-foreground">Taxa de abertura de 20%, confirmações duvidosas</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg">
-                  <X className="h-5 w-5 text-destructive mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <X className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Planilhas confusas e desatualizadas</h4>
+                    <h4 className="font-medium text-foreground">Planilhas confusas e desatualizadas</h4>
                     <p className="text-sm text-muted-foreground">Você nunca sabe quem realmente vai aparecer</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg">
-                  <X className="h-5 w-5 text-destructive mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <X className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Check-in manual e filas intermináveis</h4>
+                    <h4 className="font-medium text-foreground">Check-in manual e filas intermináveis</h4>
                     <p className="text-sm text-muted-foreground">Evento começa atrasado, impressão ruim desde o início</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg">
-                  <X className="h-5 w-5 text-destructive mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-destructive/10 rounded-lg border border-destructive/20">
+                  <X className="h-5 w-5 text-destructive mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Zero dados para melhorar</h4>
+                    <h4 className="font-medium text-foreground">Zero dados para melhorar</h4>
                     <p className="text-sm text-muted-foreground">Repete os mesmos erros a cada evento</p>
                   </div>
                 </div>
@@ -247,39 +244,39 @@ const Index = () => {
             {/* After - Convidy Solution */}
             <div className="space-y-6">
               <div className="text-center">
-                <h3 className="text-2xl font-bold text-green-600 mb-4">✅ Com Convidy</h3>
+                <h3 className="text-2xl font-bold text-success mb-4">✅ Com Convidy</h3>
                 <p className="text-muted-foreground">Você controla tudo, eventos lotados, dados na mão</p>
               </div>
               
               <div className="space-y-4">
-                <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <Check className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-success/10 rounded-lg border border-success/20">
+                  <Check className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Convites pelo WhatsApp com 95% de abertura</h4>
+                    <h4 className="font-medium text-foreground">Convites pelo WhatsApp com 95% de abertura</h4>
                     <p className="text-sm text-muted-foreground">Confirmações em tempo real, lista sempre atualizada</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <Check className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-success/10 rounded-lg border border-success/20">
+                  <Check className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Área pública personalizada da sua empresa</h4>
+                    <h4 className="font-medium text-foreground">Área pública personalizada da sua empresa</h4>
                     <p className="text-sm text-muted-foreground">Seus eventos têm cara profissional e credibilidade</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <Check className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-success/10 rounded-lg border border-success/20">
+                  <Check className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">Check-in com QR Code em 3 segundos</h4>
+                    <h4 className="font-medium text-foreground">Check-in com QR Code em 3 segundos</h4>
                     <p className="text-sm text-muted-foreground">Evento começa pontual, experiência premium</p>
                   </div>
                 </div>
                 
-                <div className="flex items-start space-x-3 p-4 bg-green-50 rounded-lg border border-green-200">
-                  <Check className="h-5 w-5 text-green-600 mt-0.5" />
+                <div className="flex items-start space-x-3 p-4 bg-success/10 rounded-lg border border-success/20">
+                  <Check className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium">IA analisa comportamentos e otimiza eventos</h4>
+                    <h4 className="font-medium text-foreground">IA analisa comportamentos e otimiza eventos</h4>
                     <p className="text-sm text-muted-foreground">Nossa inteligência artificial cruza dados de CPF e identifica padrões para prever presença e melhorar cada evento</p>
                   </div>
                 </div>
@@ -289,7 +286,7 @@ const Index = () => {
 
           <div className="text-center mt-12">
             <Link to="/auth">
-              <Button size="lg" className="bg-green-600 hover:bg-green-700 text-lg px-8">
+              <Button size="lg" className="bg-success hover:bg-success/90 text-lg px-8">
                 Chega de eventos vazios – começar agora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
@@ -299,71 +296,71 @@ const Index = () => {
       </section>
 
       {/* Benefits by Segment */}
-      <section className="py-20 bg-card/50">
+      <section className="py-20 bg-accent/30">
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
-            <h2 className="text-3xl md:text-4xl font-bold">
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
               Soluções específicas para cada necessidade
             </h2>
           </div>
           
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {/* For HR */}
-            <Card className="border-2 border-blue-200 bg-blue-50/50">
+            <Card className="border-2 border-info/20 bg-info/5 hover:bg-info/10 transition-colors">
               <CardHeader className="text-center">
-                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-                  <Users2 className="h-8 w-8 text-blue-600" />
+                <div className="h-16 w-16 rounded-full bg-info/10 flex items-center justify-center mx-auto mb-4">
+                  <Users2 className="h-8 w-8 text-info" />
                 </div>
-                <CardTitle className="text-xl text-blue-800">Para RH</CardTitle>
+                <CardTitle className="text-xl text-info">Para RH</CardTitle>
                 <CardDescription>
                   Treinamentos, integrações, eventos internos com presença garantida
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                   <span className="text-sm">Análise de engajamento por colaborador</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                   <span className="text-sm">Relatórios de presença automáticos</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                   <span className="text-sm">Convites personalizados por setor</span>
                 </div>
               </CardContent>
             </Card>
 
             {/* For Agencies */}
-            <Card className="border-2 border-purple-200 bg-purple-50/50">
+            <Card className="border-2 border-primary/20 bg-primary/5 hover:bg-primary/10 transition-colors">
               <CardHeader className="text-center">
-                <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
-                  <Briefcase className="h-8 w-8 text-purple-600" />
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Briefcase className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="text-xl text-purple-800">Para Agências</CardTitle>
+                <CardTitle className="text-xl text-primary">Para Agências</CardTitle>
                 <CardDescription>
                   Eventos de clientes com a qualidade que eles esperam da sua agência
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                   <span className="text-sm">White label com logo do cliente</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                   <span className="text-sm">Relatórios profissionais automatizados</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
+                  <Check className="h-4 w-4 text-success" />
                   <span className="text-sm">Gestão de múltiplos clientes</span>
                 </div>
               </CardContent>
             </Card>
 
             {/* For Event Planners */}
-            <Card className="border-2 border-green-200 bg-green-50/50">
+            <Card className="border-2 border-success/20 bg-success/5 hover:bg-success/10 transition-colors">
               <CardHeader className="text-center">
                 <div className="h-16 w-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
                   <Calendar className="h-8 w-8 text-green-600" />

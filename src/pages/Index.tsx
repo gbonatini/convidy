@@ -276,8 +276,8 @@ const Index = () => {
                 <div className="flex items-start space-x-3 p-4 bg-success/10 rounded-lg border border-success/20">
                   <Check className="h-5 w-5 text-success mt-0.5 flex-shrink-0" />
                   <div>
-                    <h4 className="font-medium text-foreground">IA analisa comportamentos e otimiza eventos</h4>
-                    <p className="text-sm text-muted-foreground">Nossa inteligência artificial cruza dados de CPF e identifica padrões para prever presença e melhorar cada evento</p>
+                    <h4 className="font-medium text-foreground">IA analisa comportamentos e prevê ausências</h4>
+                    <p className="text-sm text-muted-foreground">Nossa inteligência artificial identifica pessoas que podem não comparecer baseado no histórico, permitindo ações preventivas como lembretes personalizados</p>
                   </div>
                 </div>
               </div>

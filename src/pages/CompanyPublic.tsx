@@ -238,18 +238,7 @@ const CompanyPublic = () => {
       }
     }
 
-    let currentY = 0;
-
-    // Imagem do evento no topo (se existir)
-    if (eventImageDataUrl) {
-      try {
-        const imgHeight = 50;
-        doc.addImage(eventImageDataUrl, 'JPEG', 0, 0, pageWidth, imgHeight);
-        currentY = imgHeight;
-      } catch (e) {
-        console.log('Erro ao adicionar imagem:', e);
-      }
-    }
+    let currentY = 15;
 
     // Header com fundo azul
     const headerY = currentY || 0;
@@ -332,10 +321,10 @@ const CompanyPublic = () => {
     const formattedTime = data.eventTime?.slice(0, 5) || '';
     
     const infoY = currentY + 10;
-    doc.text(`📅  Data: ${formattedDate}`, 22, infoY);
-    doc.text(`🕐  Horário: ${formattedTime}`, 22, infoY + 8);
+    doc.text(`Data: ${formattedDate}`, 22, infoY);
+    doc.text(`Horario: ${formattedTime}`, 22, infoY + 8);
     
-    const locationText = `📍  Local: ${data.eventLocation}`;
+    const locationText = `Local: ${data.eventLocation}`;
     const locationLines = doc.splitTextToSize(locationText, pageWidth - 50);
     doc.text(locationLines, 22, infoY + 16);
     
@@ -356,13 +345,26 @@ const CompanyPublic = () => {
       // Limitar a 6 linhas para não estourar a página
       const limitedDescLines = descLines.slice(0, 6);
       doc.text(limitedDescLines, 15, currentY);
-      currentY += (limitedDescLines.length * 4) + 5;
+      currentY += (limitedDescLines.length * 4) + 10;
+    }
+    
+    // Imagem do evento (se existir) - pequena e centralizada
+    if (eventImageDataUrl) {
+      try {
+        const imgWidth = 80;
+        const imgHeight = 45;
+        const imgX = (pageWidth - imgWidth) / 2;
+        doc.addImage(eventImageDataUrl, 'JPEG', imgX, currentY, imgWidth, imgHeight);
+        currentY += imgHeight + 10;
+      } catch (e) {
+        console.log('Erro ao adicionar imagem:', e);
+      }
     }
     
     // Rodapé
     doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
-    doc.text('Gerado por Convidy - Sistema de Gestão de Eventos', pageWidth / 2, pageHeight - 10, { align: 'center' });
+    doc.text('Gerado por Convidy - Sistema de Gestao de Eventos', pageWidth / 2, pageHeight - 10, { align: 'center' });
     
     // Salvar
     const fileName = `ingresso-${data.eventTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}.pdf`;

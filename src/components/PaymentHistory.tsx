@@ -9,16 +9,16 @@ import { CreditCard, QrCode, CheckCircle, XCircle, Clock, AlertCircle } from 'lu
 
 interface PaymentTransaction {
   id: string;
-  transaction_id: string;
-  payment_method: 'pix' | 'card';
+  payment_provider_id: string | null;
+  payment_method: string | null;
   amount: number;
-  status: 'pending' | 'processing' | 'approved' | 'rejected' | 'cancelled';
+  status: string | null;
   created_at: string;
   paid_at: string | null;
   system_plans: {
     name: string;
     slug: string;
-  };
+  } | null;
 }
 
 export const PaymentHistory: React.FC = () => {
@@ -34,7 +34,7 @@ export const PaymentHistory: React.FC = () => {
       // Buscar transações separadamente
       const { data: transactionsData, error: transactionsError } = await supabase
         .from('payment_transactions')
-        .select('id, transaction_id, payment_method, amount, status, created_at, paid_at, plan_id')
+        .select('id, payment_provider_id, payment_method, amount, status, created_at, paid_at, plan_id')
         .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false })
         .limit(10);

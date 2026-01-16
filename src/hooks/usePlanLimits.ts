@@ -18,8 +18,8 @@ export const usePlanLimits = () => {
   return {
     planLimits: {
       maxEvents: plan?.max_events || null,
-      maxRegistrationsPerEvent: plan?.max_registrations_per_event || null,
-      maxTotalRegistrations: plan?.max_total_registrations || null,
+      maxRegistrationsPerEvent: plan?.max_guests_per_event || null,
+      maxTotalRegistrations: null, // Removido na nova estrutura
     },
     usage,
     planName: plan?.name || '',

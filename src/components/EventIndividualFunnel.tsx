@@ -62,14 +62,14 @@ const EventIndividualFunnel: React.FC<EventIndividualFunnelProps> = ({ companyId
           // Buscar confirmações
           const { data: registrations, error: regError } = await supabase
             .from('registrations')
-            .select('checked_in')
+            .select('status')
             .eq('event_id', event.id);
 
           if (regError) throw regError;
 
           const invites = invitesData?.length || 0;
           const confirmations = registrations?.length || 0;
-          const checkins = registrations?.filter(r => r.checked_in).length || 0;
+          const checkins = registrations?.filter((r: any) => r.status === 'checked_in').length || 0;
 
           return {
             ...event,

@@ -5,10 +5,10 @@ import { supabase } from '@/integrations/supabase/client';
 interface Profile {
   id: string;
   user_id: string;
-  name: string;
-  email: string;
-  role: string;
-  company_id?: string;
+  name: string | null;
+  email: string | null;
+  company_id?: string | null;
+  avatar_url?: string | null;
 }
 
 interface AuthContextType {

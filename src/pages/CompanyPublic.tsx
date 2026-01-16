@@ -198,6 +198,7 @@ const CompanyPublic = () => {
   const generatePDF = async (data: any) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
     
     // Capturar QR Code como imagem
     const qrCodeElement = document.querySelector('.qr-code-for-pdf svg') as SVGElement;
@@ -221,91 +222,147 @@ const CompanyPublic = () => {
       });
     }
 
-    // Header com fundo
+    // Carregar imagem do evento se existir
+    let eventImageDataUrl = '';
+    if (data.eventImageUrl) {
+      try {
+        const response = await fetch(data.eventImageUrl);
+        const blob = await response.blob();
+        eventImageDataUrl = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(blob);
+        });
+      } catch (e) {
+        console.log('Não foi possível carregar imagem do evento:', e);
+      }
+    }
+
+    let currentY = 0;
+
+    // Imagem do evento no topo (se existir)
+    if (eventImageDataUrl) {
+      try {
+        const imgHeight = 50;
+        doc.addImage(eventImageDataUrl, 'JPEG', 0, 0, pageWidth, imgHeight);
+        currentY = imgHeight;
+      } catch (e) {
+        console.log('Erro ao adicionar imagem:', e);
+      }
+    }
+
+    // Header com fundo azul
+    const headerY = currentY || 0;
+    const headerHeight = currentY > 0 ? 30 : 40;
     doc.setFillColor(59, 130, 246);
-    doc.rect(0, 0, pageWidth, 45, 'F');
+    doc.rect(0, headerY, pageWidth, headerHeight, 'F');
     
-    // Título
-    doc.setFontSize(24);
+    // Título "INGRESSO"
+    doc.setFontSize(22);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(255, 255, 255);
-    doc.text('INGRESSO', pageWidth / 2, 28, { align: 'center' });
+    doc.text('INGRESSO', pageWidth / 2, headerY + (headerHeight / 2) + 4, { align: 'center' });
     
+    currentY = headerY + headerHeight + 15;
+
     // Nome do participante
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text(data.name, pageWidth / 2, 62, { align: 'center' });
+    doc.text(data.name, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 8;
     
     // CPF formatado
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(100, 100, 100);
     const cpfFormatted = data.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    doc.text(`CPF: ${cpfFormatted}`, pageWidth / 2, 70, { align: 'center' });
+    doc.text(`CPF: ${cpfFormatted}`, pageWidth / 2, currentY, { align: 'center' });
+    currentY += 12;
     
     // QR Code
     if (qrCodeDataUrl) {
-      const qrSize = 70;
+      const qrSize = 55;
       const qrX = (pageWidth - qrSize) / 2;
-      doc.addImage(qrCodeDataUrl, 'PNG', qrX, 80, qrSize, qrSize);
+      doc.addImage(qrCodeDataUrl, 'PNG', qrX, currentY, qrSize, qrSize);
+      currentY += qrSize + 5;
     }
     
     // Texto do QR
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 100);
-    doc.text('Apresente este QR Code no check-in', pageWidth / 2, 160, { align: 'center' });
+    doc.setFontSize(8);
+    doc.setTextColor(120, 120, 120);
+    doc.text('Apresente este QR Code no check-in', pageWidth / 2, currentY, { align: 'center' });
+    currentY += 10;
     
-    // Linha separadora
-    doc.setDrawColor(200, 200, 200);
-    doc.setLineDashPattern([3, 3], 0);
-    doc.line(20, 170, pageWidth - 20, 170);
+    // Linha separadora tracejada
+    doc.setDrawColor(180, 180, 180);
+    doc.setLineDashPattern([2, 2], 0);
+    doc.line(15, currentY, pageWidth - 15, currentY);
     doc.setLineDashPattern([], 0);
-    
-    // Caixa do evento
-    doc.setFillColor(249, 250, 251);
-    doc.roundedRect(15, 178, pageWidth - 30, 75, 4, 4, 'F');
+    currentY += 8;
     
     // Título do evento
-    doc.setFontSize(16);
+    doc.setFontSize(14);
     doc.setFont('helvetica', 'bold');
-    doc.setTextColor(0, 0, 0);
-    
-    // Quebrar título se muito longo
-    const titleLines = doc.splitTextToSize(data.eventTitle, pageWidth - 50);
-    doc.text(titleLines, pageWidth / 2, 192, { align: 'center' });
-    
-    const titleOffset = titleLines.length > 1 ? 8 : 0;
+    doc.setTextColor(30, 30, 30);
+    const titleLines = doc.splitTextToSize(data.eventTitle, pageWidth - 40);
+    doc.text(titleLines, pageWidth / 2, currentY, { align: 'center' });
+    currentY += (titleLines.length * 6) + 4;
     
     // Organizador
     if (data.companyName) {
-      doc.setFontSize(10);
+      doc.setFontSize(9);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text(`Organizado por: ${data.companyName}`, pageWidth / 2, 202 + titleOffset, { align: 'center' });
+      doc.text(`Organizado por: ${data.companyName}`, pageWidth / 2, currentY, { align: 'center' });
+      currentY += 10;
     }
     
+    // Caixa de informações
+    doc.setFillColor(245, 247, 250);
+    doc.roundedRect(15, currentY, pageWidth - 30, 35, 3, 3, 'F');
+    
     // Informações do evento
-    doc.setFontSize(11);
+    doc.setFontSize(10);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(60, 60, 60);
+    doc.setTextColor(50, 50, 50);
     
     const eventDate = new Date(data.eventDate + 'T12:00:00');
     const formattedDate = format(eventDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const formattedTime = data.eventTime?.slice(0, 5) || '';
     
-    const infoStartY = 218 + titleOffset;
-    doc.text(`Data: ${formattedDate}`, 25, infoStartY);
-    doc.text(`Horário: ${formattedTime}`, 25, infoStartY + 10);
+    const infoY = currentY + 10;
+    doc.text(`📅  Data: ${formattedDate}`, 22, infoY);
+    doc.text(`🕐  Horário: ${formattedTime}`, 22, infoY + 8);
     
-    // Local com quebra de linha se necessário
-    const locationLines = doc.splitTextToSize(`Local: ${data.eventLocation}`, pageWidth - 50);
-    doc.text(locationLines, 25, infoStartY + 20);
+    const locationText = `📍  Local: ${data.eventLocation}`;
+    const locationLines = doc.splitTextToSize(locationText, pageWidth - 50);
+    doc.text(locationLines, 22, infoY + 16);
+    
+    currentY += 42;
+    
+    // Descrição do evento (se existir)
+    if (data.eventDescription) {
+      doc.setFontSize(9);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(60, 60, 60);
+      doc.text('Sobre o evento:', 15, currentY);
+      currentY += 5;
+      
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(80, 80, 80);
+      doc.setFontSize(8);
+      const descLines = doc.splitTextToSize(data.eventDescription, pageWidth - 30);
+      // Limitar a 6 linhas para não estourar a página
+      const limitedDescLines = descLines.slice(0, 6);
+      doc.text(limitedDescLines, 15, currentY);
+      currentY += (limitedDescLines.length * 4) + 5;
+    }
     
     // Rodapé
-    doc.setFontSize(8);
+    doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);
-    doc.text('Gerado por Convidy - Sistema de Gestão de Eventos', pageWidth / 2, 285, { align: 'center' });
+    doc.text('Gerado por Convidy - Sistema de Gestão de Eventos', pageWidth / 2, pageHeight - 10, { align: 'center' });
     
     // Salvar
     const fileName = `ingresso-${data.eventTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}.pdf`;
@@ -453,6 +510,7 @@ const CompanyPublic = () => {
         eventTime: selectedEvent.time,
         eventLocation: selectedEvent.location,
         eventDescription: selectedEvent.description,
+        eventImageUrl: selectedEvent.image_url,
         companyName: company?.name || ''
       });
       setShowQRCode(true);

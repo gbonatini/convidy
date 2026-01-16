@@ -6,20 +6,19 @@ export interface PlanData {
   id: string;
   name: string;
   slug: string;
-  description: string;
+  description: string | null;
   price: number;
   max_events: number | null;
-  max_registrations_per_event: number | null;
-  max_total_registrations: number | null;
+  max_guests_per_event: number | null;
   features: string[];
 }
 
 export interface CompanyData {
   id: string;
   name: string;
-  plan_id: string;
-  plan_expires_at: string | null;
-  plan_status: string;
+  plan_id: string | null;
+  next_payment_due: string | null;
+  plan_status: string | null;
 }
 
 export interface UsageData {
@@ -54,9 +53,9 @@ export const useCompanyPlan = () => {
       // 1. Buscar dados da empresa
       const { data: companyData, error: companyError } = await supabase
         .from('companies')
-        .select('id, name, plan_id, plan_expires_at, plan_status')
+        .select('id, name, plan_id, next_payment_due, plan_status')
         .eq('id', profile.company_id)
-        .single();
+        .maybeSingle();
 
       if (companyError) {
         console.error('❌ Error fetching company:', companyError);
@@ -74,9 +73,9 @@ export const useCompanyPlan = () => {
       // 2. Buscar dados do plano
       const { data: planData, error: planError } = await supabase
         .from('system_plans')
-        .select('id, name, slug, description, price, max_events, max_registrations_per_event, max_total_registrations, features')
+        .select('id, name, slug, description, price, max_events, max_guests_per_event, features')
         .eq('id', companyData.plan_id)
-        .single();
+        .maybeSingle();
 
       if (planError) {
         console.error('❌ Error fetching plan:', planError);
@@ -153,14 +152,8 @@ export const useCompanyPlan = () => {
 
   const canAddRegistration = (currentEventRegistrations: number = 0) => {
     // Verificar limite por evento
-    if (plan?.max_registrations_per_event && 
-        currentEventRegistrations >= plan.max_registrations_per_event) {
-      return false;
-    }
-    
-    // Verificar limite total
-    if (plan?.max_total_registrations && 
-        usage.totalRegistrations >= plan.max_total_registrations) {
+    if (plan?.max_guests_per_event && plan.max_guests_per_event > 0 &&
+        currentEventRegistrations >= plan.max_guests_per_event) {
       return false;
     }
     
@@ -168,22 +161,20 @@ export const useCompanyPlan = () => {
   };
 
   const getRemainingEvents = () => {
-    if (!plan?.max_events) return null;
+    if (!plan?.max_events || plan.max_events < 0) return null;
     return Math.max(0, plan.max_events - usage.totalEvents);
   };
 
   const getRemainingRegistrations = () => {
-    if (!plan?.max_total_registrations) return null;
-    return Math.max(0, plan.max_total_registrations - usage.totalRegistrations);
+    return null; // Sem limite total de registros na nova estrutura
   };
 
   const getUsagePercentage = (type: 'events' | 'registrations') => {
     if (type === 'events') {
-      if (!plan?.max_events) return 0;
+      if (!plan?.max_events || plan.max_events < 0) return 0;
       return (usage.totalEvents / plan.max_events) * 100;
     } else {
-      if (!plan?.max_total_registrations) return 0;
-      return (usage.totalRegistrations / plan.max_total_registrations) * 100;
+      return 0; // Sem limite total na nova estrutura
     }
   };
 

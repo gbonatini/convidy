@@ -16,7 +16,7 @@ interface MessageTemplate {
   name: string;
   content: string;
   is_default: boolean;
-  variables: string[];
+  variables?: string[];
 }
 
 interface MessageTemplateManagerProps {
@@ -66,11 +66,15 @@ Aguardamos você!
         .order("is_default", { ascending: false });
 
       if (error) throw error;
-      setTemplates(data || []);
+      const templatesWithVariables = (data || []).map((t: any) => ({
+        ...t,
+        variables: extractVariables(t.content),
+      }));
+      setTemplates(templatesWithVariables);
 
       // Auto-select default template if none selected
-      if (!selectedTemplate && data?.length > 0) {
-        const defaultTemplate = data.find(t => t.is_default) || data[0];
+      if (!selectedTemplate && templatesWithVariables.length > 0) {
+        const defaultTemplate = templatesWithVariables.find((t: any) => t.is_default) || templatesWithVariables[0];
         onSelectTemplate(defaultTemplate);
       }
     } catch (error) {

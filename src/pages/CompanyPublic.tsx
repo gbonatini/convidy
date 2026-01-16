@@ -43,10 +43,9 @@ interface Event {
   date: string;
   time: string;
   location: string;
-  address: string;
   capacity: number;
   price: number;
-  image_url: string;
+  image_url: string | null;
   status: string;
   company_id: string;
 }

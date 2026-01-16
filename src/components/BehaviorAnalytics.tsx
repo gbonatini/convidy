@@ -57,7 +57,7 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
         .from('events')
         .select(`
           id, title, date, time, location, 
-          registrations(document, checked_in, created_at)
+          registrations(cpf, status, checked_in_at, created_at)
         `)
         .eq('company_id', companyId);
 
@@ -69,18 +69,18 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
 
       // Calcular estatísticas gerais
       const allRegistrations = events.flatMap(e => e.registrations || []);
-      const uniqueUsers = new Set(allRegistrations.map(r => r.document)).size;
+      const uniqueUsers = new Set(allRegistrations.map(r => r.cpf)).size;
       const userAttendanceCounts: Record<string, number> = {};
       
       allRegistrations.forEach(reg => {
-        if (!userAttendanceCounts[reg.document]) {
-          userAttendanceCounts[reg.document] = 0;
+        if (!userAttendanceCounts[reg.cpf || '']) {
+          userAttendanceCounts[reg.cpf || ''] = 0;
         }
-        userAttendanceCounts[reg.document]++;
+        userAttendanceCounts[reg.cpf || '']++;
       });
 
       const repeatAttendees = Object.values(userAttendanceCounts).filter((count: number) => count > 1).length;
-      const checkedInCount = allRegistrations.filter(r => r.checked_in).length;
+      const checkedInCount = allRegistrations.filter(r => r.status === 'checked_in').length;
       const attendanceRate = allRegistrations.length > 0 ? (checkedInCount / allRegistrations.length) * 100 : 0;
 
       setStats({
@@ -103,7 +103,7 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
     // Análise 1: Padrão de Comparecimento
     const attendanceRates = events.map(event => {
       const regs = event.registrations || [];
-      const checkedIn = regs.filter(r => r.checked_in).length;
+      const checkedIn = regs.filter((r: any) => r.status === 'checked_in').length;
       return regs.length > 0 ? (checkedIn / regs.length) * 100 : 0;
     });
 
@@ -174,9 +174,9 @@ export const BehaviorAnalytics: React.FC<BehaviorAnalyticsProps> = ({ companyId 
     // Análise 4: Usuários Recorrentes
     const allRegistrations = events.flatMap(e => e.registrations || []);
     const userCounts: Record<string, number> = {};
-    allRegistrations.forEach(reg => {
-      if (!userCounts[reg.document]) userCounts[reg.document] = 0;
-      userCounts[reg.document]++;
+    allRegistrations.forEach((reg: any) => {
+      if (!userCounts[reg.cpf || '']) userCounts[reg.cpf || ''] = 0;
+      userCounts[reg.cpf || '']++;
     });
 
     const repeatUsers = Object.values(userCounts).filter((count: number) => count > 1).length;

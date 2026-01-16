@@ -665,6 +665,88 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      auto_inactivate_expired_events: { Args: never; Returns: number }
+      checkin_by_cpf: {
+        Args: { p_cpf: string; p_event_id: string }
+        Returns: {
+          message: string
+          registration_id: string
+          registration_name: string
+          success: boolean
+        }[]
+      }
+      find_registration_by_barcode: {
+        Args: { p_barcode: string }
+        Returns: {
+          checked_in_at: string
+          email: string
+          event_id: string
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["registration_status"]
+        }[]
+      }
+      find_registration_by_hash: {
+        Args: { p_hash: string }
+        Returns: {
+          barcode: string
+          checked_in_at: string
+          cpf: string
+          email: string
+          event_id: string
+          id: string
+          name: string
+          phone: string
+          qr_code: string
+          status: Database["public"]["Enums"]["registration_status"]
+        }[]
+      }
+      generate_barcode_data_simple: {
+        Args: { p_registration_id: string }
+        Returns: string
+      }
+      generate_qr_data: { Args: { p_registration_id: string }; Returns: string }
+      generate_qr_data_simple: {
+        Args: { p_registration_id: string }
+        Returns: string
+      }
+      get_company_public: {
+        Args: { p_slug: string }
+        Returns: {
+          id: string
+          logo_url: string
+          name: string
+          slug: string
+        }[]
+      }
+      get_invite_public: {
+        Args: { p_invite_id: string }
+        Returns: {
+          company_logo: string
+          company_name: string
+          event_date: string
+          event_location: string
+          event_time: string
+          event_title: string
+          id: string
+          name: string
+          status: Database["public"]["Enums"]["invite_status"]
+        }[]
+      }
+      get_registration_public: {
+        Args: { p_registration_id: string }
+        Returns: {
+          company_name: string
+          event_date: string
+          event_location: string
+          event_time: string
+          event_title: string
+          id: string
+          name: string
+          qr_code: string
+          status: Database["public"]["Enums"]["registration_status"]
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -673,6 +755,23 @@ export type Database = {
         Returns: boolean
       }
       is_super_admin: { Args: never; Returns: boolean }
+      perform_checkin: {
+        Args: { p_registration_id: string }
+        Returns: {
+          message: string
+          registration_name: string
+          success: boolean
+        }[]
+      }
+      update_user_behavior_stats: {
+        Args: {
+          p_event_id: string
+          p_metric_type: string
+          p_metric_value: number
+          p_registration_id: string
+        }
+        Returns: undefined
+      }
       user_belongs_to_company: {
         Args: { _company_id: string }
         Returns: boolean

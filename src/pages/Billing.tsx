@@ -101,11 +101,11 @@ const Billing = () => {
         </div>
 
         {/* Alertas */}
-        {company?.plan_expires_at && isExpiringSoon(company.plan_expires_at) && (
+        {company?.next_payment_due && isExpiringSoon(company.next_payment_due) && (
           <Alert variant="destructive">
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription>
-              Seu plano expira em {new Date(company.plan_expires_at).toLocaleDateString('pt-BR')}. 
+              Seu plano expira em {new Date(company.next_payment_due).toLocaleDateString('pt-BR')}. 
               Renove agora para continuar usando todos os recursos.
             </AlertDescription>
           </Alert>
@@ -146,11 +146,11 @@ const Billing = () => {
                         {company?.plan_status === 'active' ? 'Ativo' : 'Inativo'}
                       </Badge>
                     </div>
-                    {company?.plan_expires_at && (
+                    {company?.next_payment_due && (
                       <div className="flex items-center justify-between text-sm">
                         <span>Expira em:</span>
                         <span className="text-muted-foreground">
-                          {new Date(company.plan_expires_at).toLocaleDateString('pt-BR')}
+                          {new Date(company.next_payment_due).toLocaleDateString('pt-BR')}
                         </span>
                       </div>
                     )}
@@ -201,7 +201,7 @@ const Billing = () => {
                 <div className="text-center space-y-2">
                   <h4 className="font-medium">Total de Confirmações</h4>
                   <div className="text-2xl font-bold text-primary">
-                    {usage.totalRegistrations} / {formatLimit(plan?.max_total_registrations)}
+                    {usage.totalRegistrations}
                   </div>
                 </div>
 

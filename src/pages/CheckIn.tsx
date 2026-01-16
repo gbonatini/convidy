@@ -44,13 +44,13 @@ interface Event {
 interface Registration {
   id: string;
   name: string;
-  document: string;
-  phone: string;
-  email: string;
-  checked_in: boolean;
-  checkin_time: string | null;
+  cpf: string | null;
+  phone: string | null;
+  email: string | null;
+  status: string;
+  checked_in_at: string | null;
   events: Event;
-  qr_code: string;
+  qr_code: string | null;
 }
 
 interface Stats {

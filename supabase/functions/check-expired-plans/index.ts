@@ -1,4 +1,3 @@
-import "https://deno.land/x/xhr@0.1.0/mod.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
@@ -15,7 +14,6 @@ serve(async (req) => {
   try {
     console.log('Running check-expired-plans function');
 
-    // Inicializar Supabase client
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -28,7 +26,7 @@ serve(async (req) => {
       .from('system_plans')
       .select('id')
       .eq('slug', 'free')
-      .single();
+      .maybeSingle();
 
     if (!freePlan) {
       throw new Error('Free plan not found');
@@ -62,12 +60,8 @@ serve(async (req) => {
         throw downgradeError;
       }
 
-      // Log das empresas que foram rebaixadas
       for (const company of expiredCompanies) {
         console.log(`Company ${company.name} (${company.id}) downgraded to free plan due to expired payment`);
-        
-        // Aqui você pode implementar notificações por email
-        // usando um serviço como Resend
       }
     }
 
@@ -85,11 +79,9 @@ serve(async (req) => {
 
     console.log(`Found ${warningCompanies?.length || 0} companies with payments due in 3 days`);
 
-    // Aqui você pode implementar o envio de emails de aviso
     if (warningCompanies && warningCompanies.length > 0) {
       for (const company of warningCompanies) {
         console.log(`Warning: Company ${company.name} payment due on ${company.next_payment_due}`);
-        // Implementar envio de email de aviso
       }
     }
 

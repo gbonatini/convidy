@@ -5,7 +5,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
@@ -13,47 +12,38 @@ import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
 import AdminLayout from '@/components/AdminLayout';
 import { Building, Bell, User, Save, Loader2, Shield, Upload, X } from 'lucide-react';
+
 interface Company {
   id: string;
   name: string;
-  description: string;
-  email: string;
-  phone: string;
-  address: string;
-  cnpj: string;
-  primary_color: string;
-  secondary_color: string;
+  email: string | null;
+  phone: string | null;
   slug: string;
-  plan: string;
-  status: string;
   logo_url: string | null;
 }
+
 interface NotificationSettings {
   id?: string;
-  new_registration: boolean;
-  event_reminder: boolean;
-  email_confirmation: boolean;
-  checkin_alert: boolean;
+  email_notifications: boolean;
+  whatsapp_notifications: boolean;
+  sms_notifications: boolean;
+  reminder_days_before: number;
 }
+
 const SettingsPage = () => {
-  const {
-    user,
-    profile,
-    loading
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
+  const { user, profile, loading } = useAuth();
+  const { toast } = useToast();
   const [company, setCompany] = useState<Company | null>(null);
   const [notifications, setNotifications] = useState<NotificationSettings>({
-    new_registration: true,
-    event_reminder: true,
-    email_confirmation: true,
-    checkin_alert: false
+    email_notifications: true,
+    whatsapp_notifications: true,
+    sms_notifications: false,
+    reminder_days_before: 1
   });
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isUploadingLogo, setIsUploadingLogo] = useState(false);
+
   useEffect(() => {
     if (profile?.company_id) {
       fetchCompanyData();
@@ -70,12 +60,10 @@ const SettingsPage = () => {
   if (!loading && profile && !profile.company_id) {
     return <Navigate to="/setup" replace />;
   }
+
   const fetchCompanyData = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('companies').select('*').eq('id', profile?.company_id).single();
+      const { data, error } = await supabase.from('companies').select('id, name, email, phone, slug, logo_url').eq('id', profile?.company_id).single();
       if (error) throw error;
       setCompany(data);
     } catch (error) {
@@ -89,26 +77,25 @@ const SettingsPage = () => {
       setIsLoading(false);
     }
   };
+
   const fetchNotificationSettings = async () => {
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('notification_settings').select('*').eq('company_id', profile?.company_id).single();
-      if (error && error.code !== 'PGRST116') throw error;
+      const { data, error } = await supabase.from('notification_settings').select('*').eq('company_id', profile?.company_id).maybeSingle();
+      if (error) throw error;
       if (data) {
         setNotifications({
           id: data.id,
-          new_registration: data.new_registration,
-          event_reminder: data.event_reminder,
-          email_confirmation: data.email_confirmation,
-          checkin_alert: data.checkin_alert
+          email_notifications: data.email_notifications ?? true,
+          whatsapp_notifications: data.whatsapp_notifications ?? true,
+          sms_notifications: data.sms_notifications ?? false,
+          reminder_days_before: data.reminder_days_before ?? 1
         });
       }
     } catch (error) {
       console.error('Erro ao carregar configurações de notificação:', error);
     }
   };
+
   const handleCompanyChange = (field: keyof Company, value: string) => {
     if (!company) return;
     console.log(`Alterando ${field}:`, value);
@@ -116,17 +103,15 @@ const SettingsPage = () => {
       ...company,
       [field]: value
     });
-    console.log('Estado atualizado da empresa:', {
-      ...company,
-      [field]: value
-    });
   };
-  const handleNotificationChange = (field: keyof NotificationSettings, value: boolean) => {
+
+  const handleNotificationChange = (field: keyof NotificationSettings, value: boolean | number) => {
     setNotifications({
       ...notifications,
       [field]: value
     });
   };
+
   const saveCompanyData = async () => {
     if (!company) return;
     console.log('=== VERIFICANDO DADOS ANTES DE SALVAR ===');
@@ -138,34 +123,20 @@ const SettingsPage = () => {
     try {
       const updateData = {
         name: company.name,
-        description: company.description,
         phone: company.phone,
-        address: company.address,
         logo_url: company.logo_url || null
       };
       console.log('Dados para atualizar:', updateData);
-      const {
-        data,
-        error
-      } = await supabase.from('companies').update(updateData).eq('id', company.id).select('*');
-      console.log('Resposta completa:', {
-        data,
-        error
-      });
+      const { data, error } = await supabase.from('companies').update(updateData).eq('id', company.id).select('*');
+      console.log('Resposta completa:', { data, error });
       if (error) {
         console.error('Erro detalhado:', error);
         throw error;
       }
       if (!data || data.length === 0) {
         console.log('Nenhum registro foi atualizado - verificando se o registro existe...');
-        const {
-          data: existingData,
-          error: selectError
-        } = await supabase.from('companies').select('*').eq('id', company.id);
-        console.log('Dados existentes:', {
-          existingData,
-          selectError
-        });
+        const { data: existingData, error: selectError } = await supabase.from('companies').select('*').eq('id', company.id);
+        console.log('Dados existentes:', { existingData, selectError });
         if (!existingData || existingData.length === 0) {
           throw new Error('Empresa não encontrada');
         }
@@ -190,26 +161,22 @@ const SettingsPage = () => {
       setIsSaving(false);
     }
   };
+
   const saveNotificationSettings = async () => {
     setIsSaving(true);
     try {
       const settingsData = {
         company_id: profile?.company_id,
-        new_registration: notifications.new_registration,
-        event_reminder: notifications.event_reminder,
-        email_confirmation: notifications.email_confirmation,
-        checkin_alert: notifications.checkin_alert
+        email_notifications: notifications.email_notifications,
+        whatsapp_notifications: notifications.whatsapp_notifications,
+        sms_notifications: notifications.sms_notifications,
+        reminder_days_before: notifications.reminder_days_before
       };
       if (notifications.id) {
-        const {
-          error
-        } = await supabase.from('notification_settings').update(settingsData).eq('id', notifications.id);
+        const { error } = await supabase.from('notification_settings').update(settingsData).eq('id', notifications.id);
         if (error) throw error;
       } else {
-        const {
-          data,
-          error
-        } = await supabase.from('notification_settings').insert([settingsData]).select().single();
+        const { data, error } = await supabase.from('notification_settings').insert([settingsData]).select().single();
         if (error) throw error;
         setNotifications({
           ...notifications,
@@ -231,6 +198,7 @@ const SettingsPage = () => {
       setIsSaving(false);
     }
   };
+
   const handleLogoUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !company) return;
@@ -252,20 +220,13 @@ const SettingsPage = () => {
       const filePath = `logos/${fileName}`;
 
       // Upload para Supabase Storage
-      const {
-        data,
-        error
-      } = await supabase.storage.from('event-images').upload(filePath, file, {
+      const { data, error } = await supabase.storage.from('event-images').upload(filePath, file, {
         upsert: true
       });
       if (error) throw error;
 
       // Obter URL pública
-      const {
-        data: {
-          publicUrl
-        }
-      } = supabase.storage.from('event-images').getPublicUrl(data.path);
+      const { data: { publicUrl } } = supabase.storage.from('event-images').getPublicUrl(data.path);
 
       // Atualizar estado local
       setCompany({
@@ -287,25 +248,31 @@ const SettingsPage = () => {
       setIsUploadingLogo(false);
     }
   };
+
   const handleRemoveLogo = () => {
     if (company) {
       setCompany({
         ...company,
-        logo_url: ''
+        logo_url: null
       });
     }
   };
+
   if (loading || isLoading) {
-    return <AdminLayout>
+    return (
+      <AdminLayout>
         <div className="flex items-center justify-center py-12">
           <div className="text-center space-y-4">
             <Loader2 className="h-8 w-8 animate-spin mx-auto" />
             <p className="text-muted-foreground">Carregando configurações...</p>
           </div>
         </div>
-      </AdminLayout>;
+      </AdminLayout>
+    );
   }
-  return <AdminLayout>
+
+  return (
+    <AdminLayout>
       <div className="space-y-6">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold">Configurações</h1>
@@ -353,89 +320,36 @@ const SettingsPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="company-description">Descrição</Label>
-                  <Textarea id="company-description" rows={3} value={company?.description || ''} onChange={e => handleCompanyChange('description', e.target.value)} />
-                </div>
-
-                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                   <div className="space-y-2">
-                     <Label htmlFor="company-street">Rua</Label>
-                     <Input id="company-street" placeholder="Nome da rua, número" value={(() => {
-                    const addressParts = (company?.address || '').split(', ');
-                    return addressParts[0] || '';
-                  })()} onChange={e => {
-                    const currentAddress = company?.address || '';
-                    const parts = currentAddress.split(', ');
-                    const newParts = [e.target.value.trim(), parts[1] || '', parts[2] || ''];
-                    const filteredParts = newParts.filter((part, index) => {
-                      if (index === 0) return part !== ''; // Rua pode estar vazia
-                      return part.trim() !== '';
-                    });
-                    const newAddress = filteredParts.join(', ');
-                    handleCompanyChange('address', newAddress);
-                  }} />
-                   </div>
-                   
-                   <div className="space-y-2">
-                     <Label htmlFor="company-city">Cidade</Label>
-                     <Input id="company-city" placeholder="Nome da cidade" value={(() => {
-                    const addressParts = (company?.address || '').split(', ');
-                    return addressParts[1] || '';
-                  })()} onChange={e => {
-                    const currentAddress = company?.address || '';
-                    const parts = currentAddress.split(', ');
-                    const newParts = [parts[0] || '', e.target.value.trim(), parts[2] || ''];
-                    const filteredParts = newParts.filter((part, index) => {
-                      if (index === 1) return part !== ''; // Cidade pode estar vazia
-                      return part.trim() !== '';
-                    });
-                    const newAddress = filteredParts.join(', ');
-                    handleCompanyChange('address', newAddress);
-                  }} />
-                   </div>
-                   
-                   <div className="space-y-2">
-                     <Label htmlFor="company-state">Estado</Label>
-                     <Input id="company-state" placeholder="UF" maxLength={2} value={(() => {
-                    const addressParts = (company?.address || '').split(', ');
-                    return addressParts[2] || '';
-                  })()} onChange={e => {
-                    const currentAddress = company?.address || '';
-                    const parts = currentAddress.split(', ');
-                    const newParts = [parts[0] || '', parts[1] || '', e.target.value.trim().toUpperCase()];
-                    const filteredParts = newParts.filter((part, index) => {
-                      if (index === 2) return part !== ''; // Estado pode estar vazio
-                      return part.trim() !== '';
-                    });
-                    const newAddress = filteredParts.join(', ');
-                    handleCompanyChange('address', newAddress);
-                  }} />
-                   </div>
-                 </div>
-
-                <div className="space-y-2">
                   <Label>Logotipo da Empresa</Label>
                   <div className="space-y-3">
-                    {company?.logo_url ? <div className="relative inline-block">
+                    {company?.logo_url ? (
+                      <div className="relative inline-block">
                         <img src={company.logo_url} alt="Logo da empresa" className="h-20 w-20 object-cover rounded-lg border shadow-sm" onError={e => {
-                      e.currentTarget.style.display = 'none';
-                    }} />
+                          e.currentTarget.style.display = 'none';
+                        }} />
                         <Button type="button" variant="destructive" size="sm" className="absolute -top-2 -right-2 h-6 w-6 rounded-full p-0" onClick={handleRemoveLogo}>
                           <X className="h-3 w-3" />
                         </Button>
-                      </div> : <div className="h-20 w-20 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
+                      </div>
+                    ) : (
+                      <div className="h-20 w-20 border-2 border-dashed border-muted-foreground/25 rounded-lg flex items-center justify-center">
                         <Upload className="h-6 w-6 text-muted-foreground" />
-                      </div>}
+                      </div>
+                    )}
                     
                     <div className="flex items-center space-x-2">
                       <Button type="button" variant="outline" disabled={isUploadingLogo} onClick={() => document.getElementById('logo-upload')?.click()}>
-                        {isUploadingLogo ? <>
+                        {isUploadingLogo ? (
+                          <>
                             <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                             Enviando...
-                          </> : <>
+                          </>
+                        ) : (
+                          <>
                             <Upload className="mr-2 h-4 w-4" />
                             {company?.logo_url ? 'Trocar Logo' : 'Enviar Logo'}
-                          </>}
+                          </>
+                        )}
                       </Button>
                       <Input id="logo-upload" type="file" accept="image/*" onChange={handleLogoUpload} className="hidden" />
                     </div>
@@ -456,42 +370,17 @@ const SettingsPage = () => {
                   </div>
                   
                   <div className="space-y-2">
-                    <Label>CNPJ</Label>
-                    <Input value={company?.cnpj || ''} disabled />
-                    <p className="text-xs text-muted-foreground">
-                      O CNPJ não pode ser alterado
-                    </p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label>Slug da Empresa</Label>
+                    <Label>Slug (URL)</Label>
                     <Input value={company?.slug || ''} disabled />
                     <p className="text-xs text-muted-foreground">
-                      URL: convidy.com/{company?.slug}
+                      O slug é usado na URL pública
                     </p>
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Plano Atual</Label>
-                    <div className="flex items-center space-x-2">
-                      <Badge variant="secondary" className="bg-amber-100">Empresarial</Badge>
-                      <Badge variant={company?.status === 'active' ? 'default' : 'destructive'}>
-                        {company?.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </div>
                   </div>
                 </div>
 
                 <Button onClick={saveCompanyData} disabled={isSaving}>
-                  {isSaving ? <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </> : <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Salvar Alterações
-                    </>}
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Salvar Alterações
                 </Button>
               </CardContent>
             </Card>
@@ -503,60 +392,68 @@ const SettingsPage = () => {
               <CardHeader>
                 <CardTitle>Configurações de Notificação</CardTitle>
                 <CardDescription>
-                  Gerencie como você quer ser notificado sobre eventos
+                  Configure como você deseja receber notificações
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
                 <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Novas confirmações</Label>
+                    <div className="space-y-0.5">
+                      <Label>Notificações por Email</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receber notificação quando alguém confirmar presença
+                        Receba notificações por email
                       </p>
                     </div>
-                    <Switch checked={notifications.new_registration} onCheckedChange={checked => handleNotificationChange('new_registration', checked)} />
+                    <Switch
+                      checked={notifications.email_notifications}
+                      onCheckedChange={(checked) => handleNotificationChange('email_notifications', checked)}
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Lembretes de evento</Label>
+                    <div className="space-y-0.5">
+                      <Label>Notificações por WhatsApp</Label>
                       <p className="text-sm text-muted-foreground">
-                        Receber lembrete antes do evento começar
+                        Receba notificações por WhatsApp
                       </p>
                     </div>
-                    <Switch checked={notifications.event_reminder} onCheckedChange={checked => handleNotificationChange('event_reminder', checked)} />
+                    <Switch
+                      checked={notifications.whatsapp_notifications}
+                      onCheckedChange={(checked) => handleNotificationChange('whatsapp_notifications', checked)}
+                    />
                   </div>
 
                   <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Confirmação por email</Label>
+                    <div className="space-y-0.5">
+                      <Label>Notificações por SMS</Label>
                       <p className="text-sm text-muted-foreground">
-                        Enviar email de confirmação para participantes
+                        Receba notificações por SMS
                       </p>
                     </div>
-                    <Switch checked={notifications.email_confirmation} onCheckedChange={checked => handleNotificationChange('email_confirmation', checked)} />
+                    <Switch
+                      checked={notifications.sms_notifications}
+                      onCheckedChange={(checked) => handleNotificationChange('sms_notifications', checked)}
+                    />
                   </div>
 
-                  <div className="flex items-center justify-between">
-                    <div className="space-y-1">
-                      <Label>Alertas de check-in</Label>
-                      <p className="text-sm text-muted-foreground">
-                        Receber notificação quando alguém fizer check-in
-                      </p>
-                    </div>
-                    <Switch checked={notifications.checkin_alert} onCheckedChange={checked => handleNotificationChange('checkin_alert', checked)} />
+                  <div className="space-y-2">
+                    <Label>Dias de antecedência para lembretes</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="30"
+                      value={notifications.reminder_days_before}
+                      onChange={(e) => handleNotificationChange('reminder_days_before', parseInt(e.target.value) || 1)}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Quantos dias antes do evento enviar lembretes
+                    </p>
                   </div>
                 </div>
 
                 <Button onClick={saveNotificationSettings} disabled={isSaving}>
-                  {isSaving ? <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Salvando...
-                    </> : <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Salvar Configurações
-                    </>}
+                  {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                  Salvar Configurações
                 </Button>
               </CardContent>
             </Card>
@@ -568,41 +465,30 @@ const SettingsPage = () => {
               <CardHeader>
                 <CardTitle>Informações do Perfil</CardTitle>
                 <CardDescription>
-                  Suas informações pessoais de acesso
+                  Visualize as informações do seu perfil
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Nome</Label>
-                    <Input value={profile?.name || ''} disabled />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Email</Label>
-                    <Input value={user?.email || ''} disabled />
-                  </div>
-                  
-                  <div className="space-y-2">
-                    <Label>Função</Label>
-                    <Badge variant="secondary">{profile?.role || 'Admin'}</Badge>
-                  </div>
+              <CardContent className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input value={profile?.name || ''} disabled />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input value={profile?.email || user?.email || ''} disabled />
                 </div>
 
-                <div className="flex items-center space-x-2 p-4 bg-muted/50 rounded-lg">
-                  <Shield className="h-5 w-5 text-muted-foreground" />
-                  <div className="space-y-1">
-                    <p className="text-sm font-medium">Informações protegidas</p>
-                    <p className="text-xs text-muted-foreground">
-                      Para alterar essas informações, entre em contato com o suporte
-                    </p>
-                  </div>
-                </div>
+                <p className="text-sm text-muted-foreground">
+                  Para alterar suas informações de perfil, entre em contato com o suporte.
+                </p>
               </CardContent>
             </Card>
           </TabsContent>
         </Tabs>
       </div>
-    </AdminLayout>;
+    </AdminLayout>
+  );
 };
+
 export default SettingsPage;

@@ -15,18 +15,17 @@ import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { ConfirmationFilters } from '@/components/ConfirmationFilters';
 import { exportConfirmations } from '@/lib/export';
+
 interface Registration {
   id: string;
   name: string;
-  email: string;
-  phone: string;
-  document: string;
-  document_type: string;
+  email: string | null;
+  phone: string | null;
+  cpf: string | null;
   status: string;
-  checked_in: boolean;
-  checkin_time: string | null;
+  checked_in_at: string | null;
   created_at: string;
-  qr_code: string;
+  qr_code: string | null;
   event?: {
     id: string;
     title: string;
@@ -35,24 +34,25 @@ interface Registration {
     location: string;
   } | null;
 }
+
 interface Company {
   id: string;
   name: string;
 }
+
 interface Invite {
   id: string;
-  full_name: string;
-  cpf: string;
-  whatsapp: string;
-  email?: string;
+  name: string;
+  cpf: string | null;
+  phone: string | null;
+  email: string | null;
   status: string;
   created_at: string;
-  event_id: string;
+  event_id: string | null;
 }
+
 const Confirmations = () => {
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [searchParams] = useSearchParams();
   const eventFilter = searchParams.get('event');
   const [registrations, setRegistrations] = useState<Registration[]>([]);
@@ -65,6 +65,7 @@ const Confirmations = () => {
   const [statusFilter, setStatusFilter] = useState('all');
   const [checkinFilter, setCheckinFilter] = useState('all');
   const [events, setEvents] = useState<any[]>([]);
+
   useEffect(() => {
     fetchCompanyAndRegistrations();
   }, []);
@@ -83,53 +84,36 @@ const Confirmations = () => {
       supabase.removeChannel(channel);
     };
   }, []);
+
   const fetchCompanyAndRegistrations = async () => {
     try {
       console.log('Iniciando fetchCompanyAndRegistrations...');
 
       // Buscar perfil do usuário para obter company_id
-      const {
-        data: {
-          user
-        }
-      } = await supabase.auth.getUser();
+      const { data: { user } } = await supabase.auth.getUser();
       console.log('Usuário:', user);
       if (!user) {
         console.log('Usuário não encontrado');
         return;
       }
-      const {
-        data: profile,
-        error: profileError
-      } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
-      console.log('Profile:', {
-        profile,
-        profileError
-      });
+      const { data: profile, error: profileError } = await supabase.from('profiles').select('company_id').eq('user_id', user.id).single();
+      console.log('Profile:', { profile, profileError });
       if (!profile?.company_id) {
         console.log('company_id não encontrado no profile');
         return;
       }
 
       // Buscar dados da empresa
-      const {
-        data: companyData
-      } = await supabase.from('companies').select('id, name').eq('id', profile.company_id).single();
+      const { data: companyData } = await supabase.from('companies').select('id, name').eq('id', profile.company_id).single();
       console.log('Dados da empresa:', companyData);
       setCompany(companyData);
 
       // Primeiro, buscar todos os eventos da empresa
-      const {
-        data: events,
-        error: eventsError
-      } = await supabase.from('events').select('id, title, date, time, location').eq('company_id', profile.company_id);
-      console.log('Eventos da empresa:', {
-        events,
-        eventsError
-      });
+      const { data: eventsData, error: eventsError } = await supabase.from('events').select('id, title, date, time, location').eq('company_id', profile.company_id);
+      console.log('Eventos da empresa:', { events: eventsData, eventsError });
       if (eventsError) throw eventsError;
-      setEvents(events || []);
-      if (!events || events.length === 0) {
+      setEvents(eventsData || []);
+      if (!eventsData || eventsData.length === 0) {
         console.log('Nenhum evento encontrado para esta empresa');
         setRegistrations([]);
         setInvites([]);
@@ -137,41 +121,27 @@ const Confirmations = () => {
       }
 
       // Buscar convites da empresa para cruzamento de dados
-      const {
-        data: invitesData,
-        error: invitesError
-      } = await supabase.from('invites').select('*').eq('company_id', profile.company_id);
-      console.log('Convites da empresa:', {
-        invitesData,
-        invitesError
-      });
-      if (!invitesError) {
-        setInvites(invitesData || []);
+      const { data: invitesData, error: invitesError } = await supabase.from('invites').select('*').eq('company_id', profile.company_id);
+      console.log('Convites da empresa:', { invitesData, invitesError });
+      if (!invitesError && invitesData) {
+        setInvites(invitesData);
       }
 
       // Buscar confirmações desses eventos
-      const eventIds = events.map(e => e.id);
-      let query = supabase.from('registrations').select('*').in('event_id', eventIds).order('created_at', {
-        ascending: false
-      });
+      const eventIds = eventsData.map(e => e.id);
+      let query = supabase.from('registrations').select('*').in('event_id', eventIds).order('created_at', { ascending: false });
 
       // Filtrar por evento específico se especificado na URL
       if (eventFilter) {
         query = query.eq('event_id', eventFilter);
       }
-      const {
-        data: registrationsData,
-        error
-      } = await query;
-      console.log('Dados das confirmações:', {
-        registrationsData,
-        error
-      });
+      const { data: registrationsData, error } = await query;
+      console.log('Dados das confirmações:', { registrationsData, error });
       if (error) throw error;
 
       // Combinar dados de registrations com eventos
       const formattedRegistrations = registrationsData?.map(reg => {
-        const eventData = events.find(e => e.id === reg.event_id);
+        const eventData = eventsData.find(e => e.id === reg.event_id);
         return {
           ...reg,
           event: eventData || {
@@ -196,11 +166,10 @@ const Confirmations = () => {
       setLoading(false);
     }
   };
+
   const handleDeleteRegistration = async (registrationId: string) => {
     try {
-      const {
-        error
-      } = await supabase.from('registrations').delete().eq('id', registrationId);
+      const { error } = await supabase.from('registrations').delete().eq('id', registrationId);
       if (error) throw error;
       setRegistrations(prev => prev.filter(reg => reg.id !== registrationId));
       toast({
@@ -216,33 +185,39 @@ const Confirmations = () => {
       });
     }
   };
+
   const filteredRegistrations = registrations.filter(reg => {
     // Filtro de texto
-    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) || reg.email.toLowerCase().includes(searchTerm.toLowerCase()) || reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesSearch = reg.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+      (reg.email && reg.email.toLowerCase().includes(searchTerm.toLowerCase())) || 
+      (reg.event?.title && reg.event.title.toLowerCase().includes(searchTerm.toLowerCase()));
 
     // Filtro de status
     const matchesStatus = statusFilter === 'all' || reg.status === statusFilter;
 
     // Filtro de check-in
-    const matchesCheckin = checkinFilter === 'all' || checkinFilter === 'checked_in' && reg.checked_in || checkinFilter === 'pending' && !reg.checked_in;
+    const isCheckedIn = reg.status === 'checked_in';
+    const matchesCheckin = checkinFilter === 'all' || 
+      (checkinFilter === 'checked_in' && isCheckedIn) || 
+      (checkinFilter === 'pending' && !isCheckedIn);
+    
     return matchesSearch && matchesStatus && matchesCheckin;
   });
+
   const formatDate = (dateString: string) => {
-    return format(new Date(dateString + 'T00:00:00'), "dd/MM/yyyy", {
-      locale: ptBR
-    });
+    return format(new Date(dateString + 'T00:00:00'), "dd/MM/yyyy", { locale: ptBR });
   };
+
   const formatTime = (timeString: string) => {
     return timeString.slice(0, 5);
   };
+
   const formatCreatedAt = (dateString: string) => {
-    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", {
-      locale: ptBR
-    });
+    return format(new Date(dateString), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR });
   };
 
   // Cálculos de indicadores com cruzamento de dados
-  const normalizeDocument = (doc: string) => doc.replace(/\D/g, '');
+  const normalizeDocument = (doc: string | null) => doc ? doc.replace(/\D/g, '') : '';
 
   // Filtrar convites e confirmações por evento se especificado
   const filteredInvites = eventFilter ? invites.filter(invite => invite.event_id === eventFilter) : invites;
@@ -250,35 +225,40 @@ const Confirmations = () => {
 
   // Encontrar confirmações que vieram de convites (cross-reference por CPF)
   const confirmedFromInvites = filteredConfirmations.filter(reg => {
-    const regDoc = normalizeDocument(reg.document);
-    return filteredInvites.some(invite => normalizeDocument(invite.cpf) === regDoc);
+    const regDoc = normalizeDocument(reg.cpf);
+    return regDoc && filteredInvites.some(invite => normalizeDocument(invite.cpf) === regDoc);
   });
 
   // Convites que ainda não confirmaram
   const invitesNotConfirmed = filteredInvites.filter(invite => {
     const inviteDoc = normalizeDocument(invite.cpf);
-    return !filteredConfirmations.some(reg => normalizeDocument(reg.document) === inviteDoc);
+    return inviteDoc && !filteredConfirmations.some(reg => normalizeDocument(reg.cpf) === inviteDoc);
   });
 
   // Confirmações espontâneas (não vieram de convites)
   const spontaneousConfirmations = filteredConfirmations.filter(reg => {
-    const regDoc = normalizeDocument(reg.document);
-    return !filteredInvites.some(invite => normalizeDocument(invite.cpf) === regDoc);
+    const regDoc = normalizeDocument(reg.cpf);
+    return !regDoc || !filteredInvites.some(invite => normalizeDocument(invite.cpf) === regDoc);
   });
 
   // Taxa de conversão
   const conversionRate = filteredInvites.length > 0 ? (confirmedFromInvites.length / filteredInvites.length * 100).toFixed(1) : '0';
+
   if (loading) {
-    return <AdminLayout>
+    return (
+      <AdminLayout>
         <div className="flex items-center justify-center min-h-[400px]">
           <div className="text-center space-y-4">
             <Users className="h-8 w-8 animate-pulse mx-auto" />
             <p className="text-muted-foreground">Carregando confirmações...</p>
           </div>
         </div>
-      </AdminLayout>;
+      </AdminLayout>
+    );
   }
-  return <AdminLayout>
+
+  return (
+    <AdminLayout>
       <div className="space-y-6">
         {/* Header */}
         <div className="space-y-4">
@@ -370,18 +350,30 @@ const Confirmations = () => {
         </div>
 
         {/* Filtros */}
-        <ConfirmationFilters eventFilter={eventFilter || 'all'} statusFilter={statusFilter} checkinFilter={checkinFilter} searchTerm={searchTerm} onEventFilterChange={eventId => {
-        // Atualizar URL se necessário
-        if (eventId === 'all') {
-          window.history.pushState({}, '', '/confirmations');
-        } else {
-          window.history.pushState({}, '', `/confirmations?event=${eventId}`);
-        }
-        fetchCompanyAndRegistrations();
-      }} onStatusFilterChange={setStatusFilter} onCheckinFilterChange={setCheckinFilter} onSearchTermChange={setSearchTerm} events={events} registrations={registrations} />
+        <ConfirmationFilters 
+          eventFilter={eventFilter || 'all'} 
+          statusFilter={statusFilter} 
+          checkinFilter={checkinFilter} 
+          searchTerm={searchTerm} 
+          onEventFilterChange={eventId => {
+            // Atualizar URL se necessário
+            if (eventId === 'all') {
+              window.history.pushState({}, '', '/confirmations');
+            } else {
+              window.history.pushState({}, '', `/confirmations?event=${eventId}`);
+            }
+            fetchCompanyAndRegistrations();
+          }} 
+          onStatusFilterChange={setStatusFilter} 
+          onCheckinFilterChange={setCheckinFilter} 
+          onSearchTermChange={setSearchTerm} 
+          events={events} 
+          registrations={registrations} 
+        />
 
         {/* Lista de Confirmações */}
-        {filteredRegistrations.length === 0 ? <Card>
+        {filteredRegistrations.length === 0 ? (
+          <Card>
             <CardContent className="flex flex-col items-center justify-center py-12">
               <Users className="h-12 w-12 text-muted-foreground mb-4" />
               <h3 className="text-lg font-semibold mb-2">Nenhuma confirmação encontrada</h3>
@@ -389,18 +381,21 @@ const Confirmations = () => {
                 {searchTerm ? 'Nenhuma confirmação corresponde aos critérios de busca.' : 'Ainda não há confirmações de presença.'}
               </p>
             </CardContent>
-          </Card> : <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
-            {filteredRegistrations.map(registration => <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
+          </Card>
+        ) : (
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+            {filteredRegistrations.map(registration => (
+              <Card key={registration.id} className="hover:shadow-md transition-all duration-200">
                 <CardContent className="p-4">
                   {/* Header com nome e status */}
                   <div className="flex items-start justify-between mb-3">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-lg text-foreground truncate">{registration.name}</h3>
-                      <p className="text-sm text-muted-foreground truncate">{registration.email}</p>
+                      <p className="text-sm text-muted-foreground truncate">{registration.email || '-'}</p>
                     </div>
                     <div className="flex flex-col gap-0.5 ml-2">
                       {getConfirmationStatusBadge(registration.status)}
-                      {registration.checked_in && getCheckinStatusBadge(registration.checked_in)}
+                      {registration.status === 'checked_in' && getCheckinStatusBadge(true)}
                     </div>
                   </div>
 
@@ -424,72 +419,34 @@ const Confirmations = () => {
                   {/* Informações pessoais e datas */}
                   <div className="grid grid-cols-2 gap-4 text-xs text-muted-foreground mb-3">
                     <div className="space-y-1">
-                      <div><strong>CPF:</strong> {registration.document?.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**")}</div>
+                      <div><strong>CPF:</strong> {registration.cpf ? registration.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, "$1.***.$3-**") : '-'}</div>
                       {registration.phone && <div><strong>Tel:</strong> {registration.phone}</div>}
                     </div>
                     <div className="space-y-1">
-                      <div><strong>Confirmado:</strong> {formatCreatedAt(registration.created_at)}</div>
-                      {registration.checked_in && registration.checkin_time && (
-                        <div><strong>Check-in:</strong> {formatCreatedAt(registration.checkin_time)}</div>
-                      )}
+                      <div><strong>Confirmado em:</strong></div>
+                      <div>{formatCreatedAt(registration.created_at)}</div>
                     </div>
                   </div>
 
-                  {/* Botões de ação */}
-                  <div className="flex space-x-2 pt-2 border-t border-border/50">
+                  {/* Ações */}
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t">
                     <Button
-                      size="sm"
                       variant="outline"
-                      onClick={() => setSelectedRegistration(registration)}
-                    >
-                      <Edit className="h-4 w-4" />
-                    </Button>
-                    <Button
                       size="sm"
-                      variant="outline"
                       onClick={() => handleDeleteRegistration(registration.id)}
+                      className="text-destructive hover:text-destructive"
                     >
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </CardContent>
-              </Card>)}
-          </div>}
-
-        {/* Dialog de Edição */}
-        <Dialog open={!!selectedRegistration} onOpenChange={() => setSelectedRegistration(null)}>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Editar Confirmação</DialogTitle>
-              <DialogDescription>
-                Edite os dados da confirmação de {selectedRegistration?.name}
-              </DialogDescription>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="edit-name">Nome</Label>
-                <Input id="edit-name" defaultValue={selectedRegistration?.name} placeholder="Nome completo" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-email">Email</Label>
-                <Input id="edit-email" type="email" defaultValue={selectedRegistration?.email} placeholder="email@exemplo.com" />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="edit-phone">Telefone</Label>
-                <Input id="edit-phone" defaultValue={selectedRegistration?.phone} placeholder="(11) 99999-9999" />
-              </div>
-              <div className="flex justify-end space-x-2">
-                <Button variant="outline" onClick={() => setSelectedRegistration(null)}>
-                  Cancelar
-                </Button>
-                <Button>
-                  Salvar Alterações
-                </Button>
-              </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+              </Card>
+            ))}
+          </div>
+        )}
       </div>
-    </AdminLayout>;
+    </AdminLayout>
+  );
 };
+
 export default Confirmations;

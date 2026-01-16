@@ -222,22 +222,6 @@ const CompanyPublic = () => {
       });
     }
 
-    // Carregar imagem do evento se existir
-    let eventImageDataUrl = '';
-    if (data.eventImageUrl) {
-      try {
-        const response = await fetch(data.eventImageUrl);
-        const blob = await response.blob();
-        eventImageDataUrl = await new Promise<string>((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result as string);
-          reader.readAsDataURL(blob);
-        });
-      } catch (e) {
-        console.log('Não foi possível carregar imagem do evento:', e);
-      }
-    }
-
     let currentY = 15;
 
     // Header com fundo azul
@@ -348,19 +332,8 @@ const CompanyPublic = () => {
       currentY += (limitedDescLines.length * 4) + 10;
     }
     
-    // Imagem do evento (se existir) - pequena e centralizada
-    if (eventImageDataUrl) {
-      try {
-        const imgWidth = 80;
-        const imgHeight = 45;
-        const imgX = (pageWidth - imgWidth) / 2;
-        doc.addImage(eventImageDataUrl, 'JPEG', imgX, currentY, imgWidth, imgHeight);
-        currentY += imgHeight + 10;
-      } catch (e) {
-        console.log('Erro ao adicionar imagem:', e);
-      }
-    }
-    
+
+
     // Rodapé
     doc.setFontSize(7);
     doc.setTextColor(150, 150, 150);

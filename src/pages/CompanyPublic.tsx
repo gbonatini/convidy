@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -15,14 +15,12 @@ import {
   Users, 
   Clock,
   Building,
-  Phone,
-  Mail,
   Loader2,
   CheckCircle,
   BarChart3,
   Download
 } from 'lucide-react';
-import JsBarcode from 'jsbarcode';
+import { QRCodeSVG } from 'qrcode.react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 
@@ -74,9 +72,8 @@ const CompanyPublic = () => {
     email: ''
   });
   const [registrationData, setRegistrationData] = useState<any>(null);
-  const [showBarcode, setShowBarcode] = useState(false);
+  const [showQRCode, setShowQRCode] = useState(false);
   const [eventCapacityStatus, setEventCapacityStatus] = useState<{[key: string]: {current: number, isFull: boolean}}>({});
-  const barcodeRef = useRef<HTMLCanvasElement>(null);
 
   // Redireciona para a versão normalizada da URL (evita 404 por traço/unicode)
   useEffect(() => {
@@ -90,70 +87,6 @@ const CompanyPublic = () => {
       fetchCompanyAndEvents();
     }
   }, [safeSlug]);
-
-  // Gerar código de barras quando registrationData estiver disponível
-  useEffect(() => {
-    if (registrationData && showBarcode && registrationData.document) {
-      console.log('📊 Tentando gerar código de barras para CPF:', registrationData.document);
-      
-      // Aguardar o canvas estar renderizado no DOM
-      const generateBarcode = () => {
-        if (barcodeRef.current) {
-          try {
-            console.log('🎯 Canvas encontrado, gerando código de barras...');
-            
-            // Limpar o canvas
-            const canvas = barcodeRef.current;
-            const ctx = canvas.getContext('2d');
-            if (ctx) {
-              ctx.clearRect(0, 0, canvas.width, canvas.height);
-            }
-            
-            // Usar o CPF limpo do registro
-            const cleanDocument = registrationData.document.replace(/[^0-9]/g, '');
-            
-            if (!cleanDocument || cleanDocument.length === 0) {
-              throw new Error('CPF inválido para gerar código de barras');
-            }
-            
-            console.log('📋 Gerando código de barras com CPF:', cleanDocument);
-            
-            // Gerar o código de barras
-            JsBarcode(barcodeRef.current, cleanDocument, {
-              format: "CODE128",
-              width: 2,
-              height: 40,
-              displayValue: true,
-              fontSize: 10,
-              margin: 5
-            });
-            
-            console.log('✅ Barcode gerado com sucesso!');
-          } catch (error) {
-            console.error('❌ Erro ao gerar código de barras:', error);
-            
-            // Fallback: mostrar mensagem de erro no canvas
-            if (barcodeRef.current) {
-              const ctx = barcodeRef.current.getContext('2d');
-              if (ctx) {
-                ctx.clearRect(0, 0, barcodeRef.current.width, barcodeRef.current.height);
-                ctx.font = '12px Arial';
-                ctx.fillStyle = 'red';
-                ctx.fillText('Erro ao gerar código', 10, 30);
-              }
-            }
-          }
-        } else {
-          console.log('⏳ Canvas ainda não disponível, tentando novamente em 100ms...');
-          // Tentar novamente após um pequeno delay
-          setTimeout(generateBarcode, 100);
-        }
-      };
-      
-      // Aguardar um pouco para o modal estar completamente renderizado
-      setTimeout(generateBarcode, 100);
-    }
-  }, [registrationData, showBarcode]);
 
   const checkEventsCapacity = async (eventsData: Event[]) => {
     const capacityPromises = eventsData.map(async (event) => {
@@ -369,7 +302,7 @@ const CompanyPublic = () => {
 
       toast({
         title: "🎉 Confirmação realizada!",
-        description: "Aguarde... gerando seu código de barras de check-in!",
+        description: "Sua presença foi confirmada com sucesso!",
       });
 
       console.log('Fechando modal de confirmação...');
@@ -387,44 +320,16 @@ const CompanyPublic = () => {
         return updated;
       });
       
-      console.log('Limpando formulário...');
+      // Mostrar QR Code com CPF normalizado
+      setRegistrationData({ 
+        cpf: normalizedDocument,
+        name: formData.name,
+        eventTitle: selectedEvent.title
+      });
+      setShowQRCode(true);
+      
+      // Limpar formulário
       setFormData({ name: '', document: '', phone: '', email: '' });
-
-      // Buscar o registro via função segura (sem SELECT público)
-      const fetchBarcode = async () => {
-        const { data: regRow, error: regErr } = await (supabase as any).rpc('get_registration_public', {
-          event_uuid: selectedEvent.id,
-          document_text: normalizedDocument,
-          phone_text: formData.phone,
-        });
-        return { regRow, regErr };
-      };
-
-      const { regRow, regErr } = await fetchBarcode();
-      if (regErr || !regRow) {
-        console.log('Código de barras não disponível imediatamente, tentando novamente...', regErr);
-        await new Promise((r) => setTimeout(r, 400));
-        const { regRow: regRow2, regErr: regErr2 } = await fetchBarcode();
-        if (regErr2 || !regRow2) {
-          console.error('Erro ao obter código de barras após retry:', regErr2);
-          toast({
-            variant: "destructive",
-            title: "Erro ao gerar código de barras",
-            description: "Registro salvo, mas houve problema ao gerar código de barras.",
-          });
-        } else {
-          console.log('Código de barras obtido no retry:', regRow2);
-          const regData = Array.isArray(regRow2) ? regRow2[0] : regRow2;
-          setRegistrationData({ ...regData, document: normalizedDocument });
-          setShowBarcode(true);
-        }
-      } else {
-        console.log('Código de barras obtido:', regRow);
-        console.log('Código de barras value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
-        const regData = Array.isArray(regRow) ? regRow[0] : regRow;
-        setRegistrationData({ ...regData, document: normalizedDocument });
-        setShowBarcode(true);
-      }
 
     } catch (error: any) {
       console.error('=== ERRO NA CONFIRMAÇÃO ===');
@@ -709,13 +614,11 @@ const CompanyPublic = () => {
         </div>
       </main>
 
-      {/* Código de Barras Modal */}
-      <Dialog open={showBarcode} onOpenChange={(open) => {
+      {/* QR Code Modal */}
+      <Dialog open={showQRCode} onOpenChange={(open) => {
         if (!open) {
-          // Resetar estados quando fechar o modal
-          setShowBarcode(false);
+          setShowQRCode(false);
           setRegistrationData(null);
-          setFormData({ name: '', document: '', phone: '', email: '' });
         }
       }}>
         <DialogContent className="w-[90vw] sm:max-w-[400px] p-6">
@@ -725,7 +628,7 @@ const CompanyPublic = () => {
               Confirmação Realizada!
             </DialogTitle>
             <p className="text-sm text-muted-foreground">
-              Sua presença foi confirmada com sucesso. Use o código de barras abaixo para o check-in no evento.
+              Sua presença foi confirmada com sucesso. Use o QR Code abaixo para o check-in no evento.
             </p>
           </DialogHeader>
           
@@ -733,24 +636,24 @@ const CompanyPublic = () => {
             <div className="space-y-6">
               <div className="text-center">
                 <div className="bg-white p-4 rounded-lg border-2 inline-block shadow-sm">
-                  <canvas 
-                    ref={barcodeRef}
-                    width={250}
-                    height={60}
-                    className="max-w-full"
-                    style={{ border: '1px solid #ccc' }}
+                  <QRCodeSVG 
+                    value={registrationData.cpf}
+                    size={200}
+                    level="H"
+                    includeMargin
                   />
                 </div>
+                <p className="mt-3 text-sm font-medium">{registrationData.name}</p>
+                <p className="text-xs text-muted-foreground">{registrationData.eventTitle}</p>
               </div>
               
               <div className="text-center text-xs text-muted-foreground">
-                Salve ou imprima este código de barras para apresentar no evento
+                Salve ou faça uma captura de tela deste QR Code para apresentar no evento
               </div>
               
               <Button onClick={() => {
-                setShowBarcode(false);
+                setShowQRCode(false);
                 setRegistrationData(null);
-                setFormData({ name: '', document: '', phone: '', email: '' });
               }} className="w-full">
                 Fechar
               </Button>

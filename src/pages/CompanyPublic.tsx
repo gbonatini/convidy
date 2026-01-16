@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -23,6 +23,7 @@ import {
 import { QRCodeSVG } from 'qrcode.react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import jsPDF from 'jspdf';
 
 interface Company {
   id: string;
@@ -74,6 +75,7 @@ const CompanyPublic = () => {
   const [registrationData, setRegistrationData] = useState<any>(null);
   const [showQRCode, setShowQRCode] = useState(false);
   const [eventCapacityStatus, setEventCapacityStatus] = useState<{[key: string]: {current: number, isFull: boolean}}>({});
+  const qrCodeRef = useRef<HTMLDivElement>(null);
 
   // Redireciona para a versão normalizada da URL (evita 404 por traço/unicode)
   useEffect(() => {
@@ -190,7 +192,89 @@ const CompanyPublic = () => {
   };
 
   const formatTime = (timeString: string) => {
-    return timeString.slice(0, 5);
+    return timeString?.slice(0, 5) || '';
+  };
+
+  const generatePDF = (data: any) => {
+    const doc = new jsPDF();
+    const pageWidth = doc.internal.pageSize.getWidth();
+    
+    // Título
+    doc.setFontSize(22);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Ingresso Digital', pageWidth / 2, 25, { align: 'center' });
+    
+    // Linha decorativa
+    doc.setDrawColor(100, 100, 100);
+    doc.line(20, 32, pageWidth - 20, 32);
+    
+    // Nome do participante
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.text(data.name, pageWidth / 2, 50, { align: 'center' });
+    
+    // CPF
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    const cpfFormatted = data.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    doc.text(`CPF: ${cpfFormatted}`, pageWidth / 2, 58, { align: 'center' });
+    
+    // QR Code placeholder info
+    doc.setFontSize(12);
+    doc.setTextColor(0, 0, 0);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Apresente este documento no check-in', pageWidth / 2, 75, { align: 'center' });
+    
+    // Caixa do evento
+    doc.setFillColor(245, 245, 245);
+    doc.roundedRect(20, 85, pageWidth - 40, 80, 3, 3, 'F');
+    
+    // Título do evento
+    doc.setFontSize(18);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    doc.text(data.eventTitle, pageWidth / 2, 100, { align: 'center' });
+    
+    // Organizador
+    if (data.companyName) {
+      doc.setFontSize(11);
+      doc.setFont('helvetica', 'normal');
+      doc.setTextColor(100, 100, 100);
+      doc.text(`Organizado por: ${data.companyName}`, pageWidth / 2, 110, { align: 'center' });
+    }
+    
+    // Informações do evento
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(50, 50, 50);
+    
+    const eventDate = new Date(data.eventDate + 'T00:00:00');
+    const formattedDate = format(eventDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
+    const formattedTime = data.eventTime?.slice(0, 5) || '';
+    
+    doc.text(`📅  ${formattedDate}`, 30, 130);
+    doc.text(`🕐  ${formattedTime}`, 30, 140);
+    doc.text(`📍  ${data.eventLocation}`, 30, 150);
+    
+    // QR Code - desenhar como texto informativo
+    doc.setFontSize(10);
+    doc.setTextColor(100, 100, 100);
+    doc.text(`Código de verificação: ${data.cpf}`, pageWidth / 2, 180, { align: 'center' });
+    
+    // Rodapé
+    doc.setFontSize(9);
+    doc.setTextColor(150, 150, 150);
+    doc.text('Gerado por Convidy - Sistema de Gestão de Eventos', pageWidth / 2, 280, { align: 'center' });
+    
+    // Salvar
+    const fileName = `ingresso-${data.eventTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+    doc.save(fileName);
+    
+    toast({
+      title: "PDF gerado!",
+      description: "Seu ingresso foi baixado com sucesso.",
+    });
   };
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -320,11 +404,16 @@ const CompanyPublic = () => {
         return updated;
       });
       
-      // Mostrar QR Code com CPF normalizado
+      // Mostrar QR Code com todas informações do evento
       setRegistrationData({ 
         cpf: normalizedDocument,
         name: formData.name,
-        eventTitle: selectedEvent.title
+        eventTitle: selectedEvent.title,
+        eventDate: selectedEvent.date,
+        eventTime: selectedEvent.time,
+        eventLocation: selectedEvent.location,
+        eventDescription: selectedEvent.description,
+        companyName: company?.name || ''
       });
       setShowQRCode(true);
       
@@ -621,42 +710,70 @@ const CompanyPublic = () => {
           setRegistrationData(null);
         }
       }}>
-        <DialogContent className="w-[90vw] sm:max-w-[400px] p-6">
-          <DialogHeader className="text-center space-y-3">
+        <DialogContent className="w-[90vw] sm:max-w-[450px] p-6 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="text-center space-y-2">
             <DialogTitle className="flex items-center justify-center gap-2 text-lg">
               <CheckCircle className="h-6 w-6 text-green-600" />
               Confirmação Realizada!
             </DialogTitle>
-            <p className="text-sm text-muted-foreground">
-              Sua presença foi confirmada com sucesso. Use o QR Code abaixo para o check-in no evento.
-            </p>
           </DialogHeader>
           
           {registrationData && (
-            <div className="space-y-6">
-              <div className="text-center">
-                <div className="bg-white p-4 rounded-lg border-2 inline-block shadow-sm">
+            <div className="space-y-4">
+              {/* QR Code */}
+              <div className="text-center" ref={qrCodeRef}>
+                <div className="bg-white p-3 rounded-lg border-2 inline-block shadow-sm">
                   <QRCodeSVG 
                     value={registrationData.cpf}
-                    size={200}
+                    size={160}
                     level="H"
                     includeMargin
                   />
                 </div>
-                <p className="mt-3 text-sm font-medium">{registrationData.name}</p>
-                <p className="text-xs text-muted-foreground">{registrationData.eventTitle}</p>
+                <p className="mt-2 text-sm font-medium">{registrationData.name}</p>
+              </div>
+
+              {/* Informações do Evento - Compacto */}
+              <div className="bg-muted/50 rounded-lg p-3 space-y-2 text-sm">
+                <h4 className="font-semibold text-center">{registrationData.eventTitle}</h4>
+                <div className="grid grid-cols-2 gap-2 text-xs">
+                  <div className="flex items-center gap-1.5">
+                    <Calendar className="h-3 w-3 text-muted-foreground" />
+                    <span>{formatDate(registrationData.eventDate)}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Clock className="h-3 w-3 text-muted-foreground" />
+                    <span>{formatTime(registrationData.eventTime)}</span>
+                  </div>
+                </div>
+                <div className="flex items-center gap-1.5 text-xs">
+                  <MapPin className="h-3 w-3 text-muted-foreground flex-shrink-0" />
+                  <span className="truncate">{registrationData.eventLocation}</span>
+                </div>
               </div>
               
-              <div className="text-center text-xs text-muted-foreground">
-                Salve ou faça uma captura de tela deste QR Code para apresentar no evento
+              {/* Botões */}
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => generatePDF(registrationData)} 
+                  className="w-full"
+                  variant="outline"
+                >
+                  <Download className="mr-2 h-4 w-4" />
+                  Baixar PDF do Ingresso
+                </Button>
+                
+                <Button onClick={() => {
+                  setShowQRCode(false);
+                  setRegistrationData(null);
+                }} className="w-full" variant="secondary">
+                  Fechar
+                </Button>
               </div>
-              
-              <Button onClick={() => {
-                setShowQRCode(false);
-                setRegistrationData(null);
-              }} className="w-full">
-                Fechar
-              </Button>
+
+              <p className="text-center text-xs text-muted-foreground">
+                Apresente o QR Code no check-in do evento
+              </p>
             </div>
           )}
         </DialogContent>

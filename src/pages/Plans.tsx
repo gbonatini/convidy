@@ -15,17 +15,15 @@ interface Plan {
   id: string;
   name: string;
   slug: string;
-  description: string;
-  price: number;
+  description: string | null;
+  price: number | null;
   max_events: number | null;
-  max_registrations_per_event: number | null;
-  max_total_registrations: number | null;
+  max_guests_per_event: number | null;
   features: any[];
-  is_active: boolean;
+  is_active: boolean | null;
 }
 interface CompanyPlan {
-  plan_id: string;
-  plan_expires_at: string | null;
+  plan_id: string | null;
   system_plans: {
     name: string;
     slug: string;
@@ -74,8 +72,13 @@ const Plans = () => {
       const {
         data: companyData,
         error: companyError
-      } = await supabase.from('companies').select('plan_id, plan_expires_at').eq('id', profile.company_id).single();
+      } = await supabase.from('companies').select('plan_id').eq('id', profile.company_id).single();
       if (companyError) throw companyError;
+
+      if (!companyData.plan_id) {
+        setCurrentPlan(null);
+        return;
+      }
 
       // Buscar dados do plano
       const {
@@ -85,10 +88,9 @@ const Plans = () => {
       if (planError) throw planError;
       const combinedData = {
         plan_id: companyData.plan_id,
-        plan_expires_at: companyData.plan_expires_at,
         system_plans: planData
       };
-      setCurrentPlan(combinedData as any);
+      setCurrentPlan(combinedData);
     } catch (error) {
       console.error('Erro ao carregar plano atual:', error);
     }
@@ -146,7 +148,6 @@ const Plans = () => {
         error
       } = await supabase.from('companies').update({
         plan_id: planId,
-        plan_expires_at: null,
         updated_at: new Date().toISOString()
       }).eq('id', profile.company_id);
       if (error) throw error;
@@ -232,16 +233,9 @@ const Plans = () => {
                   </div>
                   
                   <div className="flex justify-between items-center">
-                    <span className="text-sm">Confirmações por evento</span>
+                    <span className="text-sm">Convidados por evento</span>
                     <Badge variant="outline">
-                      {formatLimit(plan.max_registrations_per_event)}
-                    </Badge>
-                  </div>
-                  
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Total de confirmações</span>
-                    <Badge variant="outline">
-                      {formatLimit(plan.max_total_registrations)}
+                      {formatLimit(plan.max_guests_per_event)}
                     </Badge>
                   </div>
                 </div>

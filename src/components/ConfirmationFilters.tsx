@@ -47,8 +47,8 @@ export const ConfirmationFilters: React.FC<ConfirmationFiltersProps> = ({
 
   const getCheckinCounts = () => ({
     all: registrations.length,
-    checked_in: registrations.filter(r => r.checked_in).length,
-    pending: registrations.filter(r => !r.checked_in).length,
+    checked_in: registrations.filter(r => r.status === 'checked_in').length,
+    pending: registrations.filter(r => r.status !== 'checked_in').length,
   });
 
   const statusCounts = getStatusCounts();

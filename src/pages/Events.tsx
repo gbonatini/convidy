@@ -28,15 +28,15 @@ import { getEventStatusBadge } from '@/lib/status';
 interface Event {
   id: string;
   title: string;
-  description: string | null;
+  description?: string | null;
   date: string;
-  time: string | null;
-  location: string | null;
-  capacity: number | null;
-  price: number | null;
-  status: string | null;
+  time?: string | null;
+  location?: string | null;
+  capacity?: number | null;
+  price?: number | null;
+  status?: string | null;
   image_url?: string | null;
-  created_at: string | null;
+  created_at?: string | null;
   registrations?: { count: number }[];
 }
 

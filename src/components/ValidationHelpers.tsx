@@ -46,13 +46,13 @@ export const validateEventCapacity = async (eventId: string): Promise<EventCapac
   }
 };
 
-export const validateDuplicateCPF = async (eventId: string, document: string): Promise<DuplicateCPFValidation> => {
+export const validateDuplicateCPF = async (eventId: string, cpf: string): Promise<DuplicateCPFValidation> => {
   try {
     const { data, error } = await supabase
       .from('registrations')
       .select('id, name, email, status')
       .eq('event_id', eventId)
-      .eq('document', document.replace(/\D/g, ''));
+      .eq('cpf', cpf.replace(/\D/g, ''));
 
     if (error) throw error;
 

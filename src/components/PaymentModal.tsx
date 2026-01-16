@@ -18,12 +18,11 @@ interface Plan {
   id: string;
   name: string;
   slug: string;
-  description: string;
-  price: number;
+  description: string | null;
+  price: number | null;
   max_events: number | null;
-  max_registrations_per_event: number | null;
-  max_total_registrations: number | null;
-  features: string[];
+  max_guests_per_event: number | null;
+  features: any[];
 }
 
 interface PaymentModalProps {
@@ -175,12 +174,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
                 <span>{formatLimit(plan.max_events)}</span>
               </div>
               <div className="flex justify-between">
-                <span>Confirmações por evento:</span>
-                <span>{formatLimit(plan.max_registrations_per_event)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Total confirmações:</span>
-                <span>{formatLimit(plan.max_total_registrations)}</span>
+                <span>Convidados por evento:</span>
+                <span>{formatLimit(plan.max_guests_per_event)}</span>
               </div>
             </div>
 

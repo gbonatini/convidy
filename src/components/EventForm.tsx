@@ -37,15 +37,14 @@ type EventFormData = z.infer<typeof eventSchema>;
 interface Event {
   id: string;
   title: string;
-  description: string;
+  description?: string | null;
   date: string;
-  time: string;
-  location: string;
-  address: string;
-  capacity: number;
-  price: number;
-  status: string;
-  image_url?: string;
+  time?: string | null;
+  location?: string | null;
+  capacity?: number | null;
+  price?: number | null;
+  status?: string | null;
+  image_url?: string | null;
 }
 
 interface EventFormProps {
@@ -69,7 +68,7 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
       date: event?.date || '',
       time: event?.time ? event.time.slice(0, 5) : '', // Remove segundos se existir
       location: event?.location || '',
-      address: event?.address || '',
+      address: '',
       capacity: event?.capacity || 50,
       status: (event?.status as 'active' | 'inactive') || 'active',
     },

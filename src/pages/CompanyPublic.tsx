@@ -195,15 +195,15 @@ const CompanyPublic = () => {
       let companyData: any = null;
       let companyError: any = null;
 
-      const { data: companyRows, error: err1 } = await (supabase as any)
-        .rpc('get_company_public', { company_slug: safeSlug });
+      const { data: companyRows, error: err1 } = await supabase
+        .rpc('get_company_public', { p_slug: safeSlug });
       companyError = err1;
       companyData = Array.isArray(companyRows) ? companyRows[0] : companyRows;
 
       // Fallback: tentar com o slug original caso a normalização difira
       if (!companyData && slug && slug !== safeSlug) {
-        const { data: altRows, error: err2 } = await (supabase as any)
-          .rpc('get_company_public', { company_slug: slug });
+        const { data: altRows, error: err2 } = await supabase
+          .rpc('get_company_public', { p_slug: slug });
         if (!companyError) companyError = err2;
         const altData = Array.isArray(altRows) ? altRows[0] : altRows;
         if (altData) companyData = altData;

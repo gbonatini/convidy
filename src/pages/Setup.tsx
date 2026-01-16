@@ -5,7 +5,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Textarea } from '@/components/ui/textarea';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
 import { useToast } from '@/hooks/use-toast';
@@ -29,11 +28,8 @@ const Setup = () => {
   const [loadingPlans, setLoadingPlans] = useState(true);
   const [formData, setFormData] = useState({
     companyName: '',
-    cnpj: '',
-    description: '',
     email: '',
     phone: '',
-    address: '',
     planId: '',
   });
 
@@ -57,7 +53,7 @@ const Setup = () => {
         .from('system_plans')
         .select('*')
         .eq('is_active', true)
-        .order('sort_order');
+        .order('price');
 
       if (error) throw error;
 
@@ -100,30 +96,16 @@ const Setup = () => {
     });
   };
 
-  const validateCNPJ = (cnpj: string) => {
-    // Remover caracteres não numéricos
-    const cleanCNPJ = cnpj.replace(/\D/g, '');
-    
-    // Verificar se tem 14 dígitos
-    if (cleanCNPJ.length !== 14) return false;
-    
-    // Validação básica (implementar validação completa em produção)
-    return true;
-  };
-
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     console.log('🚀 Setup - Iniciando criação da empresa:', {
-      formData: {
-        ...formData,
-        cnpj: formData.cnpj.replace(/\D/g, ''),
-      },
+      formData,
       user: user?.id,
       profile: profile?.id
     });
 
-    if (!formData.companyName || !formData.cnpj || !formData.planId) {
+    if (!formData.companyName || !formData.planId) {
       toast({
         variant: "destructive",
         title: "Erro de Validação",
@@ -146,15 +128,6 @@ const Setup = () => {
 
     console.log('✅ Setup - Plano selecionado:', selectedPlan);
 
-    if (!validateCNPJ(formData.cnpj)) {
-      toast({
-        variant: "destructive",
-        title: "CNPJ Inválido",
-        description: "Por favor, insira um CNPJ válido com 14 dígitos.",
-      });
-      return;
-    }
-
     setIsLoading(true);
 
     try {
@@ -167,16 +140,13 @@ const Setup = () => {
         .replace(/-+/g, '-') // Remove hífens duplicados
         .replace(/^-|-$/g, ''); // Remove hífens do início e fim
 
+      // Usar apenas campos que existem na tabela companies
       const companyData = {
         name: formData.companyName,
-        cnpj: formData.cnpj.replace(/\D/g, ''),
-        description: formData.description,
         email: formData.email || profile?.email,
         phone: formData.phone,
-        address: formData.address,
         plan_id: formData.planId,
         slug: baseSlug || 'empresa',
-        status: 'active',
       };
 
       console.log('📝 Setup - Dados da empresa a serem criados:', companyData);
@@ -191,8 +161,8 @@ const Setup = () => {
       }
 
       // Buscar empresa recém-criada via função pública (evita SELECT bloqueado por RLS)
-      const { data: companyRpc, error: rpcError } = await (supabase as any)
-        .rpc('get_company_public', { company_slug: companyData.slug });
+      const { data: companyRpc, error: rpcError } = await supabase
+        .rpc('get_company_public', { p_slug: companyData.slug });
 
       if (rpcError) {
         console.error('❌ Setup - Erro ao buscar empresa via RPC:', rpcError);
@@ -252,11 +222,11 @@ const Setup = () => {
         details: error?.details
       });
       
-      if (error.code === '23505' && error.message.includes('cnpj')) {
+      if (error.code === '23505') {
         toast({
           variant: "destructive",
-          title: "CNPJ já cadastrado",
-          description: "Este CNPJ já está em uso. Use outro CNPJ ou entre em contato conosco.",
+          title: "Empresa já cadastrada",
+          description: "Este nome de empresa já está em uso. Use outro nome ou entre em contato conosco.",
         });
       } else {
         toast({
@@ -323,29 +293,6 @@ const Setup = () => {
                         />
                       </div>
                       
-                      <div className="space-y-2">
-                        <Label htmlFor="cnpj">CNPJ *</Label>
-                        <Input
-                          id="cnpj"
-                          name="cnpj"
-                          placeholder="00.000.000/0001-00"
-                          value={formData.cnpj}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="description">Descrição da Empresa</Label>
-                      <Textarea
-                        id="description"
-                        name="description"
-                        placeholder="Conte um pouco sobre sua empresa..."
-                        value={formData.description}
-                        onChange={handleInputChange}
-                        rows={3}
-                      />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -355,7 +302,7 @@ const Setup = () => {
                           id="email"
                           name="email"
                           type="email"
-                          placeholder={profile?.email}
+                          placeholder={profile?.email || "email@empresa.com"}
                           value={formData.email}
                           onChange={handleInputChange}
                         />
@@ -371,17 +318,6 @@ const Setup = () => {
                           onChange={handleInputChange}
                         />
                       </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="address">Endereço</Label>
-                      <Input
-                        id="address"
-                        name="address"
-                        placeholder="Rua, Número, Bairro, Cidade - UF"
-                        value={formData.address}
-                        onChange={handleInputChange}
-                      />
                     </div>
 
                     <div className="space-y-2">

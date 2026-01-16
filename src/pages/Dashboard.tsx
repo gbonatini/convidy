@@ -99,7 +99,10 @@ const Dashboard = () => {
   };
   
   const fetchDashboardStats = async () => {
-    if (!profile?.company_id) return;
+    if (!profile?.company_id) {
+      setLoadingStats(false);
+      return;
+    }
     try {
       // Buscar eventos da empresa com mais detalhes
       const { data: events, error: eventsError } = await supabase

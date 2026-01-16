@@ -120,11 +120,10 @@ export const EventForm: React.FC<EventFormProps> = ({ event, onSuccess, companyI
 
       const eventData = {
         title: data.title,
-        description: data.description,
+        description: data.description || null,
         date: data.date,
         time: data.time,
         location: data.location,
-        address: data.address,
         capacity: data.capacity,
         price: 0,
         status: data.status,

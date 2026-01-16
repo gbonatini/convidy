@@ -9,14 +9,13 @@ import { Badge } from '@/components/ui/badge';
 import { supabase } from '@/integrations/supabase/client';
 import { useToast } from '@/hooks/use-toast';
 import { useTour } from '@/hooks/useTour';
-// Joyride desabilitado temporariamente devido a erro de hooks (#310)
-// const Joyride = lazy(() => import('react-joyride')) as any;
 import { BehaviorAnalytics } from '@/components/BehaviorAnalytics';
 import EventFunnel from '@/components/EventFunnel';
 import EventProjections from '@/components/EventProjections';
 import EventIndicators from '@/components/EventIndicators';
 import EventIndividualFunnel from '@/components/EventIndividualFunnel';
 import { Loader2, LogOut, Users, Calendar, BarChart3, Settings, Plus, TrendingUp, CheckCircle, Clock, Building, Send } from 'lucide-react';
+
 interface DashboardStats {
   totalEvents: number;
   totalRegistrations: number;
@@ -31,26 +30,17 @@ interface DashboardStats {
   monthlyGrowth: number;
   eventsByMonth: Array<{ month: string; events: number; registrations: number }>;
 }
+
 interface Company {
   id: string;
   slug: string;
   name: string;
 }
+
 const Dashboard = () => {
-  const {
-    user,
-    profile,
-    loading
-  } = useAuth();
-  const {
-    toast
-  } = useToast();
-  const {
-    shouldShowTour,
-    run,
-    setRun,
-    completeTour
-  } = useTour();
+  const { user, profile, loading } = useAuth();
+  const { toast } = useToast();
+  const { shouldShowTour, run, setRun, completeTour } = useTour();
   const [stats, setStats] = useState<DashboardStats>({
     totalEvents: 0,
     totalRegistrations: 0,
@@ -68,7 +58,9 @@ const Dashboard = () => {
   const [company, setCompany] = useState<Company | null>(null);
   const [loadingStats, setLoadingStats] = useState(true);
   const [joyrideEnabled, setJoyrideEnabled] = useState(false);
+  
   useEffect(() => setJoyrideEnabled(true), []);
+  
   const tourSteps = [{
     target: '[data-tour="public-page"]',
     content: 'Esta é sua página pública! Compartilhe este link nas redes sociais ou nos convites para que as pessoas confirmem presença facilmente.',
@@ -98,20 +90,19 @@ const Dashboard = () => {
     content: 'Estes cards mostram as principais métricas dos seus eventos: total de eventos, confirmações, check-ins e taxa de presença.',
     placement: 'bottom' as const
   }];
+  
   const handleJoyrideCallback = (data: any) => {
     const { status } = data;
     if (['finished', 'skipped'].includes(status)) {
       completeTour();
     }
   };
+  
   const fetchDashboardStats = async () => {
     if (!profile?.company_id) return;
     try {
       // Buscar eventos da empresa com mais detalhes
-      const {
-        data: events,
-        error: eventsError
-      } = await supabase
+      const { data: events, error: eventsError } = await supabase
         .from('events')
         .select('id, status, capacity, created_at')
         .eq('company_id', profile.company_id);
@@ -141,21 +132,15 @@ const Dashboard = () => {
       const activeEvents = events.filter(e => e.status === 'active').length;
 
       // Buscar registrations com detalhes
-      const {
-        data: registrations,
-        error: registrationsError
-      } = await supabase
+      const { data: registrations, error: registrationsError } = await supabase
         .from('registrations')
-        .select('checked_in, event_id, created_at')
+        .select('status, event_id, created_at')
         .in('event_id', eventIds);
       
       if (registrationsError) throw registrationsError;
 
       // Buscar convites
-      const {
-        data: invites,
-        error: invitesError
-      } = await supabase
+      const { data: invites, error: invitesError } = await supabase
         .from('invites')
         .select('id, event_id')
         .in('event_id', eventIds);
@@ -163,12 +148,12 @@ const Dashboard = () => {
       if (invitesError) throw invitesError;
 
       const totalRegistrations = registrations?.length || 0;
-      const totalCheckins = registrations?.filter(r => r.checked_in).length || 0;
+      const totalCheckins = registrations?.filter(r => r.status === 'checked_in').length || 0;
       const attendanceRate = totalRegistrations > 0 ? Math.round(totalCheckins / totalRegistrations * 100) : 0;
 
       // Calcular eventos com confirmações e check-ins
       const eventsWithConfirmations = new Set(registrations?.map(r => r.event_id)).size;
-      const eventsWithCheckins = new Set(registrations?.filter(r => r.checked_in).map(r => r.event_id)).size;
+      const eventsWithCheckins = new Set(registrations?.filter(r => r.status === 'checked_in').map(r => r.event_id)).size;
 
       // Calcular ocupação média
       const totalCapacity = events.reduce((sum, event) => sum + (event.capacity || 50), 0);
@@ -215,14 +200,13 @@ const Dashboard = () => {
       setLoadingStats(false);
     }
   };
+  
   const handleSignOut = async () => {
     try {
       localStorage.clear();
       sessionStorage.clear();
       try {
-        await supabase.auth.signOut({
-          scope: 'global'
-        });
+        await supabase.auth.signOut({ scope: 'global' });
       } catch (err) {
         console.warn('Erro no sign out global:', err);
       }
@@ -239,19 +223,18 @@ const Dashboard = () => {
       });
     }
   };
+  
   const fetchCompanyData = async () => {
     if (!profile?.company_id) return;
     try {
-      const {
-        data,
-        error
-      } = await supabase.from('companies').select('id, slug, name').eq('id', profile.company_id).single();
+      const { data, error } = await supabase.from('companies').select('id, slug, name').eq('id', profile.company_id).single();
       if (error) throw error;
       setCompany(data);
     } catch (error) {
       console.error('Erro ao carregar dados da empresa:', error);
     }
   };
+  
   useEffect(() => {
     if (profile?.company_id) {
       fetchDashboardStats();
@@ -278,153 +261,159 @@ const Dashboard = () => {
     console.log('❌ Dashboard - Redirecionando para /setup (sem company_id)');
     return <Navigate to="/setup" replace />;
   }
+  
   if (loading || loadingStats) {
     console.log('⏳ Dashboard - Loading state:', { loading, loadingStats });
-    return <div className="min-h-screen flex items-center justify-center bg-background">
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">
           <Loader2 className="h-8 w-8 animate-spin mx-auto" />
           <p className="text-muted-foreground">Carregando dashboard...</p>
         </div>
-      </div>;
+      </div>
+    );
   }
 
   console.log('✅ Dashboard - Renderizando dashboard normalmente');
   return (
     <AdminLayout>
       <ErrorBoundary>
-
-      <div className="space-y-8">
-        {/* Welcome Section */}
-        <div className="flex items-center justify-between">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-bold">Dashboard</h1>
-            <p className="text-muted-foreground">
-              Bem-vindo, {profile?.name?.split(' ')[0]}! Gerencie seus eventos e acompanhe métricas em tempo real
-            </p>
+        <div className="space-y-8">
+          {/* Welcome Section */}
+          <div className="flex items-center justify-between">
+            <div className="space-y-2">
+              <h1 className="text-3xl font-bold">Dashboard</h1>
+              <p className="text-muted-foreground">
+                Bem-vindo, {profile?.name?.split(' ')[0]}! Gerencie seus eventos e acompanhe métricas em tempo real
+              </p>
+            </div>
+            
+            {/* Company Public Page Link */}
+            {company?.slug && (
+              <div data-tour="public-page">
+                <a href={`/${company.slug}`} target="_blank" rel="noopener noreferrer">
+                  <Button variant="outline" size="sm">
+                    <Building className="h-4 w-4 mr-2" />
+                    Ver Página Pública
+                  </Button>
+                </a>
+              </div>
+            )}
           </div>
-          
-          {/* Company Public Page Link */}
-          {company?.slug && <div data-tour="public-page">
-              <a href={`/${company.slug}`} target="_blank" rel="noopener noreferrer">
-                <Button variant="outline" size="sm">
-                  <Building className="h-4 w-4 mr-2" />
-                  Ver Página Pública
+
+          <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6" data-tour="stats-cards">
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
+                <Calendar className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalEvents}</div>
+                <p className="text-xs text-muted-foreground">Eventos criados</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Convidados</CardTitle>
+                <Send className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalInvites}</div>
+                <p className="text-xs text-muted-foreground">Convites enviados</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Confirmações</CardTitle>
+                <Users className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalRegistrations}</div>
+                <p className="text-xs text-muted-foreground">Total de confirmações</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
+                <CheckCircle className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.totalCheckins}</div>
+                <p className="text-xs text-muted-foreground">Check-ins realizados</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-medium">Taxa de Presença</CardTitle>
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
+                <p className="text-xs text-muted-foreground">Percentual de comparecimento</p>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Funil e Projeções - só mostra se tem eventos */}
+          {stats.totalEvents > 0 && (
+            <div className="space-y-8">
+              <EventFunnel stats={{
+                totalEvents: stats.totalEvents,
+                activeEvents: stats.activeEvents,
+                eventsWithConfirmations: stats.eventsWithConfirmations,
+                eventsWithCheckins: stats.eventsWithCheckins
+              }} />
+              
+              <EventProjections stats={{
+                totalEvents: stats.totalEvents,
+                totalRegistrations: stats.totalRegistrations,
+                totalCheckins: stats.totalCheckins,
+                attendanceRate: stats.attendanceRate,
+                averageOccupancy: stats.averageOccupancy,
+                totalInvites: stats.totalInvites
+              }} />
+              
+              <EventIndicators stats={{
+                totalEvents: stats.totalEvents,
+                totalRegistrations: stats.totalRegistrations,
+                totalCheckins: stats.totalCheckins,
+                attendanceRate: stats.attendanceRate,
+                averageOccupancy: stats.averageOccupancy,
+                monthlyGrowth: stats.monthlyGrowth,
+                eventsByMonth: stats.eventsByMonth
+              }} />
+              
+              {/* Funil Individual por Evento */}
+              <EventIndividualFunnel companyId={profile.company_id} />
+            </div>
+          )}
+
+          {/* Behavior Analytics - só mostra se tem eventos */}
+          {stats.totalEvents > 0 && profile?.company_id && <BehaviorAnalytics companyId={profile.company_id} />}
+
+          {stats.totalEvents === 0 && (
+            <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
+              <CardHeader>
+                <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center space-x-2">
+                  <Clock className="h-5 w-5" />
+                  <span>Primeiros Passos</span>
+                </CardTitle>
+                <CardDescription className="text-blue-700 dark:text-blue-300">
+                  Parece que você ainda não criou nenhum evento. Que tal começar criando seu primeiro evento?
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button className="w-full sm:w-auto" onClick={() => window.location.href = '/events'}>
+                  <Plus className="mr-2 h-4 w-4" />
+                  Criar Primeiro Evento
                 </Button>
-              </a>
-            </div>}
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-5 gap-6" data-tour="stats-cards">
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total de Eventos</CardTitle>
-              <Calendar className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalEvents}</div>
-              <p className="text-xs text-muted-foreground">Eventos criados</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Convidados</CardTitle>
-              <Send className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalInvites}</div>
-              <p className="text-xs text-muted-foreground">Convites enviados</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Confirmações</CardTitle>
-              <Users className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalRegistrations}</div>
-              <p className="text-xs text-muted-foreground">Total de confirmações</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Check-ins</CardTitle>
-              <CheckCircle className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.totalCheckins}</div>
-              <p className="text-xs text-muted-foreground">Check-ins realizados</p>
-            </CardContent>
-          </Card>
-          
-          <Card>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taxa de Presença</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-2xl font-bold">{stats.attendanceRate}%</div>
-              <p className="text-xs text-muted-foreground">Percentual de comparecimento</p>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Funil e Projeções - só mostra se tem eventos */}
-        {stats.totalEvents > 0 && (
-          <div className="space-y-8">
-            <EventFunnel stats={{
-              totalEvents: stats.totalEvents,
-              activeEvents: stats.activeEvents,
-              eventsWithConfirmations: stats.eventsWithConfirmations,
-              eventsWithCheckins: stats.eventsWithCheckins
-            }} />
-            
-            <EventProjections stats={{
-              totalEvents: stats.totalEvents,
-              totalRegistrations: stats.totalRegistrations,
-              totalCheckins: stats.totalCheckins,
-              attendanceRate: stats.attendanceRate,
-              averageOccupancy: stats.averageOccupancy,
-              totalInvites: stats.totalInvites
-            }} />
-            
-            <EventIndicators stats={{
-              totalEvents: stats.totalEvents,
-              totalRegistrations: stats.totalRegistrations,
-              totalCheckins: stats.totalCheckins,
-              attendanceRate: stats.attendanceRate,
-              averageOccupancy: stats.averageOccupancy,
-              monthlyGrowth: stats.monthlyGrowth,
-              eventsByMonth: stats.eventsByMonth
-            }} />
-            
-            {/* Funil Individual por Evento */}
-            <EventIndividualFunnel companyId={profile.company_id} />
-          </div>
-        )}
-
-        {/* Behavior Analytics - só mostra se tem eventos */}
-        {stats.totalEvents > 0 && profile?.company_id && <BehaviorAnalytics companyId={profile.company_id} />}
-
-        {stats.totalEvents === 0 && <Card className="border-blue-200 bg-blue-50 dark:border-blue-800 dark:bg-blue-950">
-            <CardHeader>
-              <CardTitle className="text-blue-800 dark:text-blue-200 flex items-center space-x-2">
-                <Clock className="h-5 w-5" />
-                <span>Primeiros Passos</span>
-              </CardTitle>
-              <CardDescription className="text-blue-700 dark:text-blue-300">
-                Parece que você ainda não criou nenhum evento. Que tal começar criando seu primeiro evento?
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button className="w-full sm:w-auto" onClick={() => window.location.href = '/events'}>
-                <Plus className="mr-2 h-4 w-4" />
-                Criar Primeiro Evento
-              </Button>
-            </CardContent>
-          </Card>}
+              </CardContent>
+            </Card>
+          )}
         </div>
       </ErrorBoundary>
     </AdminLayout>

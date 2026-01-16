@@ -118,9 +118,9 @@ export default function CheckIn() {
     // Filtrar por status de check-in
     if (checkinFilter !== 'all') {
       if (checkinFilter === 'checked_in') {
-        filtered = filtered.filter(reg => reg.checked_in);
+        filtered = filtered.filter(reg => reg.status === 'checked_in');
       } else if (checkinFilter === 'pending') {
-        filtered = filtered.filter(reg => !reg.checked_in);
+        filtered = filtered.filter(reg => reg.status !== 'checked_in');
       }
     }
 
@@ -128,7 +128,7 @@ export default function CheckIn() {
     if (searchTerm.trim()) {
       filtered = filtered.filter(reg => 
         reg.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        reg.document.includes(searchTerm.replace(/\D/g, '')) ||
+        (reg.cpf && reg.cpf.includes(searchTerm.replace(/\D/g, ''))) ||
         reg.events.title.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
@@ -191,7 +191,7 @@ export default function CheckIn() {
       return;
     }
 
-    const regs = data || [];
+    const regs = (data || []) as unknown as Registration[];
     setRegistrations(regs);
     setFilteredRegistrations(regs);
     calculateStats(regs);
@@ -200,7 +200,7 @@ export default function CheckIn() {
 
   const calculateStats = (regs: Registration[]) => {
     const total = regs.length;
-    const checkedIn = regs.filter(r => r.checked_in).length;
+    const checkedIn = regs.filter(r => r.status === 'checked_in').length;
     const pending = total - checkedIn;
     const percentage = total > 0 ? Math.round((checkedIn / total) * 100) : 0;
 
@@ -236,12 +236,12 @@ export default function CheckIn() {
   const processCheckInByBarcode = async (barcodeValue: string) => {
     try {
       console.log('[CHECK-IN] Iniciando com código de barras:', barcodeValue);
-      console.log('[CHECK-IN] Registros disponíveis:', registrations.map(r => ({ id: r.id, name: r.name, qr_code: r.qr_code, document: r.document })));
+      console.log('[CHECK-IN] Registros disponíveis:', registrations.map(r => ({ id: r.id, name: r.name, qr_code: r.qr_code, cpf: r.cpf })));
       
       // Buscar registro pelo código de barras (CPF limpo)
       let registration = registrations.find(reg => {
-        const cleanDocument = reg.document?.replace(/[^0-9]/g, '');
-        return cleanDocument === barcodeValue;
+        const cleanCpf = reg.cpf?.replace(/[^0-9]/g, '');
+        return cleanCpf === barcodeValue;
       });
       
       // Se não encontrou por CPF, tentar busca pelo qr_code
@@ -276,16 +276,15 @@ export default function CheckIn() {
 
       console.log('[CHECK-IN] Registro encontrado:', registration);
 
-      if (registration.checked_in) {
+      if (registration.status === 'checked_in') {
         toast.error(`${registration.name} já fez check-in anteriormente`);
         setShowScanner(false);
         return;
       }
 
       // Realizar check-in usando a função do banco
-      const { data, error } = await (supabase as any).rpc('perform_checkin', {
-        registration_id_input: registration.id,
-        company_id_input: userCompanyId
+      const { data, error } = await supabase.rpc('perform_checkin', {
+        p_registration_id: registration.id
       });
 
       if (error) {
@@ -293,8 +292,8 @@ export default function CheckIn() {
         throw new Error('Erro ao realizar check-in');
       }
 
-      if (!data) {
-        throw new Error('Check-in não foi possível - verificar dados');
+      if (!data || !data[0]?.success) {
+        throw new Error(data?.[0]?.message || 'Check-in não foi possível - verificar dados');
       }
 
       toast.success(`✅ Check-in realizado: ${registration.name}`);
@@ -319,71 +318,24 @@ export default function CheckIn() {
         throw new Error('CPF deve ter 11 dígitos');
       }
 
-      // Primeiro buscar o registro manualmente
-      let query = supabase
-        .from('registrations')
-        .select(`
-          id,
-          name,
-          document,
-          checked_in,
-          checkin_time,
-          events (
-            id,
-            title,
-            company_id
-          )
-        `)
-        .eq('document', cleanCpf)
-        .eq('events.company_id', userCompanyId);
+      // Usar a função RPC de check-in por CPF
+      const { data, error } = await supabase.rpc('checkin_by_cpf', {
+        p_cpf: cleanCpf,
+        p_event_id: selectedEventId !== 'all' ? selectedEventId : null
+      });
 
-      // Se um evento específico foi selecionado
-      if (selectedEventId && selectedEventId !== 'all') {
-        query = query.eq('event_id', selectedEventId);
-      }
+      console.log('[CHECK-IN] Resultado do check-in por CPF:', data, error);
 
-      const { data: registrations, error: searchError } = await query;
-
-      console.log('[CHECK-IN] Busca por CPF:', registrations, searchError);
-
-      if (searchError) {
-        console.error('[CHECK-IN] Erro na busca:', searchError);
+      if (error) {
+        console.error('[CHECK-IN] Erro na busca:', error);
         throw new Error('Erro ao buscar registro');
       }
 
-      if (!registrations || registrations.length === 0) {
-        throw new Error('Pessoa não encontrada ou não inscrita nos eventos');
+      if (!data || data.length === 0 || !data[0].success) {
+        throw new Error(data?.[0]?.message || 'Pessoa não encontrada ou não inscrita nos eventos');
       }
 
-      // Pegar o primeiro registro encontrado
-      const registration = registrations[0];
-      
-      console.log('[CHECK-IN] Registro encontrado:', registration);
-
-      if (registration.checked_in) {
-        toast.error(`${registration.name} já fez check-in`);
-        return;
-      }
-
-      // Realizar check-in
-      const { data: updatedRegistration, error: checkinError } = await supabase
-        .from('registrations')
-        .update({
-          checked_in: true,
-          checkin_time: new Date().toISOString()
-        })
-        .eq('id', registration.id)
-        .select()
-        .single();
-
-      console.log('[CHECK-IN] Resultado do update:', updatedRegistration, checkinError);
-
-      if (checkinError) {
-        console.error('[CHECK-IN] Erro ao realizar check-in:', checkinError);
-        throw new Error('Erro ao realizar check-in');
-      }
-
-      toast.success(`✅ Check-in realizado: ${registration.name}`);
+      toast.success(`✅ Check-in realizado: ${data[0].registration_name}`);
       setCpfInput('');
       
       // Atualizar dados
@@ -502,7 +454,7 @@ export default function CheckIn() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.total}</div>
-              <p className="text-xs text-muted-foreground">Participantes registrados</p>
+              <p className="text-xs text-muted-foreground">Inscritos</p>
             </CardContent>
           </Card>
           
@@ -513,7 +465,7 @@ export default function CheckIn() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.checkedIn}</div>
-              <p className="text-xs text-muted-foreground">Já fizeram check-in</p>
+              <p className="text-xs text-muted-foreground">Realizados</p>
             </CardContent>
           </Card>
           
@@ -524,275 +476,205 @@ export default function CheckIn() {
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.pending}</div>
-              <p className="text-xs text-muted-foreground">Aguardando check-in</p>
+              <p className="text-xs text-muted-foreground">Aguardando</p>
             </CardContent>
           </Card>
           
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Taxa de Presença</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-medium">Taxa</CardTitle>
+              <Percent className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
               <div className="text-2xl font-bold">{stats.percentage}%</div>
-              <p className="text-xs text-muted-foreground">Percentual de comparecimento</p>
+              <p className="text-xs text-muted-foreground">Presença</p>
             </CardContent>
           </Card>
         </div>
 
-        {/* Ações de Check-in */}
-        <div className="grid gap-4 md:grid-cols-2">
-          {/* Scanner */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <ScanLine className="h-5 w-5" />
-                Scanner de Código de Barras
-              </CardTitle>
-              <CardDescription>
-                Use a câmera para escanear códigos de barras dos participantes
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={startScanner} 
-                className="w-full" 
-                size="lg"
-              >
-                <Camera className="h-4 w-4 mr-2" />
-                Abrir Scanner
-              </Button>
-            </CardContent>
-          </Card>
-
-          {/* CPF Manual */}
+        {/* Ferramentas de Check-in */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Check-in por CPF */}
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <UserCheck className="h-5 w-5" />
-                Check-in Manual
+                Check-in por CPF
               </CardTitle>
               <CardDescription>
-                Digite o CPF do participante para fazer check-in
+                Digite o CPF do participante para realizar check-in
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleCpfSubmit} className="space-y-3">
+              <form onSubmit={handleCpfSubmit} className="space-y-4">
                 <div className="space-y-2">
                   <Label htmlFor="cpf">CPF do Participante</Label>
                   <Input
                     id="cpf"
                     type="text"
                     placeholder="000.000.000-00"
-                    value={formatCpf(cpfInput)}
-                    onChange={(e) => setCpfInput(e.target.value.replace(/\D/g, ''))}
+                    value={cpfInput}
+                    onChange={(e) => setCpfInput(formatCpf(e.target.value))}
                     maxLength={14}
                   />
                 </div>
-                <Button type="submit" className="w-full" disabled={cpfInput.length < 11}>
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  Fazer Check-in
+                <Button type="submit" className="w-full">
+                  <CheckCircle className="mr-2 h-4 w-4" />
+                  Realizar Check-in
                 </Button>
               </form>
             </CardContent>
           </Card>
+
+          {/* Check-in por Scanner */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <ScanLine className="h-5 w-5" />
+                Scanner de Código
+              </CardTitle>
+              <CardDescription>
+                Use a câmera para escanear QR Code ou código de barras
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <Button onClick={startScanner} className="w-full" variant="outline">
+                <Camera className="mr-2 h-4 w-4" />
+                Abrir Scanner
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* Filtros */}
-        <CheckInFilters
-          selectedEventId={selectedEventId}
-          checkinFilter={checkinFilter}
-          searchTerm={searchTerm}
-          onEventFilterChange={setSelectedEventId}
-          onCheckinFilterChange={setCheckinFilter}
-          onSearchTermChange={setSearchTerm}
-          events={events}
-          registrations={filteredRegistrations}
-        />
-
-        {/* Lista de Registros */}
+        {/* Filtros e Lista */}
         <Card>
           <CardHeader>
-            <CardTitle>Participantes ({filteredRegistrations.length})</CardTitle>
-          </CardHeader>
-          <CardContent>
-            {/* Mobile View */}
-            <div className="md:hidden space-y-3">
-              {filteredRegistrations.map((registration) => (
-                <div key={registration.id} className="border rounded-lg p-4 space-y-2">
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <p className="font-medium">{registration.name}</p>
-                      <p className="text-sm text-muted-foreground">{formatCpf(registration.document)}</p>
-                      <p className="text-sm text-muted-foreground">{registration.events.title}</p>
-                    </div>
-                    <Badge variant={registration.checked_in ? "success" : "warning"}>
-                      {registration.checked_in ? (
-                        <><CheckCircle className="h-3 w-3 mr-1" /> Confirmado</>
-                      ) : (
-                        <><Clock className="h-3 w-3 mr-1" /> Pendente</>
-                      )}
-                    </Badge>
-                  </div>
-                  <div className="flex justify-between items-center">
-                    {registration.checked_in && registration.checkin_time ? (
-                      <span className="text-xs text-muted-foreground">
-                        Check-in: {new Date(registration.checkin_time).toLocaleString()}
-                      </span>
-                    ) : (
-                      <div></div>
-                    )}
-                    {!registration.checked_in && (
-                      <Button
-                        size="sm"
-                        onClick={() => processCheckIn(registration.document)}
-                      >
-                        Check-in
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Desktop View */}
-            <div className="hidden md:block">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Nome</TableHead>
-                    <TableHead>CPF</TableHead>
-                    <TableHead>Evento</TableHead>
-                    <TableHead>Status</TableHead>
-                    <TableHead>Check-in</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {filteredRegistrations.map((registration) => (
-                    <TableRow key={registration.id}>
-                      <TableCell className="font-medium">{registration.name}</TableCell>
-                      <TableCell>{formatCpf(registration.document)}</TableCell>
-                      <TableCell>{registration.events.title}</TableCell>
-                      <TableCell>
-                        <Badge variant={registration.checked_in ? "success" : "warning"}>
-                          {registration.checked_in ? (
-                            <><CheckCircle className="h-3 w-3 mr-1" /> Confirmado</>
-                          ) : (
-                            <><Clock className="h-3 w-3 mr-1" /> Pendente</>
-                          )}
-                        </Badge>
-                      </TableCell>
-                      <TableCell>
-                        {registration.checked_in && registration.checkin_time ? (
-                          <span className="text-sm text-muted-foreground">
-                            {new Date(registration.checkin_time).toLocaleString()}
-                          </span>
-                        ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => processCheckIn(registration.document)}
-                            disabled={registration.checked_in}
-                          >
-                            Check-in
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Scanner Modal */}
-        <Dialog open={showScanner} onOpenChange={setShowScanner}>
-          <DialogContent className="w-[90vw] sm:max-w-[500px] p-6">
-            <DialogHeader>
-              <DialogTitle className="flex items-center gap-2">
-                <ScanLine className="h-5 w-5" />
-                Scanner de Código de Barras
-              </DialogTitle>
-              <DialogDescription>
-                Posicione o código de barras dentro da área de leitura
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4">
-              {/* Scanner Container */}
-              <div className="relative">
-                <div className="border-2 border-dashed border-primary/50 rounded-lg overflow-hidden bg-black">
-                  <video
-                    ref={videoRef}
-                    style={{
-                      width: '100%',
-                      height: '280px',
-                      objectFit: 'cover'
-                    }}
-                    muted
-                    playsInline
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div>
+                <CardTitle>Lista de Participantes</CardTitle>
+                <CardDescription>
+                  Visualize e gerencie os check-ins dos participantes
+                </CardDescription>
+              </div>
+              <div className="flex flex-col md:flex-row gap-2">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Buscar por nome, CPF..."
+                    value={searchTerm}
+                    onChange={(e) => setSearchTerm(e.target.value)}
+                    className="pl-9 w-full md:w-64"
                   />
                 </div>
-
-                {/* Overlay de mira */}
-                <div className="absolute inset-0 pointer-events-none">
-                  <div className="relative w-full h-full flex items-center justify-center">
-                    <div className="w-64 h-20 border-2 border-red-500 rounded-lg bg-red-500/10">
-                      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2">
-                        <ScanLine className="h-8 w-8 text-red-500 animate-pulse" />
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-              
-              {/* Campo manual para código de barras */}
-              <div className="mt-4">
-                <Label>Ou digite o código manualmente:</Label>
-                <Input
-                  placeholder="Digite o código de barras"
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter') {
-                      const value = (e.target as HTMLInputElement).value;
-                      if (value) {
-                        handleBarcodeScan({ text: value });
-                        (e.target as HTMLInputElement).value = '';
-                      }
-                    }
-                  }}
-                />
-              </div>
-
-              {/* Status */}
-              {scannerError && (
-                <div className="text-center p-3 bg-red-50 rounded-lg">
-                  <p className="text-sm text-red-600">{scannerError}</p>
-                </div>
-              )}
-
-              {!scannerError && (
-                <div className="text-center p-3 bg-blue-50 rounded-lg">
-                  <p className="text-sm text-blue-600">
-                    Aponte a câmera para o código de barras
-                  </p>
-                </div>
-              )}
-
-              {/* Ações */}
-              <div className="flex gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={stopScanner}
-                  className="flex-1"
-                >
-                  <X className="h-4 w-4 mr-2" />
-                  Fechar
-                </Button>
+                <Select value={selectedEventId} onValueChange={setSelectedEventId}>
+                  <SelectTrigger className="w-full md:w-48">
+                    <SelectValue placeholder="Todos os eventos" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos os eventos</SelectItem>
+                    {events.map((event) => (
+                      <SelectItem key={event.id} value={event.id}>
+                        {event.title}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Select value={checkinFilter} onValueChange={setCheckinFilter}>
+                  <SelectTrigger className="w-full md:w-40">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Todos</SelectItem>
+                    <SelectItem value="checked_in">Check-in feito</SelectItem>
+                    <SelectItem value="pending">Pendente</SelectItem>
+                  </SelectContent>
+                </Select>
               </div>
             </div>
-          </DialogContent>
-        </Dialog>
+          </CardHeader>
+          <CardContent>
+            {filteredRegistrations.length === 0 ? (
+              <div className="text-center py-12">
+                <Users className="h-12 w-12 mx-auto text-muted-foreground mb-4" />
+                <h3 className="text-lg font-medium">Nenhum participante encontrado</h3>
+                <p className="text-muted-foreground">
+                  {searchTerm ? 'Tente ajustar os filtros de busca' : 'Ainda não há inscrições para os eventos'}
+                </p>
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Nome</TableHead>
+                      <TableHead>CPF</TableHead>
+                      <TableHead>Evento</TableHead>
+                      <TableHead>Status</TableHead>
+                      <TableHead>Horário</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {filteredRegistrations.map((reg) => (
+                      <TableRow key={reg.id}>
+                        <TableCell className="font-medium">{reg.name}</TableCell>
+                        <TableCell>{reg.cpf ? formatCpf(reg.cpf) : '-'}</TableCell>
+                        <TableCell>{reg.events.title}</TableCell>
+                        <TableCell>
+                          {reg.status === 'checked_in' ? (
+                            <Badge className="bg-green-100 text-green-800">
+                              <CheckCircle className="mr-1 h-3 w-3" />
+                              Check-in feito
+                            </Badge>
+                          ) : (
+                            <Badge variant="secondary">
+                              <Clock className="mr-1 h-3 w-3" />
+                              Pendente
+                            </Badge>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          {reg.status === 'checked_in' && reg.checked_in_at
+                            ? new Date(reg.checked_in_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+                            : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
+          </CardContent>
+        </Card>
       </div>
+
+      {/* Modal do Scanner */}
+      <Dialog open={showScanner} onOpenChange={(open) => !open && stopScanner()}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Camera className="h-5 w-5" />
+              Scanner de Código
+            </DialogTitle>
+            <DialogDescription>
+              Posicione o código de barras ou QR Code na frente da câmera
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div className="relative aspect-video bg-black rounded-lg overflow-hidden">
+              <video ref={videoRef} className="w-full h-full object-cover" />
+              {scannerError && (
+                <div className="absolute inset-0 flex items-center justify-center bg-black/80 text-white text-center p-4">
+                  <p>{scannerError}</p>
+                </div>
+              )}
+            </div>
+            <Button variant="outline" onClick={stopScanner} className="w-full">
+              <X className="mr-2 h-4 w-4" />
+              Fechar Scanner
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </AdminLayout>
   );
 }

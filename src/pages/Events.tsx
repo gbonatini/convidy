@@ -28,16 +28,15 @@ import { getEventStatusBadge } from '@/lib/status';
 interface Event {
   id: string;
   title: string;
-  description: string;
+  description: string | null;
   date: string;
-  time: string;
-  location: string;
-  address: string;
-  capacity: number;
-  price: number;
-  status: string;
-  image_url?: string;
-  created_at: string;
+  time: string | null;
+  location: string | null;
+  capacity: number | null;
+  price: number | null;
+  status: string | null;
+  image_url?: string | null;
+  created_at: string | null;
   registrations?: { count: number }[];
 }
 
@@ -115,7 +114,7 @@ const Events = () => {
       if (error) throw error;
 
       console.log('Eventos carregados:', eventsData);
-      setEvents(eventsData || []);
+      setEvents((eventsData || []) as Event[]);
     } catch (error) {
       console.error('Erro ao carregar eventos:', error);
       toast({
@@ -186,11 +185,10 @@ const Events = () => {
     return new Date(parseInt(year), parseInt(month) - 1, parseInt(day)).toLocaleDateString('pt-BR');
   };
 
-  const formatTime = (time: string) => {
+  const formatTime = (time: string | null) => {
+    if (!time) return '';
     return time.slice(0, 5);
   };
-
-  // Status handling moved to @/lib/status
 
 const filteredEvents = events.filter(event => {
   if (statusFilter === 'all') return true;
@@ -317,7 +315,7 @@ const filteredEvents = events.filter(event => {
                     <div className="space-y-1 flex-1">
                       <CardTitle className="text-lg leading-tight">{event.title}</CardTitle>
                        <div className="flex items-center space-x-2">
-                         {getEventStatusBadge(event.status)}
+                         {getEventStatusBadge(event.status || 'active')}
                        </div>
                     </div>
                   </div>
@@ -325,16 +323,16 @@ const filteredEvents = events.filter(event => {
                   <div className="space-y-2 text-sm text-muted-foreground">
                     <div className="flex items-center space-x-2">
                       <Calendar className="h-4 w-4" />
-                      <span>{formatDate(event.date)} às {formatTime(event.time)}</span>
+                      <span>{formatDate(event.date)} {event.time && `às ${formatTime(event.time)}`}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <MapPin className="h-4 w-4" />
-                      <span className="truncate">{event.location}</span>
+                      <span className="truncate">{event.location || 'Local não definido'}</span>
                     </div>
                     <div className="flex items-center space-x-2">
                       <Users className="h-4 w-4" />
                       <span>
-                        {event.registrations?.[0]?.count || 0} / {event.capacity} confirmações
+                        {event.registrations?.[0]?.count || 0} / {event.capacity || 0} confirmações
                       </span>
                     </div>
                   </div>

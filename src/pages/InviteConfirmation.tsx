@@ -24,8 +24,6 @@ interface Company {
   name: string;
   slug: string;
   logo_url?: string;
-  primary_color?: string;
-  secondary_color?: string;
 }
 
 interface Event {
@@ -34,17 +32,16 @@ interface Event {
   date: string;
   time: string;
   location: string;
-  address: string;
   capacity: number;
   status: string;
 }
 
 interface Invite {
   id: string;
-  full_name: string;
-  cpf: string;
-  whatsapp: string;
-  email?: string;
+  name: string;
+  cpf: string | null;
+  phone: string | null;
+  email?: string | null;
   status: string;
   event_id: string;
   company_id: string;
@@ -69,10 +66,10 @@ const InviteConfirmation = () => {
     }
   }, [slug, inviteId]);
 
-  // Gerar código de barras quando registrationData estiver disponível (igual ao CompanyPublic)
+  // Gerar código de barras quando registrationData estiver disponível
   useEffect(() => {
-    if (registrationData && registrationData.document) {
-      console.log('📊 Tentando gerar código de barras para CPF:', registrationData.document);
+    if (registrationData && registrationData.cpf) {
+      console.log('📊 Tentando gerar código de barras para CPF:', registrationData.cpf);
       
       // Aguardar o canvas estar renderizado no DOM
       const generateBarcode = () => {
@@ -88,16 +85,16 @@ const InviteConfirmation = () => {
             }
             
             // Usar o CPF limpo do registro
-            const cleanDocument = registrationData.document.replace(/[^0-9]/g, '');
+            const cleanCpf = registrationData.cpf.replace(/[^0-9]/g, '');
             
-            if (!cleanDocument || cleanDocument.length === 0) {
+            if (!cleanCpf || cleanCpf.length === 0) {
               throw new Error('CPF inválido para gerar código de barras');
             }
             
-            console.log('📋 Gerando código de barras com CPF:', cleanDocument);
+            console.log('📋 Gerando código de barras com CPF:', cleanCpf);
             
             // Gerar o código de barras
-            JsBarcode(barcodeRef.current, cleanDocument, {
+            JsBarcode(barcodeRef.current, cleanCpf, {
               format: "CODE128",
               width: 2,
               height: 40,
@@ -141,23 +138,23 @@ const InviteConfirmation = () => {
       
       // Buscar empresa
       const { data: companyData, error: companyError } = await supabase
-        .rpc('get_company_public', { company_slug: slug });
+        .rpc('get_company_public', { p_slug: slug });
 
       console.log('Empresa encontrada:', companyData);
       console.log('Erro da empresa:', companyError);
 
-      if (companyError || !companyData) {
+      if (companyError || !companyData || companyData.length === 0) {
         throw new Error('Empresa não encontrada');
       }
 
-      const company = Array.isArray(companyData) ? companyData[0] : companyData;
-      setCompany(company);
+      const companyRow = Array.isArray(companyData) ? companyData[0] : companyData;
+      setCompany(companyRow);
 
-      console.log('🏢 Empresa definida:', company);
+      console.log('🏢 Empresa definida:', companyRow);
 
       // Buscar convite usando função pública
       const { data: inviteData, error: inviteError } = await supabase
-        .rpc('get_invite_public', { invite_uuid: inviteId });
+        .rpc('get_invite_public', { p_invite_id: inviteId });
 
       console.log('📧 Dados do convite (função pública):', inviteData);
       console.log('❌ Erro do convite:', inviteError);
@@ -174,60 +171,36 @@ const InviteConfirmation = () => {
       const inviteRow = Array.isArray(inviteData) ? inviteData[0] : inviteData;
       
       // Mapear dados da função para os objetos esperados
-      const invite = {
+      const inviteObj: Invite = {
         id: inviteRow.id,
-        full_name: inviteRow.full_name,
-        cpf: inviteRow.cpf,
-        whatsapp: inviteRow.whatsapp,
-        email: inviteRow.email,
+        name: inviteRow.name,
+        cpf: null, // Not returned by function
+        phone: null, // Not returned by function
+        email: null, // Not returned by function
         status: inviteRow.status,
-        event_id: inviteRow.event_id,
-        company_id: inviteRow.company_id
+        event_id: '', // Not returned by function
+        company_id: ''
       };
 
-      const event = {
-        id: inviteRow.event_id,
+      const eventObj: Event = {
+        id: '',
         title: inviteRow.event_title,
         date: inviteRow.event_date,
         time: inviteRow.event_time,
         location: inviteRow.event_location,
-        address: inviteRow.event_address,
-        capacity: inviteRow.event_capacity,
-        status: inviteRow.event_status
+        capacity: 0,
+        status: 'active'
       };
 
-      setInvite(invite);
-      setEvent(event);
+      setInvite(inviteObj);
+      setEvent(eventObj);
 
-      console.log('✅ Convite carregado:', invite);
-      console.log('📅 Evento carregado:', event);
+      console.log('✅ Convite carregado:', inviteObj);
+      console.log('📅 Evento carregado:', eventObj);
 
-      // Verificar se já foi confirmado - buscar registro existente
-      console.log('🔍 Verificando se já existe registro de confirmação...');
-      console.log('Parâmetros da busca:', {
-        event_uuid: invite.event_id,
-        document_text: invite.cpf,
-        phone_text: invite.whatsapp
-      });
-      
-      const { data: existingRegistration, error: regError } = await supabase
-        .rpc('get_registration_public', {
-          event_uuid: invite.event_id,
-          document_text: invite.cpf,
-          phone_text: invite.whatsapp
-        });
-
-      console.log('📋 Registro existente encontrado:', existingRegistration);
-      console.log('❌ Erro na busca do registro:', regError);
-
-      if (existingRegistration && existingRegistration.length > 0) {
-        console.log('✅ Registro já existe, usando dados existentes');
-        const regData = Array.isArray(existingRegistration) ? existingRegistration[0] : existingRegistration;
-        setRegistrationData(regData);
-      } else {
-        console.log('🚀 Registro não existe, iniciando confirmação automática...');
-        // Se não foi confirmado, confirmar automaticamente
-        await autoConfirm(invite, event);
+      // Se já confirmado, mostrar como confirmado
+      if (inviteRow.status === 'confirmed') {
+        setRegistrationData({ name: inviteRow.name });
       }
 
     } catch (error: any) {
@@ -238,184 +211,14 @@ const InviteConfirmation = () => {
     }
   };
 
-  const autoConfirm = async (inviteData: Invite, eventData: Event) => {
-    console.log('🚀 Iniciando confirmação automática...');
-    console.log('Dados do convite:', inviteData);
-    console.log('Dados do evento:', eventData);
-    
-    if (registrationData) {
-      console.log('✅ Já existe registro, não confirmando novamente');
-      return; // Já confirmado
-    }
-
-    setConfirming(true);
-    
-    try {
-      console.log('=== INÍCIO DA CONFIRMAÇÃO AUTOMÁTICA ===');
-      console.log('Evento selecionado:', eventData);
-      console.log('Dados do convite:', inviteData);
-      
-      // Verificar capacidade do evento antes de confirmar
-      const { data: currentRegistrations, error: countError } = await supabase
-        .from('registrations')
-        .select('id', { count: 'exact' })
-        .eq('event_id', eventData.id)
-        .eq('status', 'confirmed');
-      
-      if (countError) {
-        console.error('Erro ao verificar capacidade:', countError);
-        throw new Error('Erro ao verificar capacidade do evento');
-      }
-      
-      const currentCount = currentRegistrations?.length || 0;
-      if (currentCount >= eventData.capacity) {
-        toast({
-          variant: "destructive",
-          title: "Evento lotado",
-          description: `Este evento já atingiu sua capacidade máxima de ${eventData.capacity} participantes.`,
-        });
-        return;
-      }
-      
-      // Normalizar CPF removendo pontuação e traços
-      const normalizedDocument = inviteData.cpf.replace(/\D/g, '');
-      
-      const insertData = {
-        event_id: eventData.id,
-        name: inviteData.full_name,
-        email: inviteData.email || `${inviteData.whatsapp.replace(/\D/g, '')}@temp.com`,
-        phone: inviteData.whatsapp,
-        document: normalizedDocument,
-        document_type: 'cpf',
-        qr_code: '', // Will be generated by trigger
-        status: 'confirmed'
-      } as any;
-
-      console.log('Dados para inserção:', insertData);
-
-      const { error } = await supabase
-        .from('registrations')
-        .insert([insertData]);
-
-      console.log('Inserção concluída. Sem retorno de dados devido às políticas RLS.', { error });
-
-      if (error) {
-        console.error('Erro na inserção:', error);
-        
-        if (error.code === '23505') {
-          console.log('Erro de constraint única detectado');
-          if (error.message?.includes('registrations_event_document_unique')) {
-            toast({
-              variant: "destructive",
-              title: "CPF já confirmado",
-              description: "Este CPF já foi usado para confirmar presença neste evento.",
-            });
-          } else if (error.message?.includes('registrations_event_id_email_key')) {
-            toast({
-              variant: "destructive", 
-              title: "Email já usado",
-              description: "Este email já foi usado para confirmar presença neste evento.",
-            });
-          } else {
-            toast({
-              variant: "destructive",
-              title: "Registro duplicado", 
-              description: "Já existe uma confirmação para estes dados neste evento.",
-            });
-          }
-          return;
-        } else if (error.message?.includes('RLS')) {
-          toast({
-            variant: "destructive",
-            title: "Erro de permissão",
-            description: "Não é possível confirmar presença neste evento no momento.",
-          });
-          return;
-        } else {
-          toast({
-            variant: "destructive",
-            title: "Erro ao confirmar presença",
-            description: error.message || "Tente novamente em alguns instantes.",
-          });
-          return;
-        }
-      }
-
-      // Efeito de confetti para celebrar!
-      confetti({
-        particleCount: 100,
-        spread: 70,
-        origin: { y: 0.6 }
-      });
-
-      toast({
-        title: "🎉 Confirmação realizada!",
-        description: "Aguarde... gerando seu código de barras de check-in!",
-      });
-
-      console.log('Confirmação automática bem-sucedida!');
-      
-      // Buscar o registro via função segura (sem SELECT público)
-      const fetchBarcode = async () => {
-        const { data: regRow, error: regErr } = await (supabase as any).rpc('get_registration_public', {
-          event_uuid: eventData.id,
-          document_text: normalizedDocument,
-          phone_text: inviteData.whatsapp,
-        });
-        return { regRow, regErr };
-      };
-
-      const { regRow, regErr } = await fetchBarcode();
-      if (regErr || !regRow) {
-        console.log('Código de barras não disponível imediatamente, tentando novamente...', regErr);
-        await new Promise((r) => setTimeout(r, 400));
-        const { regRow: regRow2, regErr: regErr2 } = await fetchBarcode();
-        if (regErr2 || !regRow2) {
-          console.error('Erro ao obter código de barras após retry:', regErr2);
-          toast({
-            variant: "destructive",
-            title: "Erro ao gerar código de barras",
-            description: "Registro salvo, mas houve problema ao gerar código de barras.",
-          });
-        } else {
-          console.log('Código de barras obtido no retry:', regRow2);
-          const regData = Array.isArray(regRow2) ? regRow2[0] : regRow2;
-          setRegistrationData({ ...regData, document: normalizedDocument });
-        }
-      } else {
-        console.log('Código de barras obtido:', regRow);
-        console.log('Código de barras value:', Array.isArray(regRow) ? regRow[0]?.qr_code : regRow?.qr_code);
-        const regData = Array.isArray(regRow) ? regRow[0] : regRow;
-        setRegistrationData({ ...regData, document: normalizedDocument });
-      }
-
-      // Atualizar status do convite para confirmed
-      await supabase
-        .from('invites')
-        .update({ status: 'confirmed' })
-        .eq('id', inviteData.id);
-
-    } catch (error: any) {
-      console.error('=== ERRO NA CONFIRMAÇÃO AUTOMÁTICA ===');
-      console.error('Erro completo:', error);
-      
-      setError(error.message || 'Erro ao confirmar presença automaticamente');
-      toast({
-        variant: "destructive",
-        title: "Erro na confirmação",
-        description: error.message || "Erro ao confirmar presença automaticamente.",
-      });
-    } finally {
-      setConfirming(false);
-    }
-  };
-
   const formatDate = (dateString: string) => {
+    if (!dateString) return '';
     const date = new Date(dateString + 'T00:00:00');
     return format(date, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   };
 
   const formatTime = (timeString: string) => {
+    if (!timeString) return '';
     return timeString.slice(0, 5);
   };
 
@@ -497,117 +300,61 @@ const InviteConfirmation = () => {
                   <CheckCircle className="h-16 w-16 mx-auto mb-4 text-green-500" />
                   <CardTitle className="text-green-700">🎉 Presença Confirmada!</CardTitle>
                   <CardDescription>
-                    Olá {invite.full_name}, sua presença foi confirmada com sucesso!
+                    Olá {invite.name}, sua presença foi confirmada com sucesso!
                   </CardDescription>
                 </>
               ) : (
                 <>
-                  <Clock className="h-16 w-16 mx-auto mb-4 text-orange-500" />
-                  <CardTitle>Confirmando...</CardTitle>
+                  <Building className="h-16 w-16 mx-auto mb-4 text-primary" />
+                  <CardTitle>Convite para {event.title}</CardTitle>
                   <CardDescription>
-                    Processando sua confirmação de presença
+                    {company.name} convida você para este evento
                   </CardDescription>
                 </>
               )}
             </CardHeader>
-          </Card>
-
-          {/* Detalhes do evento */}
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Calendar className="h-5 w-5" />
-                Detalhes do Evento
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div>
+            
+            <CardContent className="space-y-6">
+              {/* Detalhes do evento */}
+              <div className="bg-muted/50 rounded-lg p-4 space-y-3">
                 <h3 className="font-semibold text-lg">{event.title}</h3>
-              </div>
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex items-center gap-2">
-                  <Calendar className="h-4 w-4 text-muted-foreground" />
-                  <span>{formatDate(event.date)}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <span>{formatTime(event.time)}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <MapPin className="h-4 w-4 text-muted-foreground" />
-                  <span>{event.location}</span>
-                </div>
-                
-                <div className="flex items-center gap-2">
-                  <Building className="h-4 w-4 text-muted-foreground" />
-                  <span>{company.name}</span>
+                <div className="space-y-2 text-sm text-muted-foreground">
+                  <div className="flex items-center gap-2">
+                    <Calendar className="h-4 w-4" />
+                    <span>{formatDate(event.date)}</span>
+                  </div>
+                  {event.time && (
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4" />
+                      <span>{formatTime(event.time)}</span>
+                    </div>
+                  )}
+                  {event.location && (
+                    <div className="flex items-center gap-2">
+                      <MapPin className="h-4 w-4" />
+                      <span>{event.location}</span>
+                    </div>
+                  )}
                 </div>
               </div>
 
-              {event.address && (
-                <div className="pt-2 border-t">
+              {/* Código de barras se confirmado */}
+              {registrationData && (
+                <div className="text-center space-y-4">
                   <p className="text-sm text-muted-foreground">
-                    <strong>Endereço:</strong> {event.address}
+                    Apresente este código no dia do evento para fazer check-in
                   </p>
+                  <div className="flex justify-center">
+                    <canvas ref={barcodeRef} className="max-w-full" />
+                  </div>
+                  <Button variant="outline" onClick={downloadBarcode}>
+                    <Download className="h-4 w-4 mr-2" />
+                    Baixar Código
+                  </Button>
                 </div>
               )}
             </CardContent>
           </Card>
-
-          {/* Código de barras para check-in */}
-          {registrationData && registrationData.qr_code && (
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-center">Código de Barras para Check-in</CardTitle>
-                <CardDescription className="text-center">
-                  Apresente este código no dia do evento para fazer o check-in
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="text-center space-y-4">
-                <div className="bg-white p-4 rounded-lg inline-block">
-                  <canvas 
-                    ref={barcodeRef}
-                    className="max-w-full"
-                  />
-                </div>
-                
-                <div className="space-y-2">
-                  <p className="text-sm text-muted-foreground">
-                    <strong>Nome:</strong> {registrationData.name}
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    <strong>CPF:</strong> {registrationData.document}
-                  </p>
-                </div>
-
-                <Button onClick={downloadBarcode} variant="outline" className="gap-2">
-                  <Download className="h-4 w-4" />
-                  Baixar Código de Barras
-                </Button>
-                
-                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
-                  <p className="text-sm text-blue-700 dark:text-blue-300">
-                    💡 <strong>Dica:</strong> Salve este código ou tire uma captura de tela. 
-                    Você precisará dele no dia do evento para fazer o check-in rapidamente.
-                  </p>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Botão para voltar */}
-          <div className="text-center">
-            <Button 
-              onClick={() => navigate(`/${slug}`)} 
-              variant="outline"
-              className="gap-2"
-            >
-              Ver Outros Eventos de {company.name}
-            </Button>
-          </div>
         </div>
       </main>
     </div>

@@ -195,80 +195,120 @@ const CompanyPublic = () => {
     return timeString?.slice(0, 5) || '';
   };
 
-  const generatePDF = (data: any) => {
+  const generatePDF = async (data: any) => {
     const doc = new jsPDF();
     const pageWidth = doc.internal.pageSize.getWidth();
     
-    // Título
-    doc.setFontSize(22);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Ingresso Digital', pageWidth / 2, 25, { align: 'center' });
+    // Capturar QR Code como imagem
+    const qrCodeElement = document.querySelector('.qr-code-for-pdf svg') as SVGElement;
+    let qrCodeDataUrl = '';
     
-    // Linha decorativa
-    doc.setDrawColor(100, 100, 100);
-    doc.line(20, 32, pageWidth - 20, 32);
+    if (qrCodeElement) {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const svgData = new XMLSerializer().serializeToString(qrCodeElement);
+      const img = new Image();
+      
+      await new Promise<void>((resolve) => {
+        img.onload = () => {
+          canvas.width = 200;
+          canvas.height = 200;
+          ctx?.drawImage(img, 0, 0, 200, 200);
+          qrCodeDataUrl = canvas.toDataURL('image/png');
+          resolve();
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(svgData)));
+      });
+    }
+
+    // Header com fundo
+    doc.setFillColor(59, 130, 246);
+    doc.rect(0, 0, pageWidth, 45, 'F');
+    
+    // Título
+    doc.setFontSize(24);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(255, 255, 255);
+    doc.text('INGRESSO', pageWidth / 2, 28, { align: 'center' });
     
     // Nome do participante
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
-    doc.text(data.name, pageWidth / 2, 50, { align: 'center' });
-    
-    // CPF
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(100, 100, 100);
-    const cpfFormatted = data.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
-    doc.text(`CPF: ${cpfFormatted}`, pageWidth / 2, 58, { align: 'center' });
-    
-    // QR Code placeholder info
-    doc.setFontSize(12);
-    doc.setTextColor(0, 0, 0);
-    doc.setFont('helvetica', 'bold');
-    doc.text('Apresente este documento no check-in', pageWidth / 2, 75, { align: 'center' });
-    
-    // Caixa do evento
-    doc.setFillColor(245, 245, 245);
-    doc.roundedRect(20, 85, pageWidth - 40, 80, 3, 3, 'F');
-    
-    // Título do evento
     doc.setFontSize(18);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(0, 0, 0);
-    doc.text(data.eventTitle, pageWidth / 2, 100, { align: 'center' });
+    doc.text(data.name, pageWidth / 2, 62, { align: 'center' });
+    
+    // CPF formatado
+    doc.setFontSize(11);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(100, 100, 100);
+    const cpfFormatted = data.cpf.replace(/(\d{3})(\d{3})(\d{3})(\d{2})/, '$1.$2.$3-$4');
+    doc.text(`CPF: ${cpfFormatted}`, pageWidth / 2, 70, { align: 'center' });
+    
+    // QR Code
+    if (qrCodeDataUrl) {
+      const qrSize = 70;
+      const qrX = (pageWidth - qrSize) / 2;
+      doc.addImage(qrCodeDataUrl, 'PNG', qrX, 80, qrSize, qrSize);
+    }
+    
+    // Texto do QR
+    doc.setFontSize(9);
+    doc.setTextColor(100, 100, 100);
+    doc.text('Apresente este QR Code no check-in', pageWidth / 2, 160, { align: 'center' });
+    
+    // Linha separadora
+    doc.setDrawColor(200, 200, 200);
+    doc.setLineDashPattern([3, 3], 0);
+    doc.line(20, 170, pageWidth - 20, 170);
+    doc.setLineDashPattern([], 0);
+    
+    // Caixa do evento
+    doc.setFillColor(249, 250, 251);
+    doc.roundedRect(15, 178, pageWidth - 30, 75, 4, 4, 'F');
+    
+    // Título do evento
+    doc.setFontSize(16);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(0, 0, 0);
+    
+    // Quebrar título se muito longo
+    const titleLines = doc.splitTextToSize(data.eventTitle, pageWidth - 50);
+    doc.text(titleLines, pageWidth / 2, 192, { align: 'center' });
+    
+    const titleOffset = titleLines.length > 1 ? 8 : 0;
     
     // Organizador
     if (data.companyName) {
-      doc.setFontSize(11);
+      doc.setFontSize(10);
       doc.setFont('helvetica', 'normal');
       doc.setTextColor(100, 100, 100);
-      doc.text(`Organizado por: ${data.companyName}`, pageWidth / 2, 110, { align: 'center' });
+      doc.text(`Organizado por: ${data.companyName}`, pageWidth / 2, 202 + titleOffset, { align: 'center' });
     }
     
     // Informações do evento
-    doc.setFontSize(12);
+    doc.setFontSize(11);
     doc.setFont('helvetica', 'normal');
-    doc.setTextColor(50, 50, 50);
+    doc.setTextColor(60, 60, 60);
     
-    const eventDate = new Date(data.eventDate + 'T00:00:00');
+    const eventDate = new Date(data.eventDate + 'T12:00:00');
     const formattedDate = format(eventDate, "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
     const formattedTime = data.eventTime?.slice(0, 5) || '';
     
-    doc.text(`📅  ${formattedDate}`, 30, 130);
-    doc.text(`🕐  ${formattedTime}`, 30, 140);
-    doc.text(`📍  ${data.eventLocation}`, 30, 150);
+    const infoStartY = 218 + titleOffset;
+    doc.text(`Data: ${formattedDate}`, 25, infoStartY);
+    doc.text(`Horário: ${formattedTime}`, 25, infoStartY + 10);
     
-    // QR Code - desenhar como texto informativo
-    doc.setFontSize(10);
-    doc.setTextColor(100, 100, 100);
-    doc.text(`Código de verificação: ${data.cpf}`, pageWidth / 2, 180, { align: 'center' });
+    // Local com quebra de linha se necessário
+    const locationLines = doc.splitTextToSize(`Local: ${data.eventLocation}`, pageWidth - 50);
+    doc.text(locationLines, 25, infoStartY + 20);
     
     // Rodapé
-    doc.setFontSize(9);
+    doc.setFontSize(8);
     doc.setTextColor(150, 150, 150);
-    doc.text('Gerado por Convidy - Sistema de Gestão de Eventos', pageWidth / 2, 280, { align: 'center' });
+    doc.text('Gerado por Convidy - Sistema de Gestão de Eventos', pageWidth / 2, 285, { align: 'center' });
     
     // Salvar
-    const fileName = `ingresso-${data.eventTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`;
+    const fileName = `ingresso-${data.eventTitle.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}.pdf`;
     doc.save(fileName);
     
     toast({
@@ -722,7 +762,7 @@ const CompanyPublic = () => {
             <div className="space-y-4">
               {/* QR Code */}
               <div className="text-center" ref={qrCodeRef}>
-                <div className="bg-white p-3 rounded-lg border-2 inline-block shadow-sm">
+                <div className="bg-white p-3 rounded-lg border-2 inline-block shadow-sm qr-code-for-pdf">
                   <QRCodeSVG 
                     value={registrationData.cpf}
                     size={160}

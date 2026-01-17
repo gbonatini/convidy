@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/components/AuthProvider';
@@ -362,41 +363,49 @@ const Setup = () => {
             {/* Plans Preview */}
             <div className="space-y-6">
               <h3 className="text-lg font-semibold">Planos Disponíveis</h3>
-              {plans.map((plan) => (
-                <Card 
-                  key={plan.id} 
-                  className={`cursor-pointer transition-all ${
-                    formData.planId === plan.id 
-                      ? 'ring-2 ring-primary border-primary' 
-                      : 'hover:shadow-lg'
-                  }`}
-                  onClick={() => handleSelectChange(plan.id)}
-                >
-                  <CardHeader className="pb-4">
-                    <div className="flex items-center justify-between">
-                      <CardTitle className="text-lg">{plan.name}</CardTitle>
-                      {formData.planId === plan.id && (
-                        <CheckCircle className="h-5 w-5 text-primary" />
-                      )}
-                    </div>
-                    <CardDescription>{plan.description}</CardDescription>
-                    <div className="text-2xl font-bold">
-                      {plan.price === 0 ? 'Gratuito' : `R$ ${plan.price.toFixed(2)}`}
-                      {plan.price > 0 && <span className="text-sm font-normal">/mês</span>}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="space-y-2">
-                      {plan.features.map((feature, index) => (
-                        <li key={index} className="flex items-center space-x-2 text-sm">
-                          <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                          <span>{feature}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </CardContent>
-                </Card>
-              ))}
+              {plans.map((plan) => {
+                const isAdvanced = plan.slug === 'avancado';
+                return (
+                  <Card 
+                    key={plan.id} 
+                    className={`cursor-pointer transition-all ${
+                      formData.planId === plan.id 
+                        ? 'ring-2 ring-primary border-primary' 
+                        : 'hover:shadow-lg'
+                    } ${isAdvanced ? 'border-emerald-300 dark:border-emerald-700' : ''}`}
+                    onClick={() => handleSelectChange(plan.id)}
+                  >
+                    <CardHeader className="pb-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <CardTitle className="text-lg">{plan.name}</CardTitle>
+                          {isAdvanced && (
+                            <Badge className="bg-emerald-500 text-white text-xs">Recomendado</Badge>
+                          )}
+                        </div>
+                        {formData.planId === plan.id && (
+                          <CheckCircle className="h-5 w-5 text-primary" />
+                        )}
+                      </div>
+                      <CardDescription>{plan.description}</CardDescription>
+                      <div className="text-2xl font-bold">
+                        {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2)}`}
+                        {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <ul className="space-y-2">
+                        {plan.features.map((feature, index) => (
+                          <li key={index} className="flex items-center space-x-2 text-sm">
+                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
+                            <span>{feature}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </CardContent>
+                  </Card>
+                );
+              })}
             </div>
           </div>
         </div>

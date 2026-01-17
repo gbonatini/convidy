@@ -38,11 +38,9 @@ export const PlanStatusBanner: React.FC = () => {
 
   const getPlanIcon = () => {
     switch (displayPlanName.toLowerCase()) {
-      case 'empresarial':
+      case 'avançado':
+      case 'avancado':
         return <Crown className="h-4 w-4" />;
-      case 'pro':
-      case 'profissional':
-        return <Zap className="h-4 w-4" />;
       default:
         return <Users className="h-4 w-4" />;
     }
@@ -50,11 +48,9 @@ export const PlanStatusBanner: React.FC = () => {
 
   const getPlanColor = () => {
     switch (displayPlanName.toLowerCase()) {
-      case 'empresarial':
-        return 'bg-gradient-to-r from-yellow-500 to-yellow-600 text-white';
-      case 'pro':
-      case 'profissional':
-        return 'bg-gradient-to-r from-blue-500 to-blue-600 text-white';
+      case 'avançado':
+      case 'avancado':
+        return 'bg-gradient-to-r from-emerald-500 to-emerald-600 text-white';
       default:
         return 'bg-muted text-muted-foreground';
     }

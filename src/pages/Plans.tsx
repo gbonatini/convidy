@@ -48,7 +48,7 @@ const Plans = () => {
       const {
         data,
         error
-      } = await supabase.from('system_plans').select('*').eq('is_active', true).order('sort_order');
+      } = await supabase.from('system_plans').select('*').eq('is_active', true).order('price');
       if (error) throw error;
       setPlans((data || []).map(plan => ({
         ...plan,

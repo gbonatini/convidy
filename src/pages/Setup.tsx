@@ -255,7 +255,7 @@ const Setup = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 via-background to-secondary/5">
       <div className="container mx-auto px-4 py-8">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-3xl mx-auto">
           {/* Header */}
           <div className="text-center space-y-4 mb-8">
             <h1 className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
@@ -266,148 +266,136 @@ const Setup = () => {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            {/* Form */}
-            <div className="lg:col-span-2">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center space-x-2">
-                    <Building className="h-5 w-5" />
-                    <span>Dados da Empresa</span>
-                  </CardTitle>
-                  <CardDescription>
-                    Essas informações aparecerão na sua página pública
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleSubmit} className="space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="companyName">Nome da Empresa *</Label>
-                        <Input
-                          id="companyName"
-                          name="companyName"
-                          placeholder="Ex: Minha Empresa LTDA"
-                          value={formData.companyName}
-                          onChange={handleInputChange}
-                          required
-                        />
-                      </div>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center space-x-2">
+                <Building className="h-5 w-5" />
+                <span>Dados da Empresa</span>
+              </CardTitle>
+              <CardDescription>
+                Essas informações aparecerão na sua página pública
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div className="space-y-2">
+                  <Label htmlFor="companyName">Nome da Empresa *</Label>
+                  <Input
+                    id="companyName"
+                    name="companyName"
+                    placeholder="Ex: Minha Empresa LTDA"
+                    value={formData.companyName}
+                    onChange={handleInputChange}
+                    required
+                  />
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email de Contato</Label>
+                    <Input
+                      id="email"
+                      name="email"
+                      type="email"
+                      placeholder={profile?.email || "email@empresa.com"}
+                      value={formData.email}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                  
+                  <div className="space-y-2">
+                    <Label htmlFor="phone">Telefone</Label>
+                    <Input
+                      id="phone"
+                      name="phone"
+                      placeholder="(11) 99999-9999"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                    />
+                  </div>
+                </div>
+
+                {/* Plans Selection */}
+                <div className="space-y-4">
+                  <Label>Selecione seu Plano *</Label>
+                  <div className="grid grid-cols-1 gap-4">
+                    {plans.map((plan) => {
+                      const isAdvanced = plan.slug === 'avancado';
+                      const isSelected = formData.planId === plan.id;
                       
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor="email">Email de Contato</Label>
-                        <Input
-                          id="email"
-                          name="email"
-                          type="email"
-                          placeholder={profile?.email || "email@empresa.com"}
-                          value={formData.email}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                      
-                      <div className="space-y-2">
-                        <Label htmlFor="phone">Telefone</Label>
-                        <Input
-                          id="phone"
-                          name="phone"
-                          placeholder="(11) 99999-9999"
-                          value={formData.phone}
-                          onChange={handleInputChange}
-                        />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="plan">Plano *</Label>
-                      <Select onValueChange={handleSelectChange} required>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Selecione um plano" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {plans.map((plan) => (
-                            <SelectItem key={plan.id} value={plan.id}>
-                              <div className="flex items-center justify-between w-full">
-                                <span>{plan.name}</span>
-                                <span className="ml-2 text-sm text-muted-foreground">
-                                  {plan.price === 0 ? 'Gratuito' : `R$ ${plan.price.toFixed(2)}`}
-                                </span>
-                              </div>
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    <Button type="submit" className="w-full" disabled={isLoading}>
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                          Configurando...
-                        </>
-                      ) : (
-                        <>
-                          Finalizar Configuração
-                          <ArrowRight className="ml-2 h-4 w-4" />
-                        </>
-                      )}
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Plans Preview */}
-            <div className="space-y-6">
-              <h3 className="text-lg font-semibold">Planos Disponíveis</h3>
-              {plans.map((plan) => {
-                const isAdvanced = plan.slug === 'avancado';
-                return (
-                  <Card 
-                    key={plan.id} 
-                    className={`cursor-pointer transition-all ${
-                      formData.planId === plan.id 
-                        ? 'ring-2 ring-primary border-primary' 
-                        : 'hover:shadow-lg'
-                    } ${isAdvanced ? 'border-emerald-300 dark:border-emerald-700' : ''}`}
-                    onClick={() => handleSelectChange(plan.id)}
-                  >
-                    <CardHeader className="pb-4">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center space-x-2">
-                          <CardTitle className="text-lg">{plan.name}</CardTitle>
+                      return (
+                        <div
+                          key={plan.id}
+                          onClick={() => handleSelectChange(plan.id)}
+                          className={`relative cursor-pointer rounded-xl border-2 p-5 transition-all hover:shadow-md ${
+                            isSelected 
+                              ? 'border-primary bg-primary/5 shadow-md' 
+                              : 'border-border hover:border-primary/50'
+                          } ${isAdvanced ? 'ring-1 ring-emerald-200 dark:ring-emerald-800' : ''}`}
+                        >
                           {isAdvanced && (
-                            <Badge className="bg-emerald-500 text-white text-xs">Recomendado</Badge>
+                            <Badge className="absolute -top-3 right-4 bg-emerald-500 text-white">
+                              Recomendado
+                            </Badge>
                           )}
+                          
+                          <div className="flex items-start justify-between gap-4">
+                            <div className="flex items-start gap-4">
+                              <div className={`mt-1 h-5 w-5 rounded-full border-2 flex items-center justify-center transition-colors ${
+                                isSelected 
+                                  ? 'border-primary bg-primary' 
+                                  : 'border-muted-foreground'
+                              }`}>
+                                {isSelected && (
+                                  <CheckCircle className="h-3 w-3 text-primary-foreground" />
+                                )}
+                              </div>
+                              
+                              <div className="space-y-1">
+                                <h3 className="font-semibold text-lg">{plan.name}</h3>
+                                <p className="text-sm text-muted-foreground">{plan.description}</p>
+                                <ul className="mt-3 space-y-1.5">
+                                  {plan.features.map((feature, index) => (
+                                    <li key={index} className="flex items-center gap-2 text-sm">
+                                      <CheckCircle className="h-3.5 w-3.5 text-emerald-500 flex-shrink-0" />
+                                      <span>{feature}</span>
+                                    </li>
+                                  ))}
+                                </ul>
+                              </div>
+                            </div>
+                            
+                            <div className="text-right shrink-0">
+                              <div className="text-2xl font-bold">
+                                {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2)}`}
+                              </div>
+                              {plan.price > 0 && (
+                                <span className="text-sm text-muted-foreground">/mês</span>
+                              )}
+                            </div>
+                          </div>
                         </div>
-                        {formData.planId === plan.id && (
-                          <CheckCircle className="h-5 w-5 text-primary" />
-                        )}
-                      </div>
-                      <CardDescription>{plan.description}</CardDescription>
-                      <div className="text-2xl font-bold">
-                        {plan.price === 0 ? 'Grátis' : `R$ ${plan.price.toFixed(2)}`}
-                        {plan.price > 0 && <span className="text-sm font-normal text-muted-foreground">/mês</span>}
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <ul className="space-y-2">
-                        {plan.features.map((feature, index) => (
-                          <li key={index} className="flex items-center space-x-2 text-sm">
-                            <CheckCircle className="h-3 w-3 text-green-500 flex-shrink-0" />
-                            <span>{feature}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
-          </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <Button type="submit" className="w-full" size="lg" disabled={isLoading || !formData.planId}>
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Configurando...
+                    </>
+                  ) : (
+                    <>
+                      Finalizar Configuração
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </>
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
         </div>
       </div>
     </div>

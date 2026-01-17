@@ -1158,44 +1158,116 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Final CTA Section */}
+      {/* Final CTA Section - Behavioral Intelligence */}
       <section className="py-20 bg-gradient-to-r from-primary to-primary/80 text-primary-foreground relative overflow-hidden">
-        <div className="container mx-auto px-4 text-center relative z-10">
-          <div className="space-y-8 max-w-3xl mx-auto">
-            {/* Urgency reminder */}
-            
-
-            <h2 className="text-3xl md:text-5xl font-bold">
-              Pronto para ter eventos lotados?
-            </h2>
-            <p className="text-xl opacity-90 leading-relaxed">
-              Mais de 200 empresas já pararam de perder tempo com planilhas e check-ins manuais. 
-              <strong className="block mt-2">Seja a próxima a ter eventos com presença garantida!</strong>
-            </p>
-            
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/auth">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto text-lg px-10 py-4 bg-white text-primary hover:bg-white/90">
-                  <Flame className="mr-2 h-5 w-5" />
-                  Começar Agora
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
-            </div>
-            
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm opacity-90 max-w-xl mx-auto">
+        <div className="container mx-auto px-4 relative z-10">
+          <div className="space-y-12 max-w-5xl mx-auto">
+            <div className="text-center space-y-6">
+              <div className="inline-flex items-center px-4 py-2 bg-white/20 rounded-full text-sm font-medium backdrop-blur-sm">
+                <Brain className="h-4 w-4 mr-2" />
+                Inteligência Comportamental
+              </div>
               
-              <div className="flex items-center justify-center space-x-2">
-                <Shield className="h-4 w-4" />
-                <span>Sem cartão de crédito</span>
+              <h2 className="text-3xl md:text-5xl font-bold">
+                Conheça seus convidados como nunca antes
+              </h2>
+              <p className="text-xl opacity-90 leading-relaxed max-w-3xl mx-auto">
+                O Convidy vai além do check-in. Nossa IA analisa o comportamento de cada convidado 
+                para você tomar decisões mais inteligentes sobre seus eventos.
+              </p>
+            </div>
+
+            {/* Behavioral Insights Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                  <TrendingUp className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Taxa de Comparecimento</h3>
+                <p className="opacity-80 text-sm">
+                  Saiba quem confirma e comparece vs quem confirma e falta. 
+                  Identifique padrões de no-show antes que aconteçam.
+                </p>
               </div>
-              <div className="flex items-center justify-center space-x-2">
-                <Zap className="h-4 w-4" />
-                <span>Setup em 3 minutos</span>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                  <Clock className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Pontualidade</h3>
+                <p className="opacity-80 text-sm">
+                  Descubra quem costuma chegar no horário, quem atrasa 
+                  e quem precisa de um lembrete extra.
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                  <Users className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Tempo de Permanência</h3>
+                <p className="opacity-80 text-sm">
+                  Identifique quem fica até o final do evento e quem 
+                  costuma ir embora rapidamente após o check-in.
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                  <Calendar className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Histórico de Eventos</h3>
+                <p className="opacity-80 text-sm">
+                  Veja em quais eventos cada pessoa participou, 
+                  quais recusou e suas preferências de formato.
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                  <BarChart3 className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Score de Engajamento</h3>
+                <p className="opacity-80 text-sm">
+                  Cada convidado recebe uma pontuação baseada em seu 
+                  histórico, ajudando você a priorizar convites.
+                </p>
+              </div>
+
+              <div className="bg-white/10 backdrop-blur-sm rounded-xl p-6 border border-white/20">
+                <div className="h-12 w-12 rounded-full bg-white/20 flex items-center justify-center mb-4">
+                  <Target className="h-6 w-6" />
+                </div>
+                <h3 className="text-lg font-bold mb-2">Previsão de Presença</h3>
+                <p className="opacity-80 text-sm">
+                  Nossa IA prevê quantas pessoas realmente vão comparecer 
+                  com base no histórico comportamental.
+                </p>
               </div>
             </div>
 
-            
+            <div className="text-center space-y-6">
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <Link to="/auth">
+                  <Button size="lg" variant="secondary" className="w-full sm:w-auto text-lg px-10 py-4 bg-white text-primary hover:bg-white/90">
+                    <Brain className="mr-2 h-5 w-5" />
+                    Começar a Analisar
+                    <ArrowRight className="ml-2 h-5 w-5" />
+                  </Button>
+                </Link>
+              </div>
+              
+              <div className="flex items-center justify-center gap-6 text-sm opacity-90">
+                <div className="flex items-center space-x-2">
+                  <Shield className="h-4 w-4" />
+                  <span>Dados protegidos pela LGPD</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Zap className="h-4 w-4" />
+                  <span>Insights em tempo real</span>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
         
@@ -1214,7 +1286,7 @@ const Index = () => {
               A plataforma completa para eventos corporativos que realmente funcionam
             </p>
             <div className="flex items-center justify-center space-x-6 text-sm text-muted-foreground">
-              <span>© 2025 Convidy. Todos os direitos reservados.</span>
+              <span>© 2026 Convidy. Todos os direitos reservados.</span>
             </div>
             <div className="flex items-center justify-center space-x-4 text-xs text-muted-foreground">
               <span>✅ LGPD Compliant</span>

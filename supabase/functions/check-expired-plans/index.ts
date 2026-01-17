@@ -43,14 +43,14 @@ serve(async (req) => {
     console.log(`Found ${expiredCompanies?.length || 0} expired companies`);
 
     if (expiredCompanies && expiredCompanies.length > 0) {
-      // Downgrade para plano gratuito
+      // Downgrade para plano gratuito (5 confirmações)
       const { error: downgradeError } = await supabase
         .from('companies')
         .update({
           plan_id: freePlan.id,
           plan_status: 'active',
           payment_status: 'expired',
-          max_monthly_guests: 10,
+          max_monthly_guests: 5,
           updated_at: new Date().toISOString()
         })
         .in('id', expiredCompanies.map(c => c.id));

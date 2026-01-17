@@ -101,20 +101,18 @@ const Plans = () => {
   }, [profile]);
   const getPlanIcon = (planName: string) => {
     switch (planName.toLowerCase()) {
-      case 'empresarial':
-        return <Crown className="h-6 w-6 text-yellow-500" />;
-      case 'profissional':
-        return <Zap className="h-6 w-6 text-blue-500" />;
+      case 'avançado':
+      case 'avancado':
+        return <Crown className="h-6 w-6 text-emerald-500" />;
       default:
         return <Users className="h-6 w-6 text-gray-500" />;
     }
   };
   const getPlanGradient = (planName: string) => {
     switch (planName.toLowerCase()) {
-      case 'empresarial':
-        return 'bg-gradient-to-br from-yellow-50 to-yellow-100 dark:from-yellow-950 dark:to-yellow-900 border-yellow-200 dark:border-yellow-800';
-      case 'profissional':
-        return 'bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800';
+      case 'avançado':
+      case 'avancado':
+        return 'bg-gradient-to-br from-emerald-50 to-emerald-100 dark:from-emerald-950 dark:to-emerald-900 border-emerald-200 dark:border-emerald-800';
       default:
         return 'bg-gradient-to-br from-gray-50 to-gray-100 dark:from-gray-950 dark:to-gray-900 border-gray-200 dark:border-gray-800';
     }
@@ -126,7 +124,8 @@ const Plans = () => {
     }).format(price);
   };
   const formatLimit = (limit: number | null, suffix: string = '') => {
-    return limit === null ? 'Ilimitado' : `${limit}${suffix}`;
+    if (limit === null || limit === -1) return 'Ilimitado';
+    return `${limit}${suffix}`;
   };
   const isCurrentPlan = (planId: string) => {
     return currentPlan?.plan_id === planId;
@@ -203,60 +202,85 @@ const Plans = () => {
             </CardHeader>
           </Card>}
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {plans.map(plan => <Card key={plan.id} className={`relative ${getPlanGradient(plan.name)}`}>
-              <CardHeader className="text-center">
-                <div className="flex justify-center mb-4">
-                  {getPlanIcon(plan.name)}
-                </div>
-                <CardTitle className="text-2xl">{plan.name}</CardTitle>
-                <CardDescription className="min-h-[3rem]">
-                  {plan.description}
-                </CardDescription>
-                <div className="py-4">
-                  <span className="text-4xl font-bold">
-                    {formatPrice(plan.price)}
-                  </span>
-                  <span className="text-muted-foreground">/mês</span>
-                </div>
-              </CardHeader>
-
-              <CardContent className="space-y-4">
-                <Separator />
-                
-                <div className="space-y-3">
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Eventos</span>
-                    <Badge variant="outline">
-                      {formatLimit(plan.max_events)}
-                    </Badge>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl mx-auto">
+          {plans.map(plan => {
+            const isAdvanced = plan.slug === 'avancado';
+            return (
+              <Card key={plan.id} className={`relative ${getPlanGradient(plan.name)} ${isAdvanced ? 'ring-2 ring-emerald-500' : ''}`}>
+                {isAdvanced && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2">
+                    <Badge className="bg-emerald-500 text-white">Recomendado</Badge>
                   </div>
+                )}
+                <CardHeader className="text-center">
+                  <div className="flex justify-center mb-4">
+                    {getPlanIcon(plan.name)}
+                  </div>
+                  <CardTitle className="text-2xl">{plan.name}</CardTitle>
+                  <CardDescription className="min-h-[3rem]">
+                    {plan.description}
+                  </CardDescription>
+                  <div className="py-4">
+                    {plan.price === 0 ? (
+                      <span className="text-4xl font-bold">Grátis</span>
+                    ) : (
+                      <>
+                        <span className="text-4xl font-bold">
+                          {formatPrice(plan.price)}
+                        </span>
+                        <span className="text-muted-foreground">/mês</span>
+                      </>
+                    )}
+                  </div>
+                </CardHeader>
+
+                <CardContent className="space-y-4">
+                  <Separator />
                   
-                  <div className="flex justify-between items-center">
-                    <span className="text-sm">Convidados por evento</span>
-                    <Badge variant="outline">
-                      {formatLimit(plan.max_guests_per_event)}
-                    </Badge>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Eventos</span>
+                      <Badge variant="outline">
+                        {formatLimit(plan.max_events)}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm">Confirmações por evento</span>
+                      <Badge variant="outline">
+                        {formatLimit(plan.max_guests_per_event)}
+                      </Badge>
+                    </div>
                   </div>
-                </div>
 
-                <Separator />
+                  <Separator />
 
-                <div className="space-y-2">
-                  {plan.features.map((feature, index) => <div key={index} className="flex items-center space-x-2">
-                      <Check className="h-4 w-4 text-primary" />
-                      <span className="text-sm">{feature}</span>
-                    </div>)}
-                </div>
+                  <div className="space-y-2">
+                    {plan.features.map((feature, index) => (
+                      <div key={index} className="flex items-center space-x-2">
+                        <Check className="h-4 w-4 text-primary" />
+                        <span className="text-sm">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
 
-                <Button className="w-full mt-6" onClick={() => handleSelectPlan(plan)} disabled={isCurrentPlan(plan.id)} variant={isCurrentPlan(plan.id) ? "outline" : "default"}>
-                  {isCurrentPlan(plan.id) ? <>
-                      <Check className="h-4 w-4 mr-2" />
-                      Plano Atual
-                    </> : plan.price === 0 ? 'Usar Plano Gratuito' : 'Assinar Plano'}
-                </Button>
-              </CardContent>
-            </Card>)}
+                  <Button 
+                    className={`w-full mt-6 ${isAdvanced && !isCurrentPlan(plan.id) ? 'bg-emerald-500 hover:bg-emerald-600' : ''}`}
+                    onClick={() => handleSelectPlan(plan)} 
+                    disabled={isCurrentPlan(plan.id)} 
+                    variant={isCurrentPlan(plan.id) ? "outline" : "default"}
+                  >
+                    {isCurrentPlan(plan.id) ? (
+                      <>
+                        <Check className="h-4 w-4 mr-2" />
+                        Plano Atual
+                      </>
+                    ) : plan.price === 0 ? 'Usar Plano Gratuito' : 'Assinar Agora'}
+                  </Button>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

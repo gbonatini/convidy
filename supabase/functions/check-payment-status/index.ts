@@ -91,6 +91,9 @@ serve(async (req) => {
                 .eq('id', transaction.plan_id)
                 .single();
 
+              // -1 significa ilimitado (plano avançado)
+              const maxGuests = plan?.slug === 'free' ? 5 : plan?.slug === 'avancado' ? -1 : 5;
+              
               await supabase
                 .from('companies')
                 .update({
@@ -98,7 +101,7 @@ serve(async (req) => {
                   plan_status: 'active',
                   payment_status: 'active',
                   next_payment_due: nextPaymentDue.toISOString(),
-                  max_monthly_guests: plan?.slug === 'free' ? 10 : plan?.slug === 'profissional' ? 100 : 500,
+                  max_monthly_guests: maxGuests,
                   updated_at: new Date().toISOString()
                 })
                 .eq('id', transaction.company_id);

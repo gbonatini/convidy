@@ -46,10 +46,9 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
 
   const getPlanIcon = () => {
     switch (plan.name.toLowerCase()) {
-      case 'empresarial':
-        return <Crown className="h-8 w-8 text-yellow-500" />;
-      case 'profissional':
-        return <Zap className="h-8 w-8 text-blue-500" />;
+      case 'avançado':
+      case 'avancado':
+        return <Crown className="h-8 w-8 text-emerald-500" />;
       default:
         return <Users className="h-8 w-8 text-gray-500" />;
     }
@@ -63,7 +62,8 @@ export const PaymentModal: React.FC<PaymentModalProps> = ({
   };
 
   const formatLimit = (limit: number | null) => {
-    return limit === null ? 'Ilimitado' : limit.toString();
+    if (limit === null || limit === -1) return 'Ilimitado';
+    return limit.toString();
   };
 
   const handlePayment = async () => {

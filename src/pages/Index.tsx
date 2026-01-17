@@ -770,18 +770,18 @@ const Index = () => {
         <div className="container mx-auto px-4">
           <div className="text-center space-y-4 mb-16">
             <Badge variant="outline" className="bg-orange-100 text-orange-700 border-orange-300">
-              Planos para Cada Necessidade
+              Planos Simples e Transparentes
             </Badge>
             <h2 className="text-3xl md:text-4xl font-bold">
-              Comece <span className="text-green-600">grátis</span>, evolua conforme cresce
+              Comece <span className="text-green-600">grátis</span>, evolua sem limites
             </h2>
             <p className="text-xl text-muted-foreground max-w-3xl mx-auto">
-              Do plano gratuito robusto até recursos empresariais com IA. 
+              Apenas dois planos: gratuito para testar e avançado para crescer. 
               <strong>Sem surpresas, sem fidelidade, sem complicação</strong>.
             </p>
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 max-w-4xl mx-auto">
             {/* Free Plan */}
             <Card className="border-2 border-green-200 bg-green-50/50 relative">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
@@ -802,11 +802,11 @@ const Index = () => {
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Até 5 eventos por mês</span>
+                  <span className="text-sm">1 evento ativo</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">50 convidados por evento</span>
+                  <span className="text-sm">5 confirmações por evento</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
@@ -816,39 +816,45 @@ const Index = () => {
                   <Check className="h-4 w-4 text-green-600" />
                   <span className="text-sm">Dashboard básico</span>
                 </div>
+                <div className="flex items-center space-x-2">
+                  <Check className="h-4 w-4 text-green-600" />
+                  <span className="text-sm">Check-in com QR Code</span>
+                </div>
                 <div className="pt-4">
-                  <Button className="w-full bg-green-600 hover:bg-green-700">
-                    Começar Grátis
-                  </Button>
+                  <Link to="/auth">
+                    <Button className="w-full bg-green-600 hover:bg-green-700">
+                      Começar Grátis
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
 
-            {/* Professional Plan */}
-            <Card className="border-2 border-blue-200 bg-blue-50/50 relative transform scale-105">
+            {/* Advanced Plan */}
+            <Card className="border-2 border-primary/30 bg-primary/5 relative transform md:scale-105 shadow-xl">
               <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-blue-600 text-white px-4 py-1">
-                  MAIS POPULAR
+                <Badge className="bg-primary text-white px-4 py-1">
+                  ⭐ RECOMENDADO
                 </Badge>
               </div>
               <CardHeader className="text-center pt-8">
-                <div className="h-16 w-16 rounded-full bg-blue-100 flex items-center justify-center mx-auto mb-4">
-                  <Rocket className="h-8 w-8 text-blue-600" />
+                <div className="h-16 w-16 rounded-full bg-primary/10 flex items-center justify-center mx-auto mb-4">
+                  <Crown className="h-8 w-8 text-primary" />
                 </div>
-                <CardTitle className="text-2xl text-blue-800">Profissional</CardTitle>
-                <div className="text-3xl font-bold">R$ 97<span className="text-lg text-muted-foreground">/mês</span></div>
-                <CardDescription className="text-blue-600 font-medium">
+                <CardTitle className="text-2xl text-primary">Avançado</CardTitle>
+                <div className="text-3xl font-bold">R$ 149,90<span className="text-lg text-muted-foreground">/mês</span></div>
+                <CardDescription className="text-primary font-medium">
                   Sem fidelidade • Cancele quando quiser
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Eventos ilimitados</span>
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Eventos ilimitados</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">500 convidados por evento</span>
+                  <Zap className="h-4 w-4 text-primary" />
+                  <span className="text-sm font-medium">Confirmações ilimitadas</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
@@ -856,62 +862,27 @@ const Index = () => {
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">White label básico</span>
+                  <span className="text-sm">White label completo</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
                   <span className="text-sm">Relatórios avançados</span>
-                </div>
-                <div className="pt-4">
-                  <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                    Testar 7 Dias Grátis
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* Enterprise Plan */}
-            <Card className="border-2 border-purple-200 bg-purple-50/50 relative">
-              <div className="absolute -top-3 left-1/2 transform -translate-x-1/2">
-                <Badge className="bg-purple-600 text-white px-4 py-1">
-                  IA INCLUÍDA
-                </Badge>
-              </div>
-              <CardHeader className="text-center pt-8">
-                <div className="h-16 w-16 rounded-full bg-purple-100 flex items-center justify-center mx-auto mb-4">
-                  <Crown className="h-8 w-8 text-purple-600" />
-                </div>
-                <CardTitle className="text-2xl text-purple-800">Empresarial</CardTitle>
-                <div className="text-3xl font-bold">R$ 297<span className="text-lg text-muted-foreground">/mês</span></div>
-                <CardDescription className="text-purple-600 font-medium">
-                  Para agências e grandes empresas
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Tudo do Profissional +</span>
                 </div>
                 <div className="flex items-center space-x-2">
                   <Brain className="h-4 w-4 text-purple-600" />
                   <span className="text-sm font-medium">IA Comportamental</span>
                 </div>
                 <div className="flex items-center space-x-2">
-                  <Brain className="h-4 w-4 text-purple-600" />
-                  <span className="text-sm font-medium">Predição de Presença</span>
-                </div>
-                <div className="flex items-center space-x-2">
                   <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">White label completo</span>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Check className="h-4 w-4 text-green-600" />
-                  <span className="text-sm">Multi-usuários ilimitados</span>
+                  <span className="text-sm">Suporte prioritário</span>
                 </div>
                 <div className="pt-4">
-                  <Button className="w-full bg-purple-600 hover:bg-purple-700">
-                    Solicitar Demo
-                  </Button>
+                  <Link to="/auth">
+                    <Button className="w-full bg-primary hover:bg-primary/90">
+                      <Rocket className="mr-2 h-4 w-4" />
+                      Começar Agora
+                    </Button>
+                  </Link>
                 </div>
               </CardContent>
             </Card>
@@ -919,13 +890,13 @@ const Index = () => {
           
           <div className="text-center mt-12">
             <p className="text-muted-foreground mb-4">
-              💡 <strong>Dica:</strong> Comece com o plano gratuito e evolua conforme sua necessidade. 
+              💡 <strong>Dica:</strong> Comece com o plano gratuito e evolua quando precisar. 
               Sem fidelidade, sem taxa de cancelamento.
             </p>
             <Link to="/auth">
               <Button size="lg" className="bg-green-600 hover:bg-green-700">
                 <Gift className="mr-2 h-5 w-5" />
-                Começar Grátis Agora
+                Testar Grátis Agora
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </Link>

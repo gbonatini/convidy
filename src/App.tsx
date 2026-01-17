@@ -17,6 +17,7 @@ import Plans from "./pages/Plans";
 import Billing from "./pages/Billing";
 import CompanyPublic from "./pages/CompanyPublic";
 import InviteConfirmation from "./pages/InviteConfirmation";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -39,6 +40,7 @@ const App = () => (
             <Route path="/checkin" element={<CheckIn />} />
             <Route path="/plans" element={<Plans />} />
             <Route path="/billing" element={<Billing />} />
+            <Route path="/analytics" element={<Analytics />} />
             <Route path="/settings" element={<SettingsPage />} />
             <Route path="/:slug/convite/:inviteId" element={<InviteConfirmation />} />
             <Route path="/:slug" element={<CompanyPublic />} />

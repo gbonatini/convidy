@@ -25,7 +25,8 @@ import {
   Send,
   BarChart3,
   ExternalLink,
-  Crown
+  Crown,
+  Brain
 } from 'lucide-react';
 import { PlanStatusBanner } from '@/components/PlanStatusBanner';
 import { supabase } from '@/integrations/supabase/client';
@@ -37,6 +38,7 @@ const menuItems = [
   { title: 'Convites', url: '/invites', icon: Send, tourId: 'sidebar-invites' },
   { title: 'Confirmações', url: '/confirmations', icon: Users, tourId: 'sidebar-confirmations' },
   { title: 'Check-in', url: '/checkin', icon: BarChart3, tourId: 'sidebar-checkin' },
+  { title: 'Analytics', url: '/analytics', icon: Brain, tourId: 'sidebar-analytics' },
   { title: 'Planos', url: '/plans', icon: Crown, tourId: 'sidebar-plans' },
   { title: 'Configurações', url: '/settings', icon: Settings, tourId: 'sidebar-settings' },
 ];
